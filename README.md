@@ -4,8 +4,11 @@ Uma camada fina de regras e atalhos em cima de projetos open source que já coor
 
 ## A ideia
 
-Os plugins instalados fazem o trabalho pesado. Este repo guarda só o que é nosso:
+O Jaiminho vira um repositório de agentes que usam projetos open source que já existem, em vez de reconstruir a plataforma. O que sobra do código da suíte antiga é só o necessário para conduzir essas dependências.
 
+Os plugins instalados fazem o trabalho pesado. Este repo guarda:
+
+- os agentes e as skills que chamam esses projetos do jeito que o Mateus trabalha;
 - a lista exata do que está instalado e como instalar e remover cada peça;
 - o plano de teste que decide se a ideia funciona;
 - as regras próprias que nenhum projeto cobre (decididas depois do teste).
