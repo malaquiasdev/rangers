@@ -1,6 +1,6 @@
 ---
 name: jaiminho
-description: Starts an activity with the coordinator. Use when the human types /jaiminho followed by an issue id or a short description.
+description: Starts an activity with the coordinator. Use when the human types /jaiminho followed by a Linear issue, a GitHub issue or a short description.
 ---
 
 Activity: $ARGUMENTS
