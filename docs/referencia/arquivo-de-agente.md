@@ -23,7 +23,7 @@ O corpo segue a mesma ordem em todos os arquivos:
 3. `## What you do`, com os passos do papel.
 4. `## What you do not do`, com os limites do papel.
 
-O coordenador tem ainda uma seção `## How you talk to the human`, com as regras de mensagem para o humano.
+O coordenador tem ainda duas seções: `## How you talk to the human`, com as regras de mensagem para o humano, e `## Push notifications`, com os momentos em que ele avisa o humano por notificação.
 
 ## Regras que se repetem
 

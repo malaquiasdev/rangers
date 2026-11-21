@@ -16,9 +16,13 @@ Os papéis estão nos arquivos de [`agents/`](../../agents/). O campo `descripti
 
 O explorador (Explorer) responde perguntas sobre código e dados sem mudar nada, com `caminho:linha` para cada afirmação. Ele tem dois modos: `find`, para achar onde algo está, e `explain`, para explicar como funciona e o que quebra se mudar.
 
-O agente de aprendizado (Learning) lê as transcrições de sessão que mudaram desde a última vez e transforma correções do humano em regras. Ele abre uma PR neste repositório com as propostas e o humano aprova ou recusa cada regra. O arquivo dele prevê uma tarefa agendada que o roda duas vezes por dia. Essa tarefa não está neste repositório.
+O agente de aprendizado (Learning) lê as transcrições de sessão que mudaram desde a última vez e transforma correções do humano em regras. Ele abre uma PR neste repositório com as propostas e o humano aprova ou recusa cada regra. Quando a PR está aberta, ele avisa o humano em uma linha com o link: por notificação, se a ferramenta estiver disponível na execução agendada, ou por um lembrete na lista "Tarefas Claude". O arquivo dele prevê uma tarefa agendada que o roda duas vezes por dia. Essa tarefa não está neste repositório.
 
 O agente de documentação (Documentation) organiza a pasta `docs/` de um repositório pelo método Diátaxis. Só o humano o chama, e ele nunca abre PR nem muda código.
+
+## Quem avisa o humano
+
+O humano lê num tablet e acompanha os agentes pelo app. Quem manda notificação é o coordenador: quando o plano espera o sim, quando uma PR abre, quando um agente para, trava ou termina sem resultado, quando o revisor acha um BLOQUEIA e quando algo fica pronto para o humano testar. Agentes com ferramentas limitadas, como o revisor e o explorador, não notificam. Eles respondem ao coordenador, e o coordenador avisa.
 
 ## Por que os limites são escritos como proibições
 
