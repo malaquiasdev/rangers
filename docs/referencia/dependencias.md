@@ -34,7 +34,6 @@ Campos por tipo:
 | Peça | Fixada em `deps.toml` | Instalada por `instalar.sh` | Conferida por `conferir.sh` |
 | --- | --- | --- | --- |
 | pstack, i-have-adhd, openspec, container-use | Sim | Sim | Sim |
-| ccmanager, basic-memory | Não | Sim | Sim |
 | lychee (imagem de container) | Sim | Não | Não |
 | Skills (`kind = "skill"`) | Sim | Não | Não |
 | Runtime de container (`docker`) | Não | Não | Sim |
@@ -47,8 +46,6 @@ As skills ficam na pasta de skills do usuário, `~/.claude/skills/`. `deps.toml`
 | --- | --- | --- |
 | pstack | `claude plugin marketplace add cursor/plugins` e `claude plugin install pstack@cursor-plugins` | `claude plugin uninstall pstack@cursor-plugins` e `claude plugin marketplace remove cursor-plugins` |
 | i-have-adhd | `claude plugin marketplace add ayghri/i-have-adhd` e `claude plugin install i-have-adhd@i-have-adhd` | `claude plugin uninstall i-have-adhd` e `claude plugin marketplace remove i-have-adhd` |
-| ccmanager | `npm install -g ccmanager` | `npm uninstall -g ccmanager` |
-| basic-memory | `uv tool install basic-memory --prerelease=allow` | `uv tool uninstall basic-memory` |
 | container-use | `brew install dagger/tap/container-use` | `brew uninstall container-use` |
 | openspec | `npm install -g @fission-ai/openspec` | `npm uninstall -g @fission-ai/openspec` |
 

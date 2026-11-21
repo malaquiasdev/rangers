@@ -22,8 +22,6 @@ plugin_versao() {
 
 mostrar pstack "$(plugin_versao 'pstack@cursor-plugins')"
 mostrar i-have-adhd "$(plugin_versao 'i-have-adhd@i-have-adhd')"
-mostrar ccmanager "$(command -v ccmanager >/dev/null && ccmanager --version 2>/dev/null | head -1)"
-mostrar basic-memory "$(command -v basic-memory >/dev/null && basic-memory --version 2>/dev/null | head -1)"
 mostrar container-use "$(command -v container-use >/dev/null && container-use version 2>&1 | head -1)"
 mostrar openspec "$(command -v openspec >/dev/null && openspec --version 2>/dev/null | head -1)"
 

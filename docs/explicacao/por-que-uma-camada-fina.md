@@ -13,8 +13,6 @@ Os plugins e ferramentas instalados fazem o trabalho pesado. Os nomes aparecem e
 | `grilling` | Skill que refina uma atividade com uma pergunta por vez |
 | OpenSpec | Contrato e spec antes de escrever código |
 | container-use | Ambiente isolado por agente, sem poder de merge |
-| ccmanager | Avisa quando um agente muda de estado |
-| basic-memory | Memória em Markdown entre sessões |
 
 A lista exata, com versão e origem, está em [`deps.toml`](../../deps.toml). O que cada campo quer dizer está na [referência das dependências](../referencia/dependencias.md).
 

@@ -11,7 +11,7 @@ Cada linha tem o nome da peça e a versão que o próprio programa informa. Uma 
 | Peça | Como o script descobre a versão |
 | --- | --- |
 | Plugins do Claude Code (pstack, i-have-adhd) | Procura o plugin na saída de `claude plugin list` e lê a linha `Version:` seguinte |
-| Comandos de terminal (ccmanager, basic-memory, container-use, openspec) | Confere se o comando existe e lê a primeira linha da saída de versão dele |
+| Comandos de terminal (container-use, openspec) | Confere se o comando existe e lê a primeira linha da saída de versão dele |
 | Runtime de container | `docker info` |
 
 Saída e código de retorno:
@@ -31,8 +31,6 @@ Instala cada peça que estiver faltando e pula as que já existem. Pode ser roda
 | --- | --- | --- |
 | pstack | `claude plugin list` contém `pstack@cursor-plugins` | `claude plugin marketplace add cursor/plugins` e `claude plugin install pstack@cursor-plugins` |
 | i-have-adhd | `claude plugin list` contém `i-have-adhd@i-have-adhd` | `claude plugin marketplace add ayghri/i-have-adhd` e `claude plugin install i-have-adhd@i-have-adhd` |
-| ccmanager | O comando `ccmanager` existe | `npm install -g ccmanager` |
-| basic-memory | O comando `basic-memory` existe | `uv tool install basic-memory --prerelease=allow` |
 | container-use | O comando `container-use` existe | `brew install dagger/tap/container-use` |
 | openspec | O comando `openspec` existe | `npm install -g @fission-ai/openspec` |
 
@@ -46,4 +44,4 @@ O que o script não faz:
 - não fixa versão: instala a versão atual de cada fonte;
 - não instala as skills nem a imagem do lychee listadas em `deps.toml`;
 - não liga os agentes no Claude Code (veja [como ligar os agentes](../como-fazer/ligar-os-agentes.md));
-- não configura o basic-memory nem o container-use como servidor MCP.
+- não configura o container-use como servidor MCP.

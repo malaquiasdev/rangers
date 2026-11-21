@@ -15,14 +15,6 @@ if ! tem_plugin 'i-have-adhd@i-have-adhd'; then
   claude plugin install i-have-adhd@i-have-adhd
 fi
 
-if ! command -v ccmanager >/dev/null; then
-  npm install -g ccmanager
-fi
-
-if ! command -v basic-memory >/dev/null; then
-  uv tool install basic-memory --prerelease=allow
-fi
-
 if ! command -v container-use >/dev/null; then
   brew install dagger/tap/container-use
 fi
