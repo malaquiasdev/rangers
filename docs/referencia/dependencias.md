@@ -60,4 +60,4 @@ Os comandos de instalação são os mesmos de [`scripts/instalar.sh`](../../scri
 - Node e npm. A máquina do teste usa Node 22.
 - uv.
 - Homebrew.
-- Um runtime de container que responda ao comando `docker`. Podman serve.
+- Um runtime de container que responda ao comando `docker`. Podman serve quando o comando `docker` chama o Podman, por exemplo por um link `docker` apontando para `podman`.

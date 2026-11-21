@@ -2,6 +2,8 @@
 
 Cada agente tem um papel só e um limite claro do que não faz. A divisão segue uma ideia simples: quem escreve o código não revisa, quem revisa não edita, e nenhum agente leva nada para produção sem o sim explícito do humano.
 
+Nenhum arquivo de agente dá a um agente o poder de fazer merge ou deploy. O autor e o coordenador são proibidos de fazer merge, e o portão nunca faz merge à mão. Os arquivos não dizem quem faz o merge depois que o portão libera.
+
 Os papéis estão nos arquivos de [`agents/`](../../agents/). O campo `description` de cada um começa pelo nome do papel em inglês (Coordinator, Author, Reviewer e assim por diante). O formato do arquivo está na [referência do arquivo de agente](../referencia/arquivo-de-agente.md).
 
 ## O caminho de uma atividade

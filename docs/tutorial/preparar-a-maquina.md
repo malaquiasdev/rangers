@@ -9,7 +9,7 @@ Você precisa de:
 - o clone deste repositório;
 - Claude Code instalado, com o comando `claude` no terminal;
 - Node com npm, uv e Homebrew;
-- um runtime de container que responda ao comando `docker`. Podman serve.
+- um runtime de container que responda ao comando `docker`. Podman serve, desde que o comando `docker` chame o Podman (por exemplo, um link `docker` apontando para `podman`) e a máquina do Podman esteja ligada com `podman machine start`.
 
 Abra um terminal na raiz do clone. Todos os comandos abaixo rodam dali.
 
@@ -31,7 +31,7 @@ scripts/instalar.sh
 
 O script instala só o que faltava e, no fim, roda a conferência de novo. Repare na última linha: agora ela diz `Tudo no lugar.`.
 
-Se a linha do `docker` disser `SEM RESPOSTA`, o runtime de container não está de pé. Com Podman, rode `podman machine start` e depois `scripts/conferir.sh` outra vez.
+Se ainda aparecer `item(ns) faltando`, procure nas linhas de cima qual peça está como `FALTANDO` ou `SEM RESPOSTA`. O caso mais comum é a linha do `docker`: o script não liga o runtime de container. Ligue o Podman com `podman machine start` e rode `scripts/conferir.sh` outra vez.
 
 ## 3. Configure o pstack
 

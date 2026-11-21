@@ -4,7 +4,19 @@ O Jaiminho começou como uma plataforma própria, a `jaiminho-suite`. Ela coorde
 
 ## O que fica com os projetos open source
 
-Os plugins e ferramentas instalados fazem o trabalho pesado: roteiros prontos para cada tipo de tarefa, revisão por outro agente, ambiente isolado por agente, contrato antes do código, formato de resposta para quem tem TDAH. A lista exata, com versão e origem, está em [`deps.toml`](../../deps.toml). O que cada campo quer dizer está na [referência das dependências](../referencia/dependencias.md).
+Os plugins e ferramentas instalados fazem o trabalho pesado. Os nomes aparecem em toda a documentação:
+
+| Peça | O que faz para o Jaiminho |
+| --- | --- |
+| pstack | Plugin do Claude Code com roteiros prontos por tipo de tarefa (bug, feature e outros), revisão por outro agente, verificação e reflexão. Os agentes daqui chamam os roteiros e as skills dele |
+| i-have-adhd | Plugin que muda o formato da resposta para quem tem TDAH: ação primeiro, passos numerados. Liga com `/i-have-adhd` |
+| `grilling` | Skill que refina uma atividade com uma pergunta por vez |
+| OpenSpec | Contrato e spec antes de escrever código |
+| container-use | Ambiente isolado por agente, sem poder de merge |
+| ccmanager | Avisa quando um agente muda de estado |
+| basic-memory | Memória em Markdown entre sessões |
+
+A lista exata, com versão e origem, está em [`deps.toml`](../../deps.toml). O que cada campo quer dizer está na [referência das dependências](../referencia/dependencias.md).
 
 ## O que fica neste repositório
 

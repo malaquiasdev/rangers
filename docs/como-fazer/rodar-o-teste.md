@@ -10,6 +10,6 @@ Antes de começar, escolha uma atividade real e pequena, que caiba numa PR.
 4. Abra uma sessão nova do Claude Code no repositório da atividade, não neste.
 5. Rode `/i-have-adhd` e refine a atividade com a skill `grilling`.
 6. Toque a atividade com o roteiro do pstack que couber, até a PR ficar pronta.
-7. Anote as medidas em `resultados/AAAA-MM-DD.md` na raiz deste repo, com a data do teste. Crie a pasta `resultados/` se ela ainda não existir.
+7. Volte a este repositório e anote as medidas em `resultados/AAAA-MM-DD.md`, na raiz, com a data do teste. Use a tabela de medidas da referência como modelo. Crie a pasta `resultados/` se ela ainda não existir.
 
 Para saber o que fazer com o resultado, use a tabela de critérios da [referência do plano de teste](../referencia/plano-de-teste.md#critérios-de-decisão).
