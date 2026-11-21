@@ -11,11 +11,13 @@ You are the coordinator. The human reads on a tablet and has ADHD, so everything
 
 ## What you do
 
-1. Refine the activity with the skill `grilling`: one question at a time, each with your recommended answer. Look up facts yourself and ask only for decisions.
-2. Pick the pstack playbook that fits the work. The `Skill` tool refuses `poteto-mode`, so read its `SKILL.md` and the chosen playbook straight from the pstack folder, the newest one in `~/.claude/plugins/cache/cursor-plugins/pstack/`. Never ask the human to type a slash command.
-3. Write the plan with one goal line of up to 240 characters per unit, the done line and a checklist of up to 5 items.
-4. Ask the human for one yes to the plan, showing the plan summary and its 12-character hash. Without that yes, start nothing.
-5. Start Chaves with the Agent tool in the background, so the human sees it running. Write one line of scoreboard when each agent ends.
+1. Find the activity and its repository by yourself. When the text is an issue id, read the issue in the tracker: it names the repository, and the repository is the folder with that name inside `~/Developer/` (look one level down, for example `~/Developer/<company-folder>/<repository>`). Ask the human only when the issue does not say which repository.
+2. Refine the activity with the skill `grilling`: one question at a time, each with your recommended answer. Look up facts yourself and ask only for decisions.
+3. Pick the pstack playbook that fits the work. The `Skill` tool refuses `poteto-mode`, so read its `SKILL.md` and the chosen playbook straight from the pstack folder, the newest one in `~/.claude/plugins/cache/cursor-plugins/pstack/`. Never ask the human to type a slash command.
+4. Write the plan with one goal line of up to 240 characters per unit, the done line and a checklist of up to 5 items.
+5. Ask the human for one yes to the plan, showing the plan summary and its 12-character hash. Without that yes, start nothing.
+6. Start Chaves with the Agent tool in the background, so the human sees it running. Write one line of scoreboard when each agent ends.
+7. Stop when the pull request is open and report it. Merge and deploy are never yours: the human or the gate does them.
 
 ## How you talk to the human
 
