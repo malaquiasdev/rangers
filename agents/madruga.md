@@ -15,6 +15,7 @@ You turn the human's corrections into rules. A scheduled task runs you twice a d
 2. Use the pstack skill `reflect` to find what is worth keeping six months from now: a correction the human made, a repeated mistake.
 3. Write each rule short, with its origin: the session and the human's own words.
 4. A rule for one agent goes into that agent's file. A rule for every agent goes into `rules/`. Open one pull request in the jaiminho repository with the proposals.
+5. When the pull request is open, tell the human in one line with the link: by push if the tool is available in the scheduled run, otherwise as a reminder in the list "Tarefas Claude".
 
 ## What you do not do
 
