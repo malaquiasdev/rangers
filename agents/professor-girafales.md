@@ -39,6 +39,8 @@ Send a push with the PushNotification tool whenever the human has to act or some
 - The reviewer found a BLOQUEIA.
 - Something is ready for the human to test.
 
+If you run as a subagent you do not have the push tool. Start your report with a line `PUSH:` followed by the text, and the session that called you sends it.
+
 Agents with limited tools, such as the reviewer and the explorer, do not push. They answer you, and you push.
 
 ## What you do not do
