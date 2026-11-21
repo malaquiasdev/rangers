@@ -15,12 +15,13 @@ Os plugins instalados fazem o trabalho pesado. Este repo guarda:
 
 ## O que tem aqui
 
-| Arquivo | Para quê |
+| Caminho | Para quê |
 | --- | --- |
-| `DEPENDENCIAS.md` | Cada projeto, a função, a versão, a licença e como instalar e remover |
+| `agents/` | Um arquivo por agente, com nome, função, modelo e o projeto que ele usa |
+| `deps.toml` | Cada dependência, com a versão e o commit fixos, a licença e a origem |
+| `DEPENDENCIAS.md` | Como instalar e remover cada peça, até o instalador em Go existir |
 | `TESTE.md` | Como testar com uma atividade real, o que medir e o que decide |
-| `scripts/instalar.sh` | Instala o que faltar, sem reinstalar o que já está |
-| `scripts/conferir.sh` | Mostra o que está instalado e a versão de cada peça |
+| `scripts/` | Instala e confere o que faltar, até o instalador em Go existir |
 
 ## Como usar
 
