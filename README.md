@@ -1,6 +1,6 @@
-# jaiminho-lite
+# jaiminho
 
-Uma camada fina de regras e atalhos em cima de projetos open source que já coordenam agentes. Substitui a plataforma `jaiminho-suite`, que foi arquivada.
+Um repositório de agentes e regras em cima de projetos open source que já coordenam agentes. Substitui a plataforma `jaiminho-suite`, que foi arquivada.
 
 ## A ideia
 
