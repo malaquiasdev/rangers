@@ -24,6 +24,7 @@ function = "Response format for a reader with ADHD"
 
 [[dependency]]
 name = "openspec"
+optional = true
 kind = "npm"
 package = "@fission-ai/openspec"
 version = "1.7.0"

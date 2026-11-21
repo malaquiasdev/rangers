@@ -23,7 +23,8 @@ plugin_versao() {
 mostrar pstack "$(plugin_versao 'pstack@cursor-plugins')"
 mostrar i-have-adhd "$(plugin_versao 'i-have-adhd@i-have-adhd')"
 mostrar container-use "$(command -v container-use >/dev/null && container-use version 2>&1 | head -1)"
-mostrar openspec "$(command -v openspec >/dev/null && openspec --version 2>/dev/null | head -1)"
+versao_opcional=$(command -v openspec >/dev/null && openspec --version 2>/dev/null | head -1)
+printf '%-14s %s\n' openspec "${versao_opcional:-não instalado (opcional)}"
 
 if docker info >/dev/null 2>&1; then
   printf '%-14s %s\n' docker "respondendo"

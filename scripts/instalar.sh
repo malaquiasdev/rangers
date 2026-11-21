@@ -19,7 +19,7 @@ if ! command -v container-use >/dev/null; then
   brew install dagger/tap/container-use
 fi
 
-if ! command -v openspec >/dev/null; then
+if [ "${INSTALAR_OPCIONAIS:-0}" = 1 ] && ! command -v openspec >/dev/null; then
   npm install -g @fission-ai/openspec
 fi
 

@@ -11,7 +11,7 @@ Cada linha tem o nome da peça e a versão que o próprio programa informa. Uma 
 | Peça | Como o script descobre a versão |
 | --- | --- |
 | Plugins do Claude Code (pstack, i-have-adhd) | Procura o plugin na saída de `claude plugin list` e lê a linha `Version:` seguinte |
-| Comandos de terminal (container-use, openspec) | Confere se o comando existe e lê a primeira linha da saída de versão dele |
+| Comandos de terminal (container-use; o openspec é opcional e não acusa falta) | Confere se o comando existe e lê a primeira linha da saída de versão dele |
 | Runtime de container | `docker info` |
 
 Saída e código de retorno:

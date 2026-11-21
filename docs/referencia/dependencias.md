@@ -33,7 +33,8 @@ Campos por tipo:
 
 | Peça | Fixada em `deps.toml` | Instalada por `instalar.sh` | Conferida por `conferir.sh` |
 | --- | --- | --- | --- |
-| pstack, i-have-adhd, openspec, container-use | Sim | Sim | Sim |
+| pstack, i-have-adhd, container-use | Sim | Sim | Sim |
+| openspec (opcional) | Sim | Só com `INSTALAR_OPCIONAIS=1` | Mostra "não instalado (opcional)" sem acusar falta |
 | lychee (imagem de container) | Sim | Não | Não |
 | Skills (`kind = "skill"`) | Sim | Não | Não |
 | Runtime de container (`docker`) | Não | Não | Sim |
