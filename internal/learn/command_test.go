@@ -14,7 +14,7 @@ func command(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	home := t.TempDir()
 	out := &bytes.Buffer{}
-	dep := Dependencies{Now: func() time.Time { return time.Date(2026, 11, 22, 10, 30, 0, 0, time.UTC) }, Out: out}
+	dep := &Dependencies{Now: func() time.Time { return time.Date(2026, 11, 22, 10, 30, 0, 0, time.UTC) }, Out: out}
 	err := Command(context.Background(), args, func(name string) string {
 		if name == "HOME" {
 			return home

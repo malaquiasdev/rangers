@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type Claude interface {
@@ -46,10 +47,15 @@ func (GitCLI) NewWorktree(repo, branch, worktree string) error {
 	return nil
 }
 
-type OsascriptReminder struct{}
+type OsascriptReminder struct {
+	Timeout time.Duration
+}
 
-func (OsascriptReminder) Create(title, body string) error {
-	cmd := exec.Command("osascript", "-")
+func (r OsascriptReminder) Create(title, body string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "osascript", "-")
+	cmd.WaitDelay = time.Second
 	cmd.Stdin = strings.NewReader(reminderScript(title, body))
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("osascript: %w: %s", err, strings.TrimSpace(string(out)))

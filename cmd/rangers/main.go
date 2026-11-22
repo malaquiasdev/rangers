@@ -16,12 +16,13 @@ func main() {
 		os.Exit(2)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	dep := learn.Dependencies{
+	dep := &learn.Dependencies{
 		Claude:   learn.ClaudeCLI{},
 		Git:      learn.GitCLI{},
-		Reminder: learn.OsascriptReminder{},
+		Reminder: learn.OsascriptReminder{Timeout: 10 * time.Second},
 		Now:      time.Now,
 		Out:      os.Stdout,
+		Err:      os.Stderr,
 	}
 	err := learn.Command(ctx, os.Args[2:], os.Getenv, dep)
 	stop()

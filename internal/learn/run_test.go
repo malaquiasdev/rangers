@@ -37,6 +37,7 @@ type scenario struct {
 	log      string
 	reminder *fakeReminder
 	out      *bytes.Buffer
+	errOut   *bytes.Buffer
 }
 
 func testGitEnv() []string {
@@ -83,6 +84,7 @@ func newScenario(t *testing.T) *scenario {
 		log:      filepath.Join(root, "claude.log"),
 		reminder: &fakeReminder{},
 		out:      &bytes.Buffer{},
+		errOut:   &bytes.Buffer{},
 		cfg: Config{
 			IntervalHours:  2,
 			MinLines:       10,
@@ -154,12 +156,13 @@ func (s *scenario) checkpointAgo(ago time.Duration) {
 }
 
 func (s *scenario) run() error {
-	return Run(context.Background(), &s.cfg, Dependencies{
+	return Run(context.Background(), &s.cfg, &Dependencies{
 		Claude:   ClaudeCLI{},
 		Git:      GitCLI{},
 		Reminder: s.reminder,
 		Now:      func() time.Time { return s.now },
 		Out:      s.out,
+		Err:      s.errOut,
 	})
 }
 
@@ -550,18 +553,6 @@ func TestRunFailures(t *testing.T) {
 		}
 	})
 
-	t.Run("given a reminder that fails, when running, then it returns the error but the metrics and the checkpoint are already written", func(t *testing.T) {
-		s := newScenario(t)
-		s.reminder.fail = errors.New("no permission")
-		s.fresh(12)
-		err := s.run()
-		if err == nil || !strings.Contains(err.Error(), "no permission") {
-			t.Fatalf("got %v", err)
-		}
-		if !s.stateHas("metrics.tsv") || !s.stateHas("checkpoint") {
-			t.Fatal("the state should be written")
-		}
-	})
 }
 
 func gitSnapshot(t *testing.T, repo string) string {
@@ -614,6 +605,82 @@ func TestRunIgnoresGitVariablesFromTheEnvironment(t *testing.T) {
 		}
 		if branches := s.branches(); !strings.Contains(branches, "learn/2026-11-22-1030") {
 			t.Fatalf("the round did not use its own repo: %q", branches)
+		}
+	})
+}
+
+func TestRunReminderFailure(t *testing.T) {
+	failing := func(t *testing.T) *scenario {
+		t.Helper()
+		s := newScenario(t)
+		s.reminder.fail = errors.New("AppleEvent timed out (-1712)")
+		s.fresh(12)
+		return s
+	}
+	pendingLine := "Revisar as regras propostas\tRamo learn/2026-11-22-1030 em %s/rangers-worktrees/learn-2026-11-22-1030\n"
+
+	t.Run("given a reminder that fails, when running, then it succeeds and the metrics, the checkpoint and the branch line are written", func(t *testing.T) {
+		s := failing(t)
+		if err := s.run(); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if !s.stateHas("metrics.tsv") || !s.stateHas("checkpoint") {
+			t.Fatal("the state should be written")
+		}
+		if !strings.Contains(s.out.String(), "ramo learn/2026-11-22-1030 em ") {
+			t.Fatalf("output: %q", s.out.String())
+		}
+	})
+
+	t.Run("given a reminder that fails, when running, then it prints a warning in Portuguese on the error output", func(t *testing.T) {
+		s := failing(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		warning := s.errOut.String()
+		if !strings.HasPrefix(warning, "aviso: não consegui criar o lembrete") || !strings.Contains(warning, "AppleEvent timed out (-1712)") || !strings.Contains(warning, "pending-reminders.txt") {
+			t.Fatalf("warning: %q", warning)
+		}
+		if strings.Contains(s.out.String(), "aviso") {
+			t.Fatalf("the warning leaked to the output: %q", s.out.String())
+		}
+	})
+
+	t.Run("given a reminder that fails, when running, then it appends the title and the branch to pending-reminders.txt", func(t *testing.T) {
+		s := failing(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		expected := fmt.Sprintf(pendingLine, filepath.Dir(s.cfg.Repo))
+		if got := s.stateFile("pending-reminders.txt"); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("given two rounds whose reminders fail, when running both, then the file keeps one line per round", func(t *testing.T) {
+		s := failing(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		s.now = s.now.Add(3 * time.Hour)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		lines := strings.Split(strings.TrimSpace(s.stateFile("pending-reminders.txt")), "\n")
+		if len(lines) != 2 || !strings.Contains(lines[1], "learn/2026-11-22-1330") {
+			t.Fatalf("lines: %q", lines)
+		}
+	})
+
+	t.Run("given a reminder that works, when running, then there is no warning and no pending file", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.errOut.Len() != 0 || s.stateHas("pending-reminders.txt") {
+			t.Fatalf("warning %q, pending file %v", s.errOut.String(), s.stateHas("pending-reminders.txt"))
 		}
 	})
 }

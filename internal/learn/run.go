@@ -20,6 +20,7 @@ import (
 const (
 	checkpointName = "checkpoint"
 	metricsName    = "metrics.tsv"
+	pendingName    = "pending-reminders.txt"
 	allowedTools   = "Read,Edit,Write,Bash(git add:*),Bash(git commit:*),Bash(git status:*),Bash(git diff:*)"
 	reminderTitle  = "Revisar as regras propostas"
 )
@@ -30,6 +31,7 @@ type Dependencies struct {
 	Reminder Reminder
 	Now      func() time.Time
 	Out      io.Writer
+	Err      io.Writer
 }
 
 type response struct {
@@ -45,7 +47,7 @@ type response struct {
 	} `json:"usage"`
 }
 
-func Run(ctx context.Context, cfg *Config, dep Dependencies) error {
+func Run(ctx context.Context, cfg *Config, dep *Dependencies) error {
 	now := dep.Now()
 	lines, reason, err := collect(cfg, now)
 	if err != nil {
@@ -88,7 +90,7 @@ func collect(cfg *Config, now time.Time) ([]transcript.Line, string, error) {
 	return lines, blocksLines(cfg.MinLines, len(lines)), nil
 }
 
-func runModel(ctx context.Context, cfg *Config, dep Dependencies, now time.Time, lines []transcript.Line, budget float64) error {
+func runModel(ctx context.Context, cfg *Config, dep *Dependencies, now time.Time, lines []transcript.Line, budget float64) error {
 	agent, err := findAgent(filepath.Join(cfg.Repo, "agents"))
 	if err != nil {
 		return err
@@ -138,7 +140,7 @@ func invoke(ctx context.Context, cfg *Config, claude Claude, stamp, worktree str
 	return r, nil
 }
 
-func finish(cfg *Config, dep Dependencies, now time.Time, stamp, branch, worktree string, lines int, r *response) error {
+func finish(cfg *Config, dep *Dependencies, now time.Time, stamp, branch, worktree string, lines int, r *response) error {
 	_, err := fmt.Fprintln(dep.Out, r.Result)
 	if err != nil {
 		return err
@@ -155,7 +157,28 @@ func finish(cfg *Config, dep Dependencies, now time.Time, stamp, branch, worktre
 	if err != nil {
 		return err
 	}
-	return dep.Reminder.Create(reminderTitle, fmt.Sprintf("Ramo %s em %s", branch, worktree))
+	body := fmt.Sprintf("Ramo %s em %s", branch, worktree)
+	err = dep.Reminder.Create(reminderTitle, body)
+	if err == nil {
+		return nil
+	}
+	return keepPending(cfg.State, dep.Err, err, body)
+}
+
+func keepPending(state string, warnings io.Writer, cause error, body string) error {
+	path := filepath.Join(state, pendingName)
+	_, err := fmt.Fprintf(warnings, "aviso: não consegui criar o lembrete (%v); anotei em %s\n", cause, path)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	if _, err := file.WriteString(reminderTitle + "\t" + body + "\n"); err != nil {
+		return errors.Join(err, file.Close())
+	}
+	return file.Close()
 }
 
 func join(lines []transcript.Line) string {
