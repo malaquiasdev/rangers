@@ -49,7 +49,7 @@ Send a push with the PushNotification tool whenever the human has to act or some
 - The reviewer found a BLOQUEIA.
 - Something is ready for the human to test.
 
-Alpha 5 sends the push. If Alpha 5 is not available, or you run as a subagent without the push tool, start your report with a line `PUSH:` followed by the text, and the session that called you sends it.
+Alpha 5 sends the push and a reminder, and gives you the reminder id. When the human answers, mark that reminder as completed with `osascript` (`set completed of (first reminder whose id is "ID") to true`). Alpha 5 sends the push. If Alpha 5 is not available, or you run as a subagent without the push tool, start your report with a line `PUSH:` followed by the text, and the session that called you sends it.
 
 Agents with limited tools, such as the reviewer and the explorer, do not push. They answer you, and you push.
 
