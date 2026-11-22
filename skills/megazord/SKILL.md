@@ -1,6 +1,6 @@
 ---
-name: comando
-description: Starts an activity with the coordinator. Use when the human types /comando followed by a Linear issue, a GitHub issue or a short description.
+name: megazord
+description: Starts an activity with the coordinator. Use when the human types /megazord followed by a Linear issue, a GitHub issue or a short description.
 ---
 
 Activity: $ARGUMENTS

@@ -1,12 +1,12 @@
 # Por que uma camada fina em cima de open source
 
-O Centro de Comando começou como uma plataforma própria, a `jaiminho-suite`. Ela coordenava agentes do Claude Code com código escrito do zero. A suíte foi arquivada e este repositório tomou o lugar dela com outra aposta: usar projetos open source que já coordenam agentes e escrever só o que nenhum deles cobre.
+O Megazord começou como uma plataforma própria, a `jaiminho-suite`. Ela coordenava agentes do Claude Code com código escrito do zero. A suíte foi arquivada e este repositório tomou o lugar dela com outra aposta: usar projetos open source que já coordenam agentes e escrever só o que nenhum deles cobre.
 
 ## O que fica com os projetos open source
 
 Os plugins e ferramentas instalados fazem o trabalho pesado. Os nomes aparecem em toda a documentação:
 
-| Peça | O que faz para o Centro de Comando |
+| Peça | O que faz para o Megazord |
 | --- | --- |
 | pstack | Plugin do Claude Code com roteiros prontos por tipo de tarefa (bug, feature e outros), revisão por outro agente, verificação e reflexão. Os agentes daqui chamam os roteiros e as skills dele |
 | i-have-adhd | Plugin que muda o formato da resposta para quem tem TDAH: ação primeiro, passos numerados. Liga com `/i-have-adhd` |
@@ -43,7 +43,7 @@ Três peças não existem prontas em nenhum projeto:
 2. O portão que confere a CI antes do merge.
 3. As regras de resposta curta para TDAH.
 
-Elas só entram se o teste mostrar que fazem falta. Os agentes já citam algumas delas. O agente de portão chama um comando `comando gate`, e o agente de aprendizado grava regras numa pasta `rules/`. Nenhum dos dois existe ainda neste repositório.
+Elas só entram se o teste mostrar que fazem falta. Os agentes já citam algumas delas. O agente de portão chama um comando `megazord gate`, e o agente de aprendizado grava regras numa pasta `rules/`. Nenhum dos dois existe ainda neste repositório.
 
 O mesmo vale para o instalador em Go. Até ele existir, os scripts em `scripts/` fazem esse papel (veja a [referência dos scripts](../referencia/scripts.md)).
 
