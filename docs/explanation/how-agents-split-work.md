@@ -2,7 +2,7 @@
 
 Each agent has one role and a clear limit on what it does not do. The split follows a simple idea: whoever writes the code does not review it, whoever reviews does not edit, and no agent takes anything to production without the human's explicit yes.
 
-No agent file gives an agent the power to merge or deploy. The coordinator, the author and the swarm are forbidden to merge. The gate only runs a program and reports what it says; it never merges by hand.
+Only the gate agent can merge, and only through `rangers gate --merge`, when its task says to merge. The program refuses a production pull request, requires the human's yes bound to the head commit and requires a green CI: at least one check, each one passed or skipped. The gate never merges by hand. The coordinator, the author and the swarm are forbidden to merge, and no agent deploys.
 
 The roles are in the files of [`agents/`](../../agents/). The `description` of each one starts with the role in English: Coordinator, Author, Reviewer and so on. The file format is in the [agent file reference](../reference/agent-file.md).
 
