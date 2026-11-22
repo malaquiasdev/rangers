@@ -273,10 +273,13 @@ func (r *round) finishRules(ctx context.Context, resp *response, branch, worktre
 	}
 	body := fmt.Sprintf("Ramo %s em %s", branch, worktree)
 	err = r.dep.Reminder.Create(ctx, reminderTitle, body)
-	if err == nil {
-		return nil
+	if err != nil {
+		err = r.keepPending(err, body)
 	}
-	return r.keepPending(err, body)
+	if err != nil {
+		return err
+	}
+	return r.keepOrigin(ctx, resp.Result)
 }
 
 func (r *round) keepPending(cause error, body string) error {
@@ -340,11 +343,15 @@ func join(lines []transcript.Line) string {
 }
 
 func appendLine(path, line string) error {
+	return appendText(path, line+"\n")
+}
+
+func appendText(path, text string) error {
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
-	if _, err = file.WriteString(line + "\n"); err != nil {
+	if _, err = file.WriteString(text); err != nil {
 		return errors.Join(err, file.Close())
 	}
 	return file.Close()

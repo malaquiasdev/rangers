@@ -1178,3 +1178,90 @@ func TestRunBrainAccess(t *testing.T) {
 		}
 	})
 }
+
+func TestRunOriginNote(t *testing.T) {
+	const withOrigin = `{"type":"result","is_error":false,"duration_ms":5400,"num_turns":3,` +
+		`"total_cost_usd":0.1,"usage":{"input_tokens":1,"cache_creation_input_tokens":1,` +
+		`"cache_read_input_tokens":1,"output_tokens":1},` +
+		`"result":"1 rule: ask before merging\nOrigin:\n- ask before merging, session abc12345, \"nao mergeia sem eu mandar\"\n"}`
+	const withoutOrigin = `{"type":"result","is_error":false,"duration_ms":5400,"num_turns":3,` +
+		`"total_cost_usd":0.1,"usage":{"input_tokens":1,"cache_creation_input_tokens":1,` +
+		`"cache_read_input_tokens":1,"output_tokens":1},"result":"1 rule: ask before merging"}`
+	note := func(s *scenario) string {
+		return filepath.Join(s.cfg.Brain, "claude", "estudos", "origem-das-regras-rangers.md")
+	}
+
+	t.Run("given a final message with an Origin: section and a writable brain, when the rules round ends, then the section is appended once under the round stamp", func(t *testing.T) {
+		s := newScenario(t)
+		s.fakeClaude(withOrigin, 0)
+		s.fresh(12)
+		if err := os.MkdirAll(filepath.Dir(note(s)), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(note(s), []byte("# Origem\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := os.ReadFile(note(s))
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected := "# Origem\n\n## 2026-11-22-1030\n\n" +
+			"- ask before merging, session abc12345, \"nao mergeia sem eu mandar\"\n"
+		if string(raw) != expected {
+			t.Fatalf("expected %q, got %q", expected, raw)
+		}
+		if strings.Count(string(raw), "## 2026-11-22-1030") != 1 {
+			t.Fatalf("stamp heading repeated: %q", raw)
+		}
+	})
+
+	t.Run("given a brain without the notes folder, when the rules round ends, then it creates the note", func(t *testing.T) {
+		s := newScenario(t)
+		s.fakeClaude(withOrigin, 0)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := os.ReadFile(note(s))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasPrefix(string(raw), "## 2026-11-22-1030\n\n- ask before merging") {
+			t.Fatalf("note: %q", raw)
+		}
+	})
+
+	t.Run("given a final message without an Origin: section, when the rules round ends, then nothing is written to the brain", func(t *testing.T) {
+		s := newScenario(t)
+		s.fakeClaude(withoutOrigin, 0)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(note(s)); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("the note must not exist: %v", err)
+		}
+	})
+
+	t.Run("given a brain the job cannot write, when the rules round ends, then nothing is written and the round does not fail", func(t *testing.T) {
+		s := newScenario(t)
+		s.fakeClaude(withOrigin, 0)
+		s.fresh(12)
+		s.brain = &fakeBrain{fail: errors.New("operation not permitted")}
+		if err := s.run(); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if _, err := os.Stat(note(s)); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("the note must not exist: %v", err)
+		}
+		if dirs := s.brain.(*fakeBrain).dirs; len(dirs) != 1 || dirs[0] != s.cfg.Brain {
+			t.Fatalf("probed %q", dirs)
+		}
+		if s.errOut.Len() != 0 || len(s.reminder.calls) != 1 {
+			t.Fatalf("err output %q, reminders %d", s.errOut.String(), len(s.reminder.calls))
+		}
+	})
+}
