@@ -11,6 +11,11 @@ const (
 	cloneURL    = "https://github.com/mattpocock/skills.git"
 	skillSource = "/tmp/skill-1/skills/productivity/grilling"
 	doneText    = "\nDone. Restart Claude Code and run /pstack:setup-pstack once.\n"
+
+	auditSource    = repoDir + "/bin/audit"
+	auditInstalled = claudeDir + "/bin/audit"
+	auditScript    = "#!/usr/bin/env bash\n"
+	auditDiffers   = "bin/audit differs from the installed file, left alone\n"
 )
 
 func TestInstallPieces(t *testing.T) {
@@ -262,6 +267,81 @@ func TestInstallLinks(t *testing.T) {
 		err := s.run()
 		if err == nil || !strings.Contains(err.Error(), "is a directory") {
 			t.Fatalf("got %v", err)
+		}
+	})
+}
+
+func withAudit(t *testing.T) *setup {
+	t.Helper()
+	s := newSetup(t)
+	s.allInstalled()
+	s.files.files[auditSource] = auditScript
+	return s
+}
+
+func TestInstallBinLinks(t *testing.T) {
+	t.Run("given a bin file in the repository and none installed, when installing, then it links it into the claude dir bin", func(t *testing.T) {
+		s := withAudit(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.links[auditInstalled] != auditSource {
+			t.Fatalf("got %v", s.files.links)
+		}
+		if !strings.Contains(s.typed(), row("links", "1 linked into "+claudeDir)) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given a regular file with the same bytes, when installing, then it becomes a link", func(t *testing.T) {
+		s := withAudit(t)
+		s.files.files[auditInstalled] = auditScript
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.links[auditInstalled] != auditSource {
+			t.Fatalf("got %v", s.files.links)
+		}
+		if _, still := s.files.files[auditInstalled]; still {
+			t.Fatal("the regular file is still there")
+		}
+	})
+
+	t.Run("given a regular file with other bytes, when installing, then it is left alone, says so and the other links are made", func(t *testing.T) {
+		s := withAudit(t)
+		s.files.files[auditInstalled] = "mine\n"
+		s.files.files[repoDir+"/agents/a.md"] = "a"
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.files[auditInstalled] != "mine\n" || s.files.links[auditInstalled] != "" {
+			t.Fatalf("files %v, links %v", s.files.files, s.files.links)
+		}
+		if s.files.links[claudeDir+"/agents/a.md"] != repoDir+"/agents/a.md" {
+			t.Fatalf("got %v", s.files.links)
+		}
+		if !strings.Contains(s.typed(), auditDiffers) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if !strings.Contains(s.typed(), row("links", "1 linked into "+claudeDir)) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given the bin link already made, when installing again, then nothing changes", func(t *testing.T) {
+		s := withAudit(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		made := len(s.files.symlinked)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.files.symlinked) != made || s.files.links[auditInstalled] != auditSource {
+			t.Fatalf("symlinked %v, links %v", s.files.symlinked, s.files.links)
+		}
+		if strings.Contains(s.typed(), "left alone") {
+			t.Fatalf("got\n%s", s.typed())
 		}
 	})
 }

@@ -44,13 +44,14 @@ type fakeRunner struct {
 }
 
 type memFiles struct {
-	files    map[string]string
-	links    map[string]string
-	removed  []string
-	written  []string
-	copyErr  error
-	linkErr  error
-	tempDirs int
+	files     map[string]string
+	links     map[string]string
+	removed   []string
+	written   []string
+	copyErr   error
+	linkErr   error
+	symlinked []string
+	tempDirs  int
 }
 
 type setup struct {
@@ -129,6 +130,7 @@ func (m *memFiles) Symlink(target, link string) error {
 	}
 	delete(m.files, link)
 	m.links[link] = target
+	m.symlinked = append(m.symlinked, link)
 	return nil
 }
 
