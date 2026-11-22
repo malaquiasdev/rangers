@@ -45,7 +45,7 @@ go build -o ~/.local/bin/rangers ./cmd/rangers
 rangers install
 ```
 
-`rangers install` installs the pieces in `deps.toml` and links the agents, the rules and the entry skill into `~/.claude`. Then restart Claude Code and run `/pstack:setup-pstack` once. `rangers install --check` shows what is in place and ends with `All in place.` when nothing is missing. If the `docker` line says `NOT RESPONDING`, start Podman with `podman machine start`. The [step-by-step tutorial](docs/tutorials/prepare-the-machine.md) walks through the same setup, and [how to uninstall](docs/how-to/uninstall.md) undoes it.
+`rangers install` installs the pieces in `deps.toml` and links the agents, the rules, the entry skill and the `bin/` helpers into `~/.claude`. Then restart Claude Code and run `/pstack:setup-pstack` once. `rangers install --check` shows what is in place and ends with `All in place.` when nothing is missing. If the `docker` line says `NOT RESPONDING`, start Podman with `podman machine start`. The [step-by-step tutorial](docs/tutorials/prepare-the-machine.md) walks through the same setup, and [how to uninstall](docs/how-to/uninstall.md) undoes it.
 
 ## Use
 
