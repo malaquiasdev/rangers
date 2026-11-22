@@ -16,12 +16,13 @@ Open a terminal at the root of the clone. Every command below runs from there.
 ## 1. See what is already there
 
 ```sh
-scripts/verify.sh
+go build -o ~/.local/bin/rangers ./cmd/rangers
+rangers install --check
 ```
 
-You will see one line per piece, with its version next to it. The ones not installed yet show `FALTANDO`. The last line says how many items are missing, or `Tudo no lugar.`.
+You will see one line per piece, with its version next to it. The ones not installed yet show `MISSING`. The last line says how many items are missing, or `All in place.`.
 
-Do not worry about the `FALTANDO` lines: the next step takes care of them.
+Do not worry about the `MISSING` lines: the next step takes care of them.
 
 ## 2. Install what is missing
 
@@ -29,9 +30,9 @@ Do not worry about the `FALTANDO` lines: the next step takes care of them.
 scripts/install.sh
 ```
 
-The script installs only what was missing and, at the end, runs the check again. Look at the last line: now it says `Tudo no lugar.`.
+The script installs only what was missing. Then run `rangers install --check` again. Look at the last line: now it says `All in place.`.
 
-If it still says `item(ns) faltando`, look in the lines above for the piece marked `FALTANDO` or `SEM RESPOSTA`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `scripts/verify.sh` again.
+If it still says `item(s) missing`, look in the lines above for the piece marked `MISSING` or `NOT RESPONDING`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `rangers install --check` again.
 
 ## 3. Set up pstack
 

@@ -41,6 +41,8 @@ git clone https://github.com/malaquiasdev/rangers
 cd rangers
 scripts/install.sh
 make hooks
+go build -o ~/.local/bin/rangers ./cmd/rangers
+rangers install --check
 ```
 
 Then link the agents and the entry skill, restart Claude Code and run `/pstack:setup-pstack` once:

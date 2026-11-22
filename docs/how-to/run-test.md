@@ -4,7 +4,7 @@ This guide runs the test that decides whether the thin layer works. The measures
 
 Before you start, pick a real, small activity that fits in one pull request.
 
-1. Run `scripts/verify.sh` and check that the last line says `Tudo no lugar.`. If something is missing, run `scripts/install.sh` (see the [scripts reference](../reference/scripts.md)).
+1. Run `rangers install --check` and check that the last line says `All in place.`. If something is missing, run `scripts/install.sh` (see the [scripts reference](../reference/scripts.md)).
 2. If you just installed pstack, restart Claude Code and run `/pstack:setup-pstack` once.
 3. Check that the agents and the skill are connected with `ls -l ~/.claude/agents ~/.claude/skills`. If they are not, follow [how to connect the agents and the skill](connect-agents.md).
 4. Open a new Claude Code session in the repository of the activity, not in this one.

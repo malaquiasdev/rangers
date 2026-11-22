@@ -2,16 +2,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/malaquiasdev/rangers/internal/install"
 	"github.com/malaquiasdev/rangers/internal/learn"
 	"github.com/malaquiasdev/rangers/internal/schedule"
 )
 
-const usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status"
+const usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
+	" | rangers install [--check]"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -28,6 +31,8 @@ func run(ctx context.Context, args []string) int {
 	switch args[0] {
 	case "learn":
 		return report(args[0], learn.Command(ctx, args[1:], os.Getenv, learnDependencies()))
+	case "install":
+		return report(args[0], install.Command(ctx, args[1:], os.Getenv, installDependencies()))
 	case "schedule":
 		return report(args[0], schedule.Command(ctx, args[1:], os.Getenv, scheduleDependencies()))
 	}
@@ -38,6 +43,9 @@ func run(ctx context.Context, args []string) int {
 func report(name string, err error) int {
 	if err == nil {
 		return 0
+	}
+	if errors.Is(err, install.ErrIncomplete) {
+		return 1
 	}
 	fmt.Fprintln(os.Stderr, "rangers "+name+":", err)
 	return 1
@@ -59,5 +67,18 @@ func scheduleDependencies() *schedule.Dependencies {
 		Launchctl: schedule.ExecLaunchctl{},
 		UID:       os.Getuid(),
 		Out:       os.Stdout,
+	}
+}
+
+func installDependencies() *install.Dependencies {
+	dir, err := os.Getwd()
+	if err != nil {
+		dir = "."
+	}
+	return &install.Dependencies{
+		Runner: install.ExecRunner{Out: os.Stdout},
+		Files:  install.OSFiles{},
+		Out:    os.Stdout,
+		Dir:    dir,
 	}
 }

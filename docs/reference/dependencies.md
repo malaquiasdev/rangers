@@ -19,7 +19,7 @@ Optional field:
 
 | Field | What it holds |
 | --- | --- |
-| `optional` | `true` when Rangers works without the piece. `verify.sh` does not count it as missing, and `install.sh` installs it only when asked |
+| `optional` | `true` when Rangers works without the piece. `rangers install --check` does not count it as missing, and `install.sh` installs it only when asked |
 
 Fields by kind:
 
@@ -37,12 +37,12 @@ Fields by kind:
 
 `deps.toml` and the scripts do not list the same pieces:
 
-| Piece | Pinned in `deps.toml` | Installed by `install.sh` | Checked by `verify.sh` |
+| Piece | Pinned in `deps.toml` | Installed by `install.sh` | Checked by `rangers install --check` |
 | --- | --- | --- | --- |
 | pstack, i-have-adhd, container-use | Yes | Yes | Yes |
-| openspec (`optional = true`) | Yes | Only with `INSTALL_OPTIONAL=1` | Shows `não instalado (opcional)` without counting it as missing |
-| lychee (container image) | Yes | No | No |
-| Skills (`kind = "skill"`) | Yes | No | No |
+| openspec (`optional = true`) | Yes | Only with `INSTALL_OPTIONAL=1` | Shows `not installed (optional)` without counting it as missing |
+| lychee (container image) | Yes | No | Yes |
+| Skills (`kind = "skill"`) | Yes | No | Yes |
 | Container runtime (`docker`) | No | No | Yes |
 
 The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. The steps to copy one are in [how to install the skills](../how-to/install-skills.md).

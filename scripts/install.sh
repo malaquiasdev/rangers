@@ -24,4 +24,4 @@ if [ "${INSTALL_OPTIONAL:-0}" = 1 ] && ! command -v openspec >/dev/null; then
 fi
 
 printf 'Feito. Reinicie o Claude Code e rode /pstack:setup-pstack uma vez.\n'
-"$(dirname "$0")/verify.sh"
+printf 'Para conferir: rangers install --check\n'

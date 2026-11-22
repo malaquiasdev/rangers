@@ -88,6 +88,10 @@ linters:
         linters:
           - gosec
         text: G204|G304
+      - path: internal/install/
+        linters:
+          - gosec
+        text: G204|G304|G703
 
 formatters:
   enable:

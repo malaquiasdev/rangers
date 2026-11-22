@@ -1,35 +1,14 @@
 # Scripts
 
-The scripts in [`scripts/`](../../scripts/) are Bash. They install and check the pieces, run the repository checks and turn on the Git hooks. Their messages are in Portuguese; this page quotes them as they are printed.
+The scripts in [`scripts/`](../../scripts/) are Bash. They install the pieces, run the repository checks and turn on the Git hooks. Their messages are in Portuguese; this page quotes them as they are printed.
 
 | Script | What it does |
 | --- | --- |
-| [`verify.sh`](#scriptsverifysh) | Shows the state of each piece and changes nothing |
 | [`install.sh`](#scriptsinstallsh) | Installs the pieces that are missing |
 | [`check.sh`](#scriptschecksh) | Runs the repository checks |
 | [`install-hooks.sh`](#scriptsinstall-hookssh) | Points Git to the hooks in `.githooks/` |
 
 `scripts/characters.txt` is not a script. It holds the names that the checks forbid outside `agents/` and `skills/`, as one extended regular expression.
-
-## `scripts/verify.sh`
-
-Shows the state of each piece, one per line, and changes nothing on the machine. It runs from any folder.
-
-Each line has the name of the piece and the version the program itself reports. A piece that is not installed shows `FALTANDO`. The last piece line checks whether the `docker` command answers `docker info`: it shows `respondendo` or `SEM RESPOSTA (o container-use precisa dele)`.
-
-| Piece | How the script finds the version |
-| --- | --- |
-| Claude Code plugins (pstack, i-have-adhd) | Finds the plugin in the output of `claude plugin list` and reads the next `Version:` line |
-| container-use | Checks that the command exists and reads the first line of `container-use version` |
-| openspec | Same as above with `openspec --version`. When it is missing, shows `não instalado (opcional)` and does not count it as missing |
-| Container runtime | `docker info` |
-
-| Situation | Last line | Exit code |
-| --- | --- | --- |
-| Nothing missing | `Tudo no lugar.` | `0` |
-| One or more pieces missing, or `docker` not answering | `N item(ns) faltando. Rode scripts/install.sh` | `1` |
-
-The script does not compare versions with `deps.toml`. It only says whether the piece exists and which version is installed.
 
 ## `scripts/install.sh`
 
@@ -42,7 +21,7 @@ Installs each piece that is missing and skips the ones already there. Running it
 | container-use | The `container-use` command exists | `brew install dagger/tap/container-use` |
 | openspec | The `openspec` command exists. Only checked when `INSTALL_OPTIONAL=1` | `npm install -g @fission-ai/openspec` |
 
-At the end it prints `Feito. Reinicie o Claude Code e rode /pstack:setup-pstack uma vez.` and runs `verify.sh`. Its exit code is the one from `verify.sh`. It stops at the first command that fails (`set -eu`).
+At the end it prints `Feito. Reinicie o Claude Code e rode /pstack:setup-pstack uma vez.` and the hint `Para conferir: rangers install --check`. It stops at the first command that fails (`set -eu`). To see the state of each piece, use [`rangers install --check`](install-command.md).
 
 It does not:
 
