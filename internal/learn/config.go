@@ -9,19 +9,20 @@ import (
 )
 
 type Config struct {
-	IntervalHours  float64
-	MinLines       int
-	BudgetUSD      float64
-	DailyBudgetUSD float64
-	Model          string
-	WindowHours    float64
-	State          string
-	Repo           string
-	Projects       string
-	Brain          string
-	NotesModel     string
-	NotesMaxBytes  int
-	SkipNotes      bool
+	IntervalHours      float64
+	MinLines           int
+	BudgetUSD          float64
+	DailyBudgetUSD     float64
+	Model              string
+	WindowHours        float64
+	State              string
+	Repo               string
+	Projects           string
+	Brain              string
+	NotesModel         string
+	NotesMaxBytes      int
+	SkipNotes          bool
+	CallTimeoutMinutes float64
 }
 
 type settings struct {
@@ -76,6 +77,8 @@ func (s *settings) defineNotes(flags *flag.FlagSet, cfg *Config, home string) {
 		"limite de bytes da entrada das notas")
 	flags.BoolVar(&cfg.SkipNotes, "skip-notes", s.get("LEARN_NOTES") == "off",
 		"pula a passada de notas")
+	flags.Float64Var(&cfg.CallTimeoutMinutes, "call-timeout-minutes",
+		s.decimal("LEARN_CALL_TIMEOUT_MINUTES", 20), "limite em minutos de cada chamada ao claude")
 }
 
 func (s *settings) text(name, fallback string) string {
@@ -119,6 +122,8 @@ func validate(cfg *Config) error {
 		return errors.New("o limite de bytes das notas precisa ser maior que zero")
 	case cfg.DailyBudgetUSD <= 0:
 		return errors.New("o teto diário em dólar precisa ser maior que zero")
+	case cfg.CallTimeoutMinutes <= 0:
+		return errors.New("o limite de minutos de cada chamada precisa ser maior que zero")
 	}
 	return nil
 }
