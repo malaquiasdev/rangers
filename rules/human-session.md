@@ -8,3 +8,4 @@
 - In the human's personal repositories, run CI checks locally (hooks, scripts) and keep only release-please in GitHub Actions, to save the Actions quota.
 - Public docs and READMEs cite nothing the reader cannot find: no private or work project as an example or reference.
 - Keep the settings of a project in one place, not spread across files: spread settings are hard to change later.
+- Change repository settings that carry no risk (description, topics, merge options) yourself with `gh` or `gh api` instead of asking the human to open the settings page. Visibility, deletion and permissions still need the human's yes. When a setting has no API, say so and send the direct link to the exact page and field.
