@@ -55,6 +55,7 @@ type step func(ctx context.Context) (outcome, error)
 type gate struct {
 	dep  *Dependencies
 	opts options
+	home string
 	pr   pullRequest
 }
 
@@ -63,7 +64,7 @@ func Command(ctx context.Context, args []string, env func(string) string, dep *D
 	if err != nil {
 		return err
 	}
-	g := &gate{dep: dep, opts: opts}
+	g := &gate{dep: dep, opts: opts, home: env("HOME")}
 	if opts.ask {
 		return g.ask(ctx)
 	}
@@ -118,7 +119,11 @@ func (g *gate) execute(ctx context.Context) error {
 }
 
 func (g *gate) steps() []step {
-	return []step{g.open, g.production, g.approval, g.ci}
+	steps := []step{g.open, g.production, g.approval, g.ci}
+	if g.opts.merge {
+		steps = append(steps, g.merge)
+	}
+	return steps
 }
 
 func (g *gate) allowed() string {

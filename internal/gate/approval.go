@@ -69,8 +69,7 @@ func (g *gate) ask(ctx context.Context) error {
 		return err
 	}
 	token := g.token()
-	head := g.pr.HeadRefOid[:min(shortLength, len(g.pr.HeadRefOid))]
 	_, err := fmt.Fprintf(g.dep.Out, "%s\nMerge %s#%d at %s? Answer sim. %s\n",
-		strings.TrimPrefix(token, "gate:"), g.opts.repo, g.opts.pr, head, token)
+		strings.TrimPrefix(token, "gate:"), g.opts.repo, g.opts.pr, g.pr.short(), token)
 	return err
 }

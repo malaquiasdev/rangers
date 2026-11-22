@@ -25,8 +25,12 @@ const (
 	green    = `[{"name":"build","state":"SUCCESS","bucket":"pass"},` +
 		`{"name":"lint","state":"SUCCESS","bucket":"pass"},` +
 		`{"name":"docs","state":"SKIPPED","bucket":"skipping"}]`
-	token = "gate:4a7010e4"
-	other = "gate:2cd50664"
+	token    = "gate:4a7010e4"
+	other    = "gate:2cd50664"
+	mergeCmd = "gh pr merge 7 --repo acme/api --squash --match-head-commit " + headSHA
+	auditBin = homeDir + "/.claude/bin/audit"
+	auditCmd = auditBin + " acme/api merge https://github.com/acme/api/pull/7 " +
+		"rangers gate: " + token + ", checks green, squash at 0123456"
 )
 
 type reply struct {
@@ -74,6 +78,16 @@ func (f *fakeRunner) Output(_ context.Context, name string, args ...string) (str
 	return "", errors.New("no reply for " + cmd)
 }
 
+func (f *fakeRunner) called(cmd string) int {
+	count := 0
+	for _, call := range f.calls {
+		if call == cmd {
+			count++
+		}
+	}
+	return count
+}
+
 func openPR() prFixture {
 	return prFixture{
 		state:  "OPEN",
@@ -113,6 +127,7 @@ func newScenario(t *testing.T, pr prFixture) *scenario {
 			viewCmd:  {out: pr.json(t)},
 			repoCmd:  {out: `{"defaultBranchRef":{"name":"main"}}`},
 			checkCmd: {out: green},
+			mergeCmd: {},
 		},
 	}
 	return &scenario{

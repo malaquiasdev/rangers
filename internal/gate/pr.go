@@ -31,6 +31,10 @@ type pullRequest struct {
 	Labels      []label `json:"labels"`
 }
 
+func (p *pullRequest) short() string {
+	return p.HeadRefOid[:min(shortLength, len(p.HeadRefOid))]
+}
+
 func (p *pullRequest) isProduction() bool {
 	if strings.HasPrefix(p.Title, releaseTitle) || strings.HasPrefix(p.HeadRefName, releaseBranch) {
 		return true
