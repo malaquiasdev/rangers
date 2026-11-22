@@ -1,6 +1,6 @@
 # Assets
 
-Pixel art for the Rangers repository: the cover poster, the wide banner and one sprite per agent. Everything is drawn by code from shapes, lighting rules and palette ramps, with Python 3 standard library only. There is no image editor step and no external tool.
+Pixel art for the Rangers repository: the cover poster, the wide banner and one sprite per agent. The poster and the banner show the backdrop, the panels and the title; the heroes live only in the panels and in the sprites. Everything is drawn by code from shapes, lighting rules and palette ramps, with Python 3 standard library only. There is no image editor step and no external tool.
 
 The art is fan-style and must be replaced by original art before the repository goes public. The checklist is in [before making the repository public](../docs/how-to/before-making-the-repo-public.md).
 
@@ -38,7 +38,8 @@ python3 -I -m unittest discover -s assets/tests -t assets
 | `pixelart/backdrop.py`, `pixelart/noise.py` | The dark command center: mist, rings, tubes, walls, floor. |
 | `pixelart/panels.py` | The six vertical close-up panels. |
 | `pixelart/lettering.py`, `pixelart/emblem.py` | The bevelled title with its ribbon, and the gem crest. |
-| `pixelart/poster.py` | The poster and the banner, each as its own composition. |
+| `pixelart/stage.py` | The stage floor: glowing rings, panel reflections, colored glow pools, light beams and sparkles. |
+| `pixelart/poster.py` | The poster and the banner, each as its own composition of the backdrop, the panels, the stage and the title. |
 
 ## Edit a hero
 

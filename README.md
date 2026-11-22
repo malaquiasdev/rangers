@@ -1,4 +1,4 @@
-<img src="assets/banner/poster.png" width="640" alt="Rangers: a 16-bit pixel art cover poster. Six armored heroes in action poses stand in front of six tall close-up panels of their helmets and chest diamonds, under a bevelled gold title on a red ribbon with a gem crest, in a dark command center with a green mist and energy rings">
+<img src="assets/banner/poster.png" width="640" alt="Rangers: a 16-bit pixel art cover poster. Six tall colored panels with a close-up of a helmet and a chest diamond stand on a glowing stage floor, under a bevelled gold title on a red ribbon with a gem crest, in a dark command center with a green mist, energy rings and glowing tubes">
 
 # Rangers
 
