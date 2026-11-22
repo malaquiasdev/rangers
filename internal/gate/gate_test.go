@@ -87,6 +87,7 @@ func TestOptions(t *testing.T) {
 		"no pull request":      {"--repo", repo},
 		"a stray word":         {"--repo", repo, "--pr", "7", "now"},
 		"an unknown flag":      {"--repo", repo, "--pr", "7", "--force"},
+		"ask with merge":       {"ask", "--repo", repo, "--pr", "7", "--merge"},
 	}
 	for name, args := range cases {
 		t.Run("given "+name+", when running the gate, then it fails with an error and calls nothing", func(t *testing.T) {

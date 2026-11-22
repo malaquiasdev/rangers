@@ -8,6 +8,9 @@ import (
 	"io"
 	"path/filepath"
 	"regexp"
+	"time"
+
+	"github.com/malaquiasdev/rangers/internal/transcript"
 )
 
 const (
@@ -29,7 +32,9 @@ type Runner interface {
 
 type Dependencies struct {
 	Runner Runner
+	Lines  func(dir string, since time.Time) ([]transcript.Line, error)
 	Out    io.Writer
+	Now    func() time.Time
 }
 
 type options struct {
@@ -59,6 +64,9 @@ func Command(ctx context.Context, args []string, env func(string) string, dep *D
 		return err
 	}
 	g := &gate{dep: dep, opts: opts}
+	if opts.ask {
+		return g.ask(ctx)
+	}
 	return g.execute(ctx)
 }
 
@@ -110,7 +118,7 @@ func (g *gate) execute(ctx context.Context) error {
 }
 
 func (g *gate) steps() []step {
-	return []step{g.open, g.production}
+	return []step{g.open, g.production, g.approval}
 }
 
 func (g *gate) allowed() string {
