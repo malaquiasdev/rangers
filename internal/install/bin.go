@@ -11,6 +11,12 @@ const (
 	binDiffers
 )
 
+var binStatus = map[binState]string{
+	binLinked:   "linked",
+	binLinkable: "NOT LINKED",
+	binDiffers:  "differs from the installed file, left alone",
+}
+
 type binState int
 
 func (in *installer) binLinks() ([]link, error) {
@@ -53,4 +59,23 @@ func (in *installer) sameBytes(a, b string) (bool, error) {
 		return false, err
 	}
 	return bytes.Equal(left, right), nil
+}
+
+func (in *installer) checkBins() (int, error) {
+	links, err := in.binLinks()
+	if err != nil {
+		return 0, err
+	}
+	missing := 0
+	for _, l := range links {
+		state, stateErr := in.binState(l)
+		if stateErr != nil {
+			return 0, stateErr
+		}
+		in.out.row("bin/"+filepath.Base(l.path), binStatus[state])
+		if state == binLinkable {
+			missing++
+		}
+	}
+	return missing, nil
 }

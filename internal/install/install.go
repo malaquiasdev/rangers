@@ -109,6 +109,11 @@ func (in *installer) check(ctx context.Context, deps []Dependency) error {
 			missing++
 		}
 	}
+	bins, err := in.checkBins()
+	if err != nil {
+		return err
+	}
+	missing += bins
 	if !in.checkRuntime(ctx) {
 		missing++
 	}
