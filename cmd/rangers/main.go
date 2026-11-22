@@ -8,13 +8,15 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/malaquiasdev/rangers/internal/gate"
 	"github.com/malaquiasdev/rangers/internal/install"
 	"github.com/malaquiasdev/rangers/internal/learn"
 	"github.com/malaquiasdev/rangers/internal/schedule"
+	"github.com/malaquiasdev/rangers/internal/transcript"
 )
 
 const usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
-	" | rangers install [--check]"
+	" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -33,6 +35,8 @@ func run(ctx context.Context, args []string) int {
 		return report(args[0], learn.Command(ctx, args[1:], os.Getenv, learnDependencies()))
 	case "install":
 		return report(args[0], install.Command(ctx, args[1:], os.Getenv, installDependencies()))
+	case "gate":
+		return reportGate(gate.Command(ctx, args[1:], os.Getenv, gateDependencies()))
 	case "schedule":
 		return report(args[0], schedule.Command(ctx, args[1:], os.Getenv, scheduleDependencies()))
 	}
@@ -49,6 +53,26 @@ func report(name string, err error) int {
 	}
 	fmt.Fprintln(os.Stderr, "rangers "+name+":", err)
 	return 1
+}
+
+func reportGate(err error) int {
+	switch {
+	case err == nil:
+		return 0
+	case errors.Is(err, gate.ErrRefused):
+		return 1
+	}
+	fmt.Fprintln(os.Stderr, "rangers gate:", err)
+	return 2
+}
+
+func gateDependencies() *gate.Dependencies {
+	return &gate.Dependencies{
+		Runner: gate.ExecRunner{},
+		Lines:  transcript.Conversation,
+		Out:    os.Stdout,
+		Now:    time.Now,
+	}
 }
 
 func learnDependencies() *learn.Dependencies {
