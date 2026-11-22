@@ -100,7 +100,7 @@ The command never pushes, never opens a pull request and never merges.
 | `input-<stamp>.txt`, `notes-input-<stamp>.txt` | The input given to the model |
 | `output-<stamp>.json`, `notes-output-<stamp>.json` | The raw answer of `claude` |
 | `pending-reminders.txt` | Reminders that could not be created: title and body, one per line |
-| `launchd.log` | Output of the scheduled job, when it was installed by `scripts/learn-schedule.sh` |
+| `launchd.log` | Output of the scheduled job, when it was installed by `rangers schedule install` |
 
 ## `metrics.tsv` columns
 
@@ -121,4 +121,13 @@ The file has no header. The columns, separated by tabs:
 
 ## Schedule
 
-[`scripts/learn-schedule.sh`](../../scripts/learn-schedule.sh) installs a launchd job, `com.rangers.learn`, that runs `~/.local/bin/rangers learn` every 2 hours and once when it loads. The job passes no flags and sets only `HOME` and `PATH`, so it runs with the defaults above. The script is described in the [scripts reference](scripts.md#scriptslearn-schedulesh).
+`rangers schedule` manages a launchd job, `com.rangers.learn`, that runs `~/.local/bin/rangers learn` every 2 hours and once when it loads. The job passes no flags and sets only `HOME` and `PATH`, so it runs with the defaults above.
+
+| Subcommand | What it does |
+| --- | --- |
+| `install` | Writes `~/Library/LaunchAgents/com.rangers.learn.plist`, creates the state folder and loads the job. `--binary` sets the program the job runs; the default is `~/.local/bin/rangers`. Prints `agendado: a cada 2 horas, log em <state>/launchd.log` |
+| `uninstall` | Unloads the job and deletes the file. Prints `agendamento removido` |
+| `status` (default) | Prints `estado`, `rodadas`, `último código de saída` and `intervalo` of the job, or `não agendado` |
+| anything else | Returns `uso: rangers schedule install|uninstall|status` and exits with code `1` |
+
+The job sets a `PATH` with `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/go/bin`, `/usr/local/bin`, `/usr/bin` and `/bin`, and writes standard output and standard error to `~/.local/state/rangers/learn/launchd.log`. `install` does not build the program.

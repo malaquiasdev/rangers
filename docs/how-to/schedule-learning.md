@@ -22,7 +22,7 @@ The scheduled job runs with no flags, so it uses the default folders. Before you
 3. Install the job:
 
    ```sh
-   scripts/learn-schedule.sh install
+   ~/.local/bin/rangers schedule install
    ```
 
    The job runs once right away and then every 2 hours.
@@ -30,7 +30,7 @@ The scheduled job runs with no flags, so it uses the default folders. Before you
 4. Check it:
 
    ```sh
-   scripts/learn-schedule.sh status
+   ~/.local/bin/rangers schedule status
    tail ~/.local/state/rangers/learn/launchd.log
    ```
 
@@ -40,12 +40,12 @@ To see what the rounds cost, run `~/.local/bin/rangers learn metrics`.
 
 After pulling changes to the Go code, rebuild with the command from step 1. The job runs the new binary on its next run.
 
-`scripts/learn-schedule.sh` has no option for flags. To run a round with other values, such as a lower dollar cap, run `~/.local/bin/rangers learn` by hand with the flags.
+`rangers schedule install` has no option for the flags of `rangers learn`; it only takes `--binary`, the path of the program the job runs. To run a round with other values, such as a lower dollar cap, run `~/.local/bin/rangers learn` by hand with the flags.
 
 ## Stop the job
 
 ```sh
-scripts/learn-schedule.sh uninstall
+~/.local/bin/rangers schedule uninstall
 ```
 
 The state folder stays. Delete `~/.local/state/rangers/learn` by hand if you want the history gone.

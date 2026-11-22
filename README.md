@@ -62,7 +62,7 @@ To let it learn from your sessions, build the program and schedule it every two 
 
 ```sh
 go build -o ~/.local/bin/rangers ./cmd/rangers
-scripts/learn-schedule.sh install
+~/.local/bin/rangers schedule install
 ```
 
 ## Develop

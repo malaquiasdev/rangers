@@ -11,7 +11,7 @@ Then run `scripts/verify.sh`. The removed piece shows as `FALTANDO` and the scri
 ## Remove everything
 
 1. Disconnect the agents and the skill, as in [disconnect the agents](connect-agents.md#disconnect-the-agents).
-2. Stop the learning job with `scripts/learn-schedule.sh uninstall`, then delete `~/.local/bin/rangers` and `~/.local/state/rangers/learn`.
+2. Stop the learning job with `~/.local/bin/rangers schedule uninstall`, then delete `~/.local/bin/rangers` and `~/.local/state/rangers/learn`.
 3. Run the remove command of each piece in the dependencies table.
 4. Restart Claude Code.
 5. Run `scripts/verify.sh`. Every piece shows as `FALTANDO`.
