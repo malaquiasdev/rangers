@@ -40,8 +40,8 @@ The test answers one question: does a thin layer on top of open source projects 
 
 The test uses a real work activity, small, the size of one pull request. A made-up activity does not count, because it does not show the real friction. The measures and what each result decides are in the [test plan reference](../reference/test-plan.md). The steps are in [how to run the test](../how-to/run-test.md).
 
-## What does not exist yet
+## What the flow does not use yet
 
-The gate agent runs a `rangers gate` command that checks the human's yes, the CI and production before a merge. That command does not exist yet: the `rangers` program has only `learn`. The coordinator does not call the gate today, and it stops when the pull request is open.
+The gate agent runs the `rangers gate` command, which checks the human's yes, the CI and production before a merge. The command exists and is described in the [reference](../reference/gate-command.md). The coordinator does not call the gate today, and it stops when the pull request is open.
 
-The gate comes in only if the test shows it is missing.
+The gate comes into the flow only if the test shows it is missing.

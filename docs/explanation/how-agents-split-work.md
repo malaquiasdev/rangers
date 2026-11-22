@@ -25,7 +25,7 @@ The roles are in the files of [`agents/`](../../agents/). The `description` of e
 
 ## The roles outside the path
 
-The **gate** runs the `rangers gate` program, which checks the human's yes, the CI and production before a merge. The program decides, not the model. That program does not exist yet (see [what does not exist yet](why-a-thin-layer.md#what-does-not-exist-yet)).
+The **gate** runs the `rangers gate` program, which checks the human's yes, the CI and production before a merge. The program decides, not the model. The gate asks the human with `rangers gate ask`, which prints a question tied to the head commit, and it always stops at production. Its checks and exit codes are in the [reference](../reference/gate-command.md).
 
 The **documentation** agent organizes the `docs/` folder of a repository by the Diataxis method. Only the human calls it, and it never opens a pull request or changes code.
 
