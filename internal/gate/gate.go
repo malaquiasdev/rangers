@@ -118,7 +118,7 @@ func (g *gate) execute(ctx context.Context) error {
 }
 
 func (g *gate) steps() []step {
-	return []step{g.open, g.production, g.approval}
+	return []step{g.open, g.production, g.approval, g.ci}
 }
 
 func (g *gate) allowed() string {

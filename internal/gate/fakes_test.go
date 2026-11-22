@@ -15,14 +15,18 @@ import (
 )
 
 const (
-	repo    = "acme/api"
-	number  = "7"
-	headSHA = "0123456789abcdef0123456789abcdef01234567"
-	homeDir = "/home/x"
-	viewCmd = "gh pr view 7 --repo acme/api --json " + prFields
-	repoCmd = "gh repo view acme/api --json defaultBranchRef"
-	token   = "gate:4a7010e4"
-	other   = "gate:2cd50664"
+	repo     = "acme/api"
+	number   = "7"
+	headSHA  = "0123456789abcdef0123456789abcdef01234567"
+	homeDir  = "/home/x"
+	viewCmd  = "gh pr view 7 --repo acme/api --json " + prFields
+	repoCmd  = "gh repo view acme/api --json defaultBranchRef"
+	checkCmd = "gh pr checks 7 --repo acme/api --json name,state,bucket"
+	green    = `[{"name":"build","state":"SUCCESS","bucket":"pass"},` +
+		`{"name":"lint","state":"SUCCESS","bucket":"pass"},` +
+		`{"name":"docs","state":"SKIPPED","bucket":"skipping"}]`
+	token = "gate:4a7010e4"
+	other = "gate:2cd50664"
 )
 
 type reply struct {
@@ -106,8 +110,9 @@ func newScenario(t *testing.T, pr prFixture) *scenario {
 	runner := &fakeRunner{
 		present: map[string]bool{},
 		replies: map[string]reply{
-			viewCmd: {out: pr.json(t)},
-			repoCmd: {out: `{"defaultBranchRef":{"name":"main"}}`},
+			viewCmd:  {out: pr.json(t)},
+			repoCmd:  {out: `{"defaultBranchRef":{"name":"main"}}`},
+			checkCmd: {out: green},
 		},
 	}
 	return &scenario{
