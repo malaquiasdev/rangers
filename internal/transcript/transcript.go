@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,9 +16,15 @@ import (
 const (
 	textLimit      = 600
 	assistantLimit = 400
+	humanSpeaker   = "user"
+	modelSpeaker   = "assistant"
+	textPart       = "text"
 )
 
-var ignoredPrefixes = []string{"<", "Base directory", "Another Claude", "[Request interrupted", "Caveat:", "[Cross-session", "[Subagent"}
+var ignoredPrefixes = []string{
+	"<", "Base directory", "Another Claude", "[Request interrupted",
+	"Caveat:", "[Cross-session", "[Subagent",
+}
 
 type Line struct {
 	Project   string
@@ -25,6 +32,22 @@ type Line struct {
 	Time      string
 	Text      string
 	Assistant bool
+}
+
+type entry struct {
+	Kind      string `json:"type"`
+	Timestamp string `json:"timestamp"`
+	Message   struct {
+		Role    string          `json:"role"`
+		Content json.RawMessage `json:"content"`
+	} `json:"message"`
+}
+
+type source struct {
+	project       string
+	session       string
+	cutoff        time.Time
+	withAssistant bool
 }
 
 func (l Line) String() string {
@@ -37,6 +60,47 @@ func (l Line) Notes() string {
 		text = "[assistant] " + text
 	}
 	return l.Project + "\t" + l.Session + "\t" + l.Time + "\t" + text
+}
+
+func (s source) read(raw []byte) []Line {
+	var lines []Line
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	for {
+		var e entry
+		if decoder.Decode(&e) != nil {
+			return lines
+		}
+		if line, ok := s.line(&e); ok {
+			lines = append(lines, line)
+		}
+	}
+}
+
+func (s source) line(e *entry) (Line, bool) {
+	who := speaker(e, s.withAssistant)
+	if who == "" || !s.after(e.Timestamp) {
+		return Line{}, false
+	}
+	text := content(e.Message.Content)
+	if text == "" || (who == humanSpeaker && ignored(text)) {
+		return Line{}, false
+	}
+	limit := textLimit
+	if who == modelSpeaker {
+		limit = assistantLimit
+	}
+	return Line{
+		Project:   s.project,
+		Session:   s.session,
+		Time:      e.Timestamp,
+		Text:      clip(text, limit),
+		Assistant: who == modelSpeaker,
+	}, true
+}
+
+func (s source) after(timestamp string) bool {
+	at, err := time.Parse(time.RFC3339Nano, timestamp)
+	return err == nil && at.After(s.cutoff)
 }
 
 func Format(lines []Line, maxBytes int) string {
@@ -54,15 +118,6 @@ func Format(lines []Line, maxBytes int) string {
 	return strings.Join(rows[start:], "")
 }
 
-type entry struct {
-	Kind      string `json:"type"`
-	Timestamp string `json:"timestamp"`
-	Message   struct {
-		Role    string          `json:"role"`
-		Content json.RawMessage `json:"content"`
-	} `json:"message"`
-}
-
 func Extract(projects string, cutoff time.Time) ([]Line, error) {
 	return collect(projects, cutoff, false)
 }
@@ -74,84 +129,96 @@ func ExtractWithAssistant(projects string, cutoff time.Time) ([]Line, error) {
 }
 
 func collect(projects string, cutoff time.Time, withAssistant bool) ([]Line, error) {
-	files, err := changedFiles(projects, cutoff)
+	root, err := os.OpenRoot(projects)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	lines, err := readAll(root, cutoff, withAssistant)
+	return lines, errors.Join(err, root.Close())
+}
+
+func readAll(root *os.Root, cutoff time.Time, withAssistant bool) ([]Line, error) {
+	fsys := root.FS()
+	files, err := changedFiles(fsys, cutoff)
 	if err != nil {
 		return nil, err
 	}
 	var lines []Line
 	for _, file := range files {
-		session := strings.TrimSuffix(filepath.Base(file), ".jsonl")
-		project := filepath.Base(filepath.Dir(file))
-		found, err := readLines(file, project, session, cutoff, withAssistant)
+		raw, err := fs.ReadFile(fsys, file)
 		if err != nil {
 			return nil, err
 		}
-		lines = append(lines, found...)
+		src := source{
+			project:       projectOf(root, file),
+			session:       strings.TrimSuffix(path.Base(file), ".jsonl"),
+			cutoff:        cutoff,
+			withAssistant: withAssistant,
+		}
+		lines = append(lines, src.read(raw)...)
 	}
 	return lines, nil
 }
 
-func changedFiles(projects string, cutoff time.Time) ([]string, error) {
-	shallow, err := filepath.Glob(filepath.Join(projects, "*.jsonl"))
-	if err != nil {
-		return nil, err
+func projectOf(root *os.Root, file string) string {
+	dir := path.Dir(file)
+	if dir == "." {
+		return filepath.Base(root.Name())
 	}
-	deep, err := filepath.Glob(filepath.Join(projects, "*", "*.jsonl"))
-	if err != nil {
-		return nil, err
-	}
+	return path.Base(dir)
+}
+
+func changedFiles(fsys fs.FS, cutoff time.Time) ([]string, error) {
 	var changed []string
-	for _, path := range append(shallow, deep...) {
-		info, err := os.Stat(path)
-		if errors.Is(err, fs.ErrNotExist) {
-			continue
-		}
+	for _, pattern := range []string{"*.jsonl", "*/*.jsonl"} {
+		matches, err := fs.Glob(fsys, pattern)
 		if err != nil {
 			return nil, err
 		}
-		if info.ModTime().After(cutoff) {
-			changed = append(changed, path)
+		for _, match := range matches {
+			newer, err := modifiedAfter(fsys, match, cutoff)
+			if err != nil {
+				return nil, err
+			}
+			if newer {
+				changed = append(changed, match)
+			}
 		}
 	}
 	sort.Strings(changed)
 	return changed, nil
 }
 
-func readLines(file, project, session string, cutoff time.Time, withAssistant bool) ([]Line, error) {
-	raw, err := os.ReadFile(file)
+func modifiedAfter(fsys fs.FS, file string, cutoff time.Time) (bool, error) {
+	info, err := fs.Stat(fsys, file)
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	var lines []Line
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	for {
-		var r entry
-		if decoder.Decode(&r) != nil {
-			return lines, nil
-		}
-		human := r.Kind == "user" && r.Message.Role == "user"
-		assistant := withAssistant && r.Kind == "assistant" && r.Message.Role == "assistant"
-		if !human && !assistant {
-			continue
-		}
-		at, err := time.Parse(time.RFC3339Nano, r.Timestamp)
-		if err != nil || !at.After(cutoff) {
-			continue
-		}
-		text := content(r.Message.Content)
-		if text == "" || (human && ignored(text)) {
-			continue
-		}
-		limit := textLimit
-		if assistant {
-			limit = assistantLimit
-		}
-		text = strings.ReplaceAll(text, "\n", " ")
-		if body := []rune(text); len(body) > limit {
-			text = string(body[:limit])
-		}
-		lines = append(lines, Line{Project: project, Session: session, Time: r.Timestamp, Text: text, Assistant: assistant})
+	return info.ModTime().After(cutoff), nil
+}
+
+func speaker(e *entry, withAssistant bool) string {
+	switch {
+	case e.Kind == humanSpeaker && e.Message.Role == humanSpeaker:
+		return humanSpeaker
+	case withAssistant && e.Kind == modelSpeaker && e.Message.Role == modelSpeaker:
+		return modelSpeaker
 	}
+	return ""
+}
+
+func clip(text string, limit int) string {
+	flat := strings.ReplaceAll(text, "\n", " ")
+	if body := []rune(flat); len(body) > limit {
+		return string(body[:limit])
+	}
+	return flat
 }
 
 func content(raw json.RawMessage) string {
@@ -168,7 +235,7 @@ func content(raw json.RawMessage) string {
 	}
 	var texts []string
 	for _, part := range parts {
-		if part.Kind == "text" {
+		if part.Kind == textPart {
 			texts = append(texts, part.Text)
 		}
 	}

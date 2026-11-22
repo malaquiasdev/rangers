@@ -14,7 +14,8 @@ func blocksInterval(intervalHours float64, checkpoint, now time.Time) string {
 		return ""
 	}
 	hours := strconv.FormatFloat(intervalHours, 'f', -1, 64)
-	return fmt.Sprintf("a última rodada foi há %d min, menos que o intervalo de %sh: não rodo", int(age.Minutes()), hours)
+	return fmt.Sprintf("a última rodada foi há %d min, menos que o intervalo de %sh: não rodo",
+		int(age.Minutes()), hours)
 }
 
 func blocksLines(minimum, lines int) string {
@@ -28,7 +29,8 @@ func blocksDaily(dailyBudget, spent float64) string {
 	if spent < dailyBudget {
 		return ""
 	}
-	return fmt.Sprintf("teto diário de US$ %.2f atingido (US$ %.2f gastos hoje): não rodo o modelo", dailyBudget, spent)
+	return fmt.Sprintf("teto diário de US$ %.2f atingido (US$ %.2f gastos hoje): não rodo o modelo",
+		dailyBudget, spent)
 }
 
 func roundBudget(budget, dailyBudget, spent float64) float64 {

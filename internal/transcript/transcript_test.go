@@ -11,12 +11,29 @@ import (
 
 var cutoff = time.Date(2026, 11, 20, 12, 0, 0, 0, time.UTC)
 
-func entryLine(t *testing.T, kind, role string, at time.Time, content any) string {
+type record struct {
+	kind    string
+	role    string
+	at      time.Time
+	content any
+}
+
+func humanLine(t *testing.T, at time.Time, content any) string {
+	t.Helper()
+	return rawLine(t, &record{kind: "user", role: "user", at: at, content: content})
+}
+
+func assistantLine(t *testing.T, at time.Time, content any) string {
+	t.Helper()
+	return rawLine(t, &record{kind: "assistant", role: "assistant", at: at, content: content})
+}
+
+func rawLine(t *testing.T, r *record) string {
 	t.Helper()
 	raw, err := json.Marshal(map[string]any{
-		"type":      kind,
-		"timestamp": at.Format("2006-01-02T15:04:05.000Z"),
-		"message":   map[string]any{"role": role, "content": content},
+		"type":      r.kind,
+		"timestamp": r.at.Format("2006-01-02T15:04:05.000Z"),
+		"message":   map[string]any{"role": r.role, "content": r.content},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -26,9 +43,8 @@ func entryLine(t *testing.T, kind, role string, at time.Time, content any) strin
 
 func after() time.Time { return cutoff.Add(time.Hour) }
 
-func write(t *testing.T, projects, path string, mtime time.Time, lines ...string) {
+func write(t *testing.T, target string, mtime time.Time, lines ...string) {
 	t.Helper()
-	target := filepath.Join(projects, path)
 	if err := os.MkdirAll(filepath.Dir(target), 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +68,7 @@ func extract(t *testing.T, projects string) []Line {
 func TestExtract(t *testing.T) {
 	t.Run("given a human text line after the cutoff, when extracting, then it returns session, time and text", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/abc-123.jsonl", after(), entryLine(t, "user", "user", after(), "fix the test"))
+		write(t, filepath.Join(projects, "proj/abc-123.jsonl"), after(), humanLine(t, after(), "fix the test"))
 		lines := extract(t, projects)
 		if len(lines) != 1 {
 			t.Fatalf("expected 1 line, got %d", len(lines))
@@ -70,7 +86,7 @@ func TestExtract(t *testing.T) {
 			{"type": "image", "source": "x"},
 			{"type": "text", "text": "second"},
 		}
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "user", "user", after(), parts))
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), humanLine(t, after(), parts))
 		lines := extract(t, projects)
 		if len(lines) != 1 || lines[0].Text != "first second" {
 			t.Fatalf("got %+v", lines)
@@ -81,7 +97,7 @@ func TestExtract(t *testing.T) {
 	for _, prefix := range prefixes {
 		t.Run("given a line starting with "+prefix[:5]+", when extracting, then it drops the line", func(t *testing.T) {
 			projects := t.TempDir()
-			write(t, projects, "proj/s.jsonl", after(), entryLine(t, "user", "user", after(), prefix+" rest"), entryLine(t, "user", "user", after(), "kept"))
+			write(t, filepath.Join(projects, "proj/s.jsonl"), after(), humanLine(t, after(), prefix+" rest"), humanLine(t, after(), "kept"))
 			lines := extract(t, projects)
 			if len(lines) != 1 || lines[0].Text != "kept" {
 				t.Fatalf("got %+v", lines)
@@ -91,10 +107,10 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given lines of another type or role, when extracting, then it drops them", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/s.jsonl", after(),
-			entryLine(t, "assistant", "assistant", after(), "answer"),
-			entryLine(t, "user", "assistant", after(), "wrong role"),
-			entryLine(t, "system", "user", after(), "wrong type"),
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(),
+			assistantLine(t, after(), "answer"),
+			rawLine(t, &record{kind: "user", role: "assistant", at: after(), content: "wrong role"}),
+			rawLine(t, &record{kind: "system", role: "user", at: after(), content: "wrong type"}),
 		)
 		if lines := extract(t, projects); len(lines) != 0 {
 			t.Fatalf("got %+v", lines)
@@ -103,7 +119,7 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given empty content, when extracting, then it drops the line", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "user", "user", after(), ""), entryLine(t, "user", "user", after(), []map[string]any{}))
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), humanLine(t, after(), ""), humanLine(t, after(), []map[string]any{}))
 		if lines := extract(t, projects); len(lines) != 0 {
 			t.Fatalf("got %+v", lines)
 		}
@@ -112,7 +128,7 @@ func TestExtract(t *testing.T) {
 	t.Run("given line breaks and a long text, when extracting, then it turns breaks into spaces and cuts at 600 characters", func(t *testing.T) {
 		projects := t.TempDir()
 		long := "a\nb" + strings.Repeat("ç", 700)
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "user", "user", after(), long))
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), humanLine(t, after(), long))
 		lines := extract(t, projects)
 		if len(lines) != 1 {
 			t.Fatalf("got %+v", lines)
@@ -128,9 +144,9 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given lines before and after the cutoff, when extracting, then only the later one stays", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/s.jsonl", after(),
-			entryLine(t, "user", "user", cutoff.Add(-time.Minute), "old"),
-			entryLine(t, "user", "user", cutoff.Add(time.Minute), "new"),
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(),
+			humanLine(t, cutoff.Add(-time.Minute), "old"),
+			humanLine(t, cutoff.Add(time.Minute), "new"),
 		)
 		lines := extract(t, projects)
 		if len(lines) != 1 || lines[0].Text != "new" {
@@ -140,7 +156,7 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given a file not changed since the cutoff, when extracting, then it skips the file", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/stale.jsonl", cutoff.Add(-time.Minute), entryLine(t, "user", "user", after(), "not read"))
+		write(t, filepath.Join(projects, "proj/stale.jsonl"), cutoff.Add(-time.Minute), humanLine(t, after(), "not read"))
 		if lines := extract(t, projects); len(lines) != 0 {
 			t.Fatalf("got %+v", lines)
 		}
@@ -148,10 +164,10 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given files at depth 1, 2 and 3, when extracting, then it reads only up to depth 2", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "shallow.jsonl", after(), entryLine(t, "user", "user", after(), "one"))
-		write(t, projects, "proj/middle.jsonl", after(), entryLine(t, "user", "user", after(), "two"))
-		write(t, projects, "proj/sub/deep.jsonl", after(), entryLine(t, "user", "user", after(), "three"))
-		write(t, projects, "proj/note.txt", after(), entryLine(t, "user", "user", after(), "four"))
+		write(t, filepath.Join(projects, "shallow.jsonl"), after(), humanLine(t, after(), "one"))
+		write(t, filepath.Join(projects, "proj/middle.jsonl"), after(), humanLine(t, after(), "two"))
+		write(t, filepath.Join(projects, "proj/sub/deep.jsonl"), after(), humanLine(t, after(), "three"))
+		write(t, filepath.Join(projects, "proj/note.txt"), after(), humanLine(t, after(), "four"))
 		texts := []string{}
 		for _, line := range extract(t, projects) {
 			texts = append(texts, line.Text)
@@ -163,7 +179,7 @@ func TestExtract(t *testing.T) {
 
 	t.Run("given a corrupted line, when extracting, then it returns what it read before and does not fail", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "user", "user", after(), "good"), "{broken")
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), humanLine(t, after(), "good"), "{broken")
 		lines := extract(t, projects)
 		if len(lines) != 1 || lines[0].Text != "good" {
 			t.Fatalf("got %+v", lines)
@@ -183,7 +199,7 @@ func TestExtractWithAssistant(t *testing.T) {
 		projects := t.TempDir()
 		long := strings.Repeat("ç", 500)
 		parts := []map[string]any{{"type": "text", "text": long}, {"type": "tool_use", "name": "Bash"}}
-		write(t, projects, "-Users-x-proj/s1.jsonl", after(), entryLine(t, "assistant", "assistant", after(), parts))
+		write(t, filepath.Join(projects, "-Users-x-proj/s1.jsonl"), after(), assistantLine(t, after(), parts))
 		lines, err := ExtractWithAssistant(projects, cutoff)
 		if err != nil {
 			t.Fatal(err)
@@ -199,7 +215,7 @@ func TestExtractWithAssistant(t *testing.T) {
 	t.Run("given an assistant message with no text part, when extracting with the assistant, then it drops the message", func(t *testing.T) {
 		projects := t.TempDir()
 		parts := []map[string]any{{"type": "tool_use", "name": "Bash"}}
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "assistant", "assistant", after(), parts))
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), assistantLine(t, after(), parts))
 		lines, err := ExtractWithAssistant(projects, cutoff)
 		if err != nil || len(lines) != 0 {
 			t.Fatalf("got %+v, %v", lines, err)
@@ -208,11 +224,11 @@ func TestExtractWithAssistant(t *testing.T) {
 
 	t.Run("given human and assistant lines in two sessions, when extracting with the assistant, then it returns them in time order with the project of each", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "-p-one/a.jsonl", after(),
-			entryLine(t, "user", "user", cutoff.Add(10*time.Minute), "human first"),
-			entryLine(t, "assistant", "assistant", cutoff.Add(30*time.Minute), "assistant third"),
+		write(t, filepath.Join(projects, "-p-one/a.jsonl"), after(),
+			humanLine(t, cutoff.Add(10*time.Minute), "human first"),
+			assistantLine(t, cutoff.Add(30*time.Minute), "assistant third"),
 		)
-		write(t, projects, "-p-two/b.jsonl", after(), entryLine(t, "user", "user", cutoff.Add(20*time.Minute), "human second"))
+		write(t, filepath.Join(projects, "-p-two/b.jsonl"), after(), humanLine(t, cutoff.Add(20*time.Minute), "human second"))
 		lines, err := ExtractWithAssistant(projects, cutoff)
 		if err != nil {
 			t.Fatal(err)
@@ -228,7 +244,7 @@ func TestExtractWithAssistant(t *testing.T) {
 
 	t.Run("given assistant messages, when extracting only the human lines, then they stay out", func(t *testing.T) {
 		projects := t.TempDir()
-		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "assistant", "assistant", after(), "answer"))
+		write(t, filepath.Join(projects, "proj/s.jsonl"), after(), assistantLine(t, after(), "answer"))
 		if lines := extract(t, projects); len(lines) != 0 {
 			t.Fatalf("got %+v", lines)
 		}

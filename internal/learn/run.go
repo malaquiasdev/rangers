@@ -21,9 +21,20 @@ const (
 	checkpointName = "checkpoint"
 	metricsName    = "metrics.tsv"
 	pendingName    = "pending-reminders.txt"
-	allowedTools   = "Read,Edit,Write,Bash(git add:*),Bash(git commit:*),Bash(git status:*),Bash(git diff:*)"
-	notesTools     = "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)"
-	reminderTitle  = "Revisar as regras propostas"
+	flagModel      = "--model"
+	flagBudget     = "--max-budget-usd"
+	rulesPass      = "rules"
+	notesPass      = "notes"
+	allowedTools   = "Read,Edit,Write,Bash(git add:*),Bash(git commit:*)," +
+		"Bash(git status:*),Bash(git diff:*)"
+	notesTools    = "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)"
+	reminderTitle = "Revisar as regras propostas"
+	rulesPrompt   = "The file %s has, one per line, the lines the human typed since the last " +
+		"checkpoint (session, time, text). Propose the rules in the files of this folder " +
+		"and make the local commit on branch %s."
+	notesPrompt = "This is the notes pass. The file %s has, one per line, what the human and " +
+		"the assistant said since the last notes checkpoint (project, session, time, text). " +
+		"Write the notes in the brain folder you were started in, as your agent file says."
 )
 
 type Dependencies struct {
@@ -48,51 +59,231 @@ type response struct {
 	} `json:"usage"`
 }
 
+type round struct {
+	cfg    *Config
+	dep    *Dependencies
+	now    time.Time
+	pass   string
+	stamp  string
+	lines  []transcript.Line
+	budget float64
+}
+
+func newRound(cfg *Config, dep *Dependencies, now time.Time, pass string) *round {
+	return &round{cfg: cfg, dep: dep, now: now, pass: pass, stamp: now.Format("2006-01-02-1504")}
+}
+
 func Run(ctx context.Context, cfg *Config, dep *Dependencies) error {
 	now := dep.Now()
-	err := runPass(ctx, cfg, dep, now, rulesPass)
+	err := newRound(cfg, dep, now, rulesPass).run(ctx)
 	if cfg.SkipNotes {
 		return err
 	}
-	return errors.Join(err, runPass(ctx, cfg, dep, now, notesPass))
+	return errors.Join(err, newRound(cfg, dep, now, notesPass).run(ctx))
 }
 
-func runPass(ctx context.Context, cfg *Config, dep *Dependencies, now time.Time, pass string) error {
-	lines, reason, err := collect(cfg, now, pass)
+func (r *round) run(ctx context.Context) error {
+	reason, err := r.blocked()
 	if err != nil {
 		return err
 	}
 	if reason != "" {
-		return say(dep.Out, pass, reason)
+		return r.say(reason)
 	}
-	spent, err := spentToday(cfg.State, now)
+	if r.pass == notesPass {
+		return r.notes(ctx)
+	}
+	return r.rules(ctx)
+}
+
+func (r *round) blocked() (string, error) {
+	reason, err := r.collect()
+	if err != nil || reason != "" {
+		return reason, err
+	}
+	spent, err := spentToday(r.cfg.State, r.now)
+	if err != nil {
+		return "", err
+	}
+	r.budget = roundBudget(r.cfg.BudgetUSD, r.cfg.DailyBudgetUSD, spent)
+	return blocksDaily(r.cfg.DailyBudgetUSD, spent), nil
+}
+
+func (r *round) collect() (string, error) {
+	if err := os.MkdirAll(r.cfg.State, 0o750); err != nil {
+		return "", err
+	}
+	cutoff, reason, err := r.cutoff()
+	if err != nil || reason != "" {
+		return reason, err
+	}
+	extract := transcript.Extract
+	if r.pass == notesPass {
+		extract = transcript.ExtractWithAssistant
+	}
+	r.lines, err = extract(r.cfg.Projects, cutoff)
+	if err != nil {
+		return "", err
+	}
+	return blocksLines(r.cfg.MinLines, humans(r.lines)), nil
+}
+
+func (r *round) cutoff() (time.Time, string, error) {
+	window := time.Duration(r.cfg.WindowHours * float64(time.Hour))
+	info, err := os.Stat(filepath.Join(r.cfg.State, r.checkpoint()))
+	if errors.Is(err, fs.ErrNotExist) {
+		return r.now.Add(-window), "", nil
+	}
+	if err != nil {
+		return time.Time{}, "", err
+	}
+	return info.ModTime(), blocksInterval(r.cfg.IntervalHours, info.ModTime(), r.now), nil
+}
+
+func (r *round) rules(ctx context.Context) error {
+	agent, err := findAgent(filepath.Join(r.cfg.Repo, "agents"))
 	if err != nil {
 		return err
 	}
-	if reason = blocksDaily(cfg.DailyBudgetUSD, spent); reason != "" {
-		return say(dep.Out, pass, reason)
+	input, err := r.writeInput("input-", join(r.lines))
+	if err != nil {
+		return err
 	}
-	budget := roundBudget(cfg.BudgetUSD, cfg.DailyBudgetUSD, spent)
-	if pass == notesPass {
-		return runNotes(ctx, cfg, dep, now, lines, budget)
+	branch, worktree, err := r.newWorktree(ctx)
+	if err != nil {
+		return err
 	}
-	return runModel(ctx, cfg, dep, now, lines, budget)
+	prompt := fmt.Sprintf(rulesPrompt, input, branch)
+	args := r.arguments(prompt, agent, r.cfg.Model, allowedTools)
+	resp, err := r.invoke(ctx, "output-", worktree, args)
+	if err != nil {
+		return err
+	}
+	return r.finishRules(ctx, &resp, branch, worktree)
 }
 
-func say(out io.Writer, pass, text string) error {
-	_, err := fmt.Fprintln(out, label(pass)+text)
+func (r *round) notes(ctx context.Context) error {
+	agent, err := findAgent(filepath.Join(r.cfg.Repo, "agents"))
+	if err != nil {
+		return err
+	}
+	input, err := r.writeInput("notes-input-", transcript.Format(r.lines, r.cfg.NotesMaxBytes))
+	if err != nil {
+		return err
+	}
+	args := r.arguments(fmt.Sprintf(notesPrompt, input), agent, r.cfg.NotesModel, notesTools)
+	resp, err := r.invoke(ctx, "notes-output-", r.cfg.Brain, args)
+	if err != nil {
+		return err
+	}
+	return r.settle(&resp)
+}
+
+func (r *round) newWorktree(ctx context.Context) (string, string, error) {
+	branch := "learn/" + r.stamp
+	worktree := r.cfg.Repo + "-worktrees/learn-" + r.stamp
+	return branch, worktree, r.dep.Git.NewWorktree(ctx, r.cfg.Repo, branch, worktree)
+}
+
+func (r *round) writeInput(prefix, content string) (string, error) {
+	path := filepath.Join(r.cfg.State, prefix+r.stamp+".txt")
+	return path, os.WriteFile(path, []byte(content), 0o600)
+}
+
+func (r *round) arguments(prompt, agent, model, tools string) []string {
+	return []string{
+		"-p", prompt,
+		"--agent", agent,
+		flagModel, model,
+		"--permission-mode", "acceptEdits",
+		"--allowedTools", tools,
+		flagBudget, strconv.FormatFloat(r.budget, 'f', -1, 64),
+		"--output-format", "json",
+	}
+}
+
+func (r *round) invoke(ctx context.Context, prefix, dir string, args []string) (response, error) {
+	var resp response
+	raw, err := r.dep.Claude.Run(ctx, dir, args)
+	if err != nil {
+		return resp, err
+	}
+	err = os.WriteFile(filepath.Join(r.cfg.State, prefix+r.stamp+".json"), raw, 0o600)
+	if err != nil {
+		return resp, err
+	}
+	err = json.Unmarshal(raw, &resp)
+	if err != nil {
+		return resp, fmt.Errorf("resposta do claude não é JSON: %w", err)
+	}
+	return resp, nil
+}
+
+func (r *round) settle(resp *response) error {
+	err := r.say(resp.Result)
+	if err != nil {
+		return err
+	}
+	err = r.record(resp)
+	if err != nil {
+		return err
+	}
+	return touchCheckpoint(filepath.Join(r.cfg.State, r.checkpoint()), r.now)
+}
+
+func (r *round) finishRules(ctx context.Context, resp *response, branch, worktree string) error {
+	err := r.settle(resp)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(r.dep.Out, "ramo %s em %s\n", branch, worktree)
+	if err != nil {
+		return err
+	}
+	body := fmt.Sprintf("Ramo %s em %s", branch, worktree)
+	err = r.dep.Reminder.Create(ctx, reminderTitle, body)
+	if err == nil {
+		return nil
+	}
+	return r.keepPending(err, body)
+}
+
+func (r *round) keepPending(cause error, body string) error {
+	path := filepath.Join(r.cfg.State, pendingName)
+	_, err := fmt.Fprintf(r.dep.Err,
+		"aviso: não consegui criar o lembrete (%v); anotei em %s\n", cause, path)
+	if err != nil {
+		return err
+	}
+	return appendLine(path, reminderTitle+"\t"+body)
+}
+
+func (r *round) record(resp *response) error {
+	cost := math.Floor(resp.CostUSD*1000) / 1000
+	fields := []string{
+		r.stamp,
+		strconv.Itoa(humans(r.lines)),
+		strconv.FormatInt(resp.DurationMs/1000, 10),
+		strconv.Itoa(resp.Turns),
+		strconv.FormatFloat(cost, 'f', -1, 64),
+		strconv.Itoa(resp.Usage.Input + resp.Usage.CacheCreation + resp.Usage.CacheRead),
+		strconv.Itoa(resp.Usage.Output),
+		r.pass,
+	}
+	return appendLine(filepath.Join(r.cfg.State, metricsName), strings.Join(fields, "\t"))
+}
+
+func (r *round) say(text string) error {
+	prefix := ""
+	if r.pass == notesPass {
+		prefix = "[notas] "
+	}
+	_, err := fmt.Fprintln(r.dep.Out, prefix+text)
 	return err
 }
 
-func label(pass string) string {
-	if pass == notesPass {
-		return "[notas] "
-	}
-	return ""
-}
-
-func checkpointOf(pass string) string {
-	if pass == notesPass {
+func (r *round) checkpoint() string {
+	if r.pass == notesPass {
 		return checkpointName + "-notes"
 	}
 	return checkpointName
@@ -108,154 +299,6 @@ func humans(lines []transcript.Line) int {
 	return count
 }
 
-func collect(cfg *Config, now time.Time, pass string) ([]transcript.Line, string, error) {
-	if err := os.MkdirAll(cfg.State, 0o750); err != nil {
-		return nil, "", err
-	}
-	cutoff := now.Add(-time.Duration(cfg.WindowHours * float64(time.Hour)))
-	info, err := os.Stat(filepath.Join(cfg.State, checkpointOf(pass)))
-	switch {
-	case err == nil:
-		if reason := blocksInterval(cfg.IntervalHours, info.ModTime(), now); reason != "" {
-			return nil, reason, nil
-		}
-		cutoff = info.ModTime()
-	case !errors.Is(err, fs.ErrNotExist):
-		return nil, "", err
-	}
-	extract := transcript.Extract
-	if pass == notesPass {
-		extract = transcript.ExtractWithAssistant
-	}
-	lines, err := extract(cfg.Projects, cutoff)
-	if err != nil {
-		return nil, "", err
-	}
-	return lines, blocksLines(cfg.MinLines, humans(lines)), nil
-}
-
-func runNotes(ctx context.Context, cfg *Config, dep *Dependencies, now time.Time, lines []transcript.Line, budget float64) error {
-	agent, err := findAgent(filepath.Join(cfg.Repo, "agents"))
-	if err != nil {
-		return err
-	}
-	stamp := now.Format("2006-01-02-1504")
-	input := filepath.Join(cfg.State, "notes-input-"+stamp+".txt")
-	err = os.WriteFile(input, []byte(transcript.Format(lines, cfg.NotesMaxBytes)), 0o600)
-	if err != nil {
-		return err
-	}
-	prompt := fmt.Sprintf("This is the notes pass. The file %s has, one per line, what the human and the assistant said since the last notes checkpoint (project, session, time, text). Write the notes in the brain folder you were started in, as your agent file says.", input)
-	r, err := invoke(ctx, cfg, dep.Claude, "notes-output-"+stamp, cfg.Brain, []string{
-		"-p", prompt,
-		"--agent", agent,
-		"--model", cfg.NotesModel,
-		"--permission-mode", "acceptEdits",
-		"--allowedTools", notesTools,
-		"--max-budget-usd", strconv.FormatFloat(budget, 'f', -1, 64),
-		"--output-format", "json",
-	})
-	if err != nil {
-		return err
-	}
-	return settle(cfg, dep, now, stamp, notesPass, humans(lines), &r)
-}
-
-func runModel(ctx context.Context, cfg *Config, dep *Dependencies, now time.Time, lines []transcript.Line, budget float64) error {
-	agent, err := findAgent(filepath.Join(cfg.Repo, "agents"))
-	if err != nil {
-		return err
-	}
-	stamp := now.Format("2006-01-02-1504")
-	input := filepath.Join(cfg.State, "input-"+stamp+".txt")
-	err = os.WriteFile(input, []byte(join(lines)), 0o600)
-	if err != nil {
-		return err
-	}
-	branch := "learn/" + stamp
-	worktree := cfg.Repo + "-worktrees/learn-" + stamp
-	err = dep.Git.NewWorktree(cfg.Repo, branch, worktree)
-	if err != nil {
-		return err
-	}
-	prompt := fmt.Sprintf("The file %s has, one per line, the lines the human typed since the last checkpoint (session, time, text). Propose the rules in the files of this folder and make the local commit on branch %s.", input, branch)
-	r, err := invoke(ctx, cfg, dep.Claude, "output-"+stamp, worktree, []string{
-		"-p", prompt,
-		"--agent", agent,
-		"--permission-mode", "acceptEdits",
-		"--allowedTools", allowedTools,
-		"--model", cfg.Model,
-		"--max-budget-usd", strconv.FormatFloat(budget, 'f', -1, 64),
-		"--output-format", "json",
-	})
-	if err != nil {
-		return err
-	}
-	return finish(cfg, dep, now, stamp, branch, worktree, len(lines), &r)
-}
-
-func invoke(ctx context.Context, cfg *Config, claude Claude, outputName, dir string, args []string) (response, error) {
-	var r response
-	raw, err := claude.Run(ctx, dir, args)
-	if err != nil {
-		return r, err
-	}
-	err = os.WriteFile(filepath.Join(cfg.State, outputName+".json"), raw, 0o600)
-	if err != nil {
-		return r, err
-	}
-	err = json.Unmarshal(raw, &r)
-	if err != nil {
-		return r, fmt.Errorf("resposta do claude não é JSON: %w", err)
-	}
-	return r, nil
-}
-
-func settle(cfg *Config, dep *Dependencies, now time.Time, stamp, pass string, lines int, r *response) error {
-	err := say(dep.Out, pass, r.Result)
-	if err != nil {
-		return err
-	}
-	err = record(cfg.State, stamp, pass, lines, r)
-	if err != nil {
-		return err
-	}
-	return touchCheckpoint(filepath.Join(cfg.State, checkpointOf(pass)), now)
-}
-
-func finish(cfg *Config, dep *Dependencies, now time.Time, stamp, branch, worktree string, lines int, r *response) error {
-	err := settle(cfg, dep, now, stamp, rulesPass, lines, r)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(dep.Out, "ramo %s em %s\n", branch, worktree)
-	if err != nil {
-		return err
-	}
-	body := fmt.Sprintf("Ramo %s em %s", branch, worktree)
-	err = dep.Reminder.Create(reminderTitle, body)
-	if err == nil {
-		return nil
-	}
-	return keepPending(cfg.State, dep.Err, err, body)
-}
-
-func keepPending(state string, warnings io.Writer, cause error, body string) error {
-	path := filepath.Join(state, pendingName)
-	_, err := fmt.Fprintf(warnings, "aviso: não consegui criar o lembrete (%v); anotei em %s\n", cause, path)
-	if err != nil {
-		return err
-	}
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		return err
-	}
-	if _, err := file.WriteString(reminderTitle + "\t" + body + "\n"); err != nil {
-		return errors.Join(err, file.Close())
-	}
-	return file.Close()
-}
-
 func join(lines []transcript.Line) string {
 	var joined strings.Builder
 	for _, line := range lines {
@@ -265,23 +308,12 @@ func join(lines []transcript.Line) string {
 	return joined.String()
 }
 
-func record(state, stamp, pass string, lines int, r *response) error {
-	cost := math.Floor(r.CostUSD*1000) / 1000
-	fields := []string{
-		stamp,
-		strconv.Itoa(lines),
-		strconv.FormatInt(r.DurationMs/1000, 10),
-		strconv.Itoa(r.Turns),
-		strconv.FormatFloat(cost, 'f', -1, 64),
-		strconv.Itoa(r.Usage.Input + r.Usage.CacheCreation + r.Usage.CacheRead),
-		strconv.Itoa(r.Usage.Output),
-		pass,
-	}
-	file, err := os.OpenFile(filepath.Join(state, metricsName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+func appendLine(path, line string) error {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
-	if _, err := file.WriteString(strings.Join(fields, "\t") + "\n"); err != nil {
+	if _, err = file.WriteString(line + "\n"); err != nil {
 		return errors.Join(err, file.Close())
 	}
 	return file.Close()

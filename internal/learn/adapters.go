@@ -15,14 +15,20 @@ type Claude interface {
 }
 
 type Git interface {
-	NewWorktree(repo, branch, worktree string) error
+	NewWorktree(ctx context.Context, repo, branch, worktree string) error
 }
 
 type Reminder interface {
-	Create(title, body string) error
+	Create(ctx context.Context, title, body string) error
 }
 
 type ClaudeCLI struct{}
+
+type GitCLI struct{}
+
+type OsascriptReminder struct {
+	Timeout time.Duration
+}
 
 func (ClaudeCLI) Run(ctx context.Context, dir string, args []string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, "claude", args...)
@@ -35,10 +41,9 @@ func (ClaudeCLI) Run(ctx context.Context, dir string, args []string) ([]byte, er
 	return out, nil
 }
 
-type GitCLI struct{}
-
-func (GitCLI) NewWorktree(repo, branch, worktree string) error {
-	cmd := exec.Command("git", "-C", repo, "worktree", "add", "-q", "-b", branch, worktree, "main")
+func (GitCLI) NewWorktree(ctx context.Context, repo, branch, worktree string) error {
+	args := []string{"-C", repo, "worktree", "add", "-q", "-b", branch, worktree, "main"}
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Env = withoutGitVariables()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -47,14 +52,10 @@ func (GitCLI) NewWorktree(repo, branch, worktree string) error {
 	return nil
 }
 
-type OsascriptReminder struct {
-	Timeout time.Duration
-}
-
-func (r OsascriptReminder) Create(title, body string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+func (r OsascriptReminder) Create(ctx context.Context, title, body string) error {
+	limited, cancel := context.WithTimeout(ctx, r.Timeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "osascript", "-")
+	cmd := exec.CommandContext(limited, "osascript", "-")
 	cmd.WaitDelay = time.Second
 	cmd.Stdin = strings.NewReader(reminderScript(title, body))
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -64,7 +65,9 @@ func (r OsascriptReminder) Create(title, body string) error {
 }
 
 func reminderScript(title, body string) string {
-	return fmt.Sprintf("tell application \"Reminders\"\n  tell list \"Tarefas Claude\"\n    make new reminder with properties {name:%s, body:%s}\n  end tell\nend tell\n", quote(title), quote(body))
+	const template = "tell application \"Reminders\"\n  tell list \"Tarefas Claude\"\n" +
+		"    make new reminder with properties {name:%s, body:%s}\n  end tell\nend tell\n"
+	return fmt.Sprintf(template, quote(title), quote(body))
 }
 
 func quote(text string) string {

@@ -14,20 +14,19 @@ import (
 	"time"
 )
 
-const claudeJSON = `{"type":"result","is_error":false,"duration_ms":5400,"num_turns":3,"total_cost_usd":0.12345,"usage":{"input_tokens":100,"cache_creation_input_tokens":500,"cache_read_input_tokens":1000,"output_tokens":50},"result":"proposed rule"}`
-
-const learningAgent = "---\nname: learner\ndescription: Learning. Reads the transcripts and proposes rules.\nmodel: opus\n---\n\nbody\n"
-
-const otherAgent = "---\nname: other\ndescription: Author. Implements one unit.\nmodel: sonnet\n---\n\nbody\n"
+const (
+	claudeJSON = `{"type":"result","is_error":false,"duration_ms":5400,"num_turns":3,` +
+		`"total_cost_usd":0.12345,"usage":{"input_tokens":100,"cache_creation_input_tokens":500,` +
+		`"cache_read_input_tokens":1000,"output_tokens":50},"result":"proposed rule"}`
+	learningAgent = "---\nname: learner\ndescription: Learning. Reads the transcripts and " +
+		"proposes rules.\nmodel: opus\n---\n\nbody\n"
+	otherAgent = "---\nname: other\ndescription: Author. Implements one unit.\n" +
+		"model: sonnet\n---\n\nbody\n"
+)
 
 type fakeReminder struct {
 	calls [][2]string
 	fail  error
-}
-
-func (f *fakeReminder) Create(title, body string) error {
-	f.calls = append(f.calls, [2]string{title, body})
-	return f.fail
 }
 
 type scenario struct {
@@ -38,6 +37,28 @@ type scenario struct {
 	reminder *fakeReminder
 	out      *bytes.Buffer
 	errOut   *bytes.Buffer
+}
+
+func (f *fakeReminder) Create(_ context.Context, title, body string) error {
+	f.calls = append(f.calls, [2]string{title, body})
+	return f.fail
+}
+
+func writeExecutable(t *testing.T, path, content string) {
+	t.Helper()
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = file.WriteString(content); err != nil {
+		t.Fatal(err)
+	}
+	if err = file.Chmod(0o500); err != nil {
+		t.Fatal(err)
+	}
+	if err = file.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testGitEnv() []string {
@@ -52,7 +73,7 @@ func testGitEnv() []string {
 
 func execute(t *testing.T, dir, name string, args ...string) {
 	t.Helper()
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(t.Context(), name, args...)
 	cmd.Dir = dir
 	cmd.Env = testGitEnv()
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -120,9 +141,7 @@ func (s *scenario) fakeClaudeFailingOn(reply string, code int, failModel string)
 		s.t.Fatal(err)
 	}
 	script := fmt.Sprintf("#!/bin/sh\nprintf -- '---\\n' >> %q\npwd -P >> %q\nprev=\nfail=0\nfor a in \"$@\"; do\n  printf '%%s\\n' \"$a\" >> %q\n  if [ \"$prev\" = --model ] && [ \"$a\" = %q ]; then fail=1; fi\n  prev=$a\ndone\n[ $fail = 1 ] && exit 1\nprintf '%%s' '%s'\nexit %d\n", s.log, s.log, s.log, failModel, reply, code)
-	if err := os.WriteFile(filepath.Join(bin, "claude"), []byte(script), 0o500); err != nil {
-		s.t.Fatal(err)
-	}
+	writeExecutable(s.t, filepath.Join(bin, "claude"), script)
 	s.t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
@@ -203,7 +222,7 @@ func (s *scenario) claudeNotCalled() bool {
 
 func (s *scenario) branches() string {
 	s.t.Helper()
-	cmd := exec.Command("git", "-C", s.cfg.Repo, "branch", "--list", "learn/*")
+	cmd := exec.CommandContext(s.t.Context(), "git", "-C", s.cfg.Repo, "branch", "--list", "learn/*")
 	cmd.Env = testGitEnv()
 	out, err := cmd.Output()
 	if err != nil {
@@ -830,7 +849,7 @@ func gitSnapshot(t *testing.T, repo string) string {
 		{"status", "--porcelain"},
 		{"ls-files", "--stage"},
 	} {
-		cmd := exec.Command("git", append([]string{"-C", repo}, args...)...)
+		cmd := exec.CommandContext(t.Context(), "git", append([]string{"-C", repo}, args...)...)
 		cmd.Env = testGitEnv()
 		out, err := cmd.CombinedOutput()
 		if err != nil {

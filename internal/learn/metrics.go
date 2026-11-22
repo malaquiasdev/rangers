@@ -12,17 +12,21 @@ import (
 	"time"
 )
 
-const metricsHeader = "rodada\tfalas\tsegundos\tturnos\tcusto_usd\ttokens_entrada\ttokens_saida\tpassada\n"
-
-const (
-	rulesPass = "rules"
-	notesPass = "notes"
-)
+const metricsHeader = "rodada\tfalas\tsegundos\tturnos\tcusto_usd\t" +
+	"tokens_entrada\ttokens_saida\tpassada\n"
 
 type totals struct {
-	rounds  int
-	seconds int
-	cost    float64
+	rounds    int
+	seconds   int
+	tokensIn  int
+	tokensOut int
+	cost      float64
+}
+
+type summary struct {
+	whole   totals
+	perPass map[string]*totals
+	shown   strings.Builder
 }
 
 func Metrics(cfg *Config, out io.Writer) error {
@@ -35,10 +39,12 @@ func Metrics(cfg *Config, out io.Writer) error {
 		_, err = fmt.Fprintln(out, "nenhuma rodada registrada")
 		return err
 	}
-	var tokensIn, tokensOut int
-	var whole totals
-	perPass := map[string]*totals{rulesPass: {}, notesPass: {}}
-	var shown strings.Builder
+	_, err = io.WriteString(out, summarize(rows).report())
+	return err
+}
+
+func summarize(rows []string) *summary {
+	sum := &summary{perPass: map[string]*totals{rulesPass: {}, notesPass: {}}}
 	for _, row := range rows {
 		fields := strings.Split(row, "\t")
 		pass := rulesPass
@@ -47,34 +53,37 @@ func Metrics(cfg *Config, out io.Writer) error {
 		} else {
 			row += "\t" + pass
 		}
-		shown.WriteString(row + "\n")
-		tokensIn += integerAt(fields, 5)
-		tokensOut += integerAt(fields, 6)
-		for _, sum := range []*totals{&whole, perPass[pass]} {
-			if sum != nil {
-				sum.add(integerAt(fields, 2), decimalAt(fields, 4))
-			}
+		sum.shown.WriteString(row + "\n")
+		sum.whole.add(fields)
+		if byPass, ok := sum.perPass[pass]; ok {
+			byPass.add(fields)
 		}
 	}
-	_, err = fmt.Fprintf(out, "%s%s\n%d rodadas, %d s no total (média %d s), US$ %.2f no total (média US$ %.2f)\ntokens: %d de entrada, %d de saída\n",
-		metricsHeader, shown.String(),
-		whole.rounds, whole.seconds, whole.seconds/whole.rounds, whole.cost, whole.cost/float64(whole.rounds), tokensIn, tokensOut)
-	if err != nil {
-		return err
-	}
-	for _, pass := range []string{rulesPass, notesPass} {
-		sum := perPass[pass]
-		if _, err = fmt.Fprintf(out, "%s: %d rodadas, %d s, US$ %.2f\n", pass, sum.rounds, sum.seconds, sum.cost); err != nil {
-			return err
-		}
-	}
-	return nil
+	return sum
 }
 
-func (t *totals) add(seconds int, cost float64) {
+func (s *summary) report() string {
+	var text strings.Builder
+	whole := &s.whole
+	text.WriteString(metricsHeader + s.shown.String())
+	fmt.Fprintf(&text, "\n%d rodadas, %d s no total (média %d s), ", whole.rounds, whole.seconds,
+		whole.seconds/whole.rounds)
+	fmt.Fprintf(&text, "US$ %.2f no total (média US$ %.2f)\n", whole.cost,
+		whole.cost/float64(whole.rounds))
+	fmt.Fprintf(&text, "tokens: %d de entrada, %d de saída\n", whole.tokensIn, whole.tokensOut)
+	for _, pass := range []string{rulesPass, notesPass} {
+		sum := s.perPass[pass]
+		fmt.Fprintf(&text, "%s: %d rodadas, %d s, US$ %.2f\n", pass, sum.rounds, sum.seconds, sum.cost)
+	}
+	return text.String()
+}
+
+func (t *totals) add(fields []string) {
 	t.rounds++
-	t.seconds += seconds
-	t.cost += cost
+	t.seconds += integerAt(fields, 2)
+	t.cost += decimalAt(fields, 4)
+	t.tokensIn += integerAt(fields, 5)
+	t.tokensOut += integerAt(fields, 6)
 }
 
 func decimalAt(fields []string, index int) float64 {

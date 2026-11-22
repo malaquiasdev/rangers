@@ -1,62 +1,102 @@
 version: "2"
+
 run:
-  tests: true
+  timeout: 5m
+
 linters:
-  default: none
+  default: standard
   enable:
-    - errcheck
-    - govet
-    - staticcheck
-    - gosec
-    - revive
-    - unused
-    - ineffassign
+    - bodyclose
+    - contextcheck
+    - cyclop
+    - decorder
+    - dupl
+    - errorlint
+    - forbidigo
+    - funcorder
+    - funlen
+    - gocognit
+    - goconst
     - gocritic
+    - gosec
+    - lll
+    - misspell
+    - nilerr
+    - noctx
+    - nolintlint
+    - revive
+    - unconvert
+    - wastedassign
   settings:
-    errcheck:
-      check-type-assertions: true
-      check-blank: true
-    gosec:
-      excludes:
-        - G204
-        - G304
-    govet:
-      enable-all: true
-      disable:
-        - fieldalignment
-    gocritic:
-      enabled-tags:
-        - diagnostic
-        - style
-        - performance
+    decorder:
+      dec-order: [const, var, type, func]
+      disable-dec-order-check: false
+      disable-init-func-first-check: false
+      disable-dec-num-check: false
+      disable-type-dec-num-check: true
+      disable-const-dec-num-check: false
+      disable-var-dec-num-check: false
+    funcorder:
+      constructor: true
+      struct-method: true
+    funlen:
+      lines: 30
+      statements: 15
+      ignore-comments: true
+    cyclop:
+      max-complexity: 8
+    gocognit:
+      min-complexity: 15
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    lll:
+      line-length: 100
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print.*$
+          msg: use log/slog
+        - pattern: ^log\.(Print|Fatal|Panic).*$
+          msg: use log/slog
     revive:
+      confidence: 0.5
       rules:
-        - name: blank-imports
-        - name: context-as-argument
-        - name: context-keys-type
-        - name: dot-imports
-        - name: error-return
-        - name: error-strings
-        - name: error-naming
-        - name: increment-decrement
-        - name: var-declaration
-        - name: range
-        - name: receiver-naming
-        - name: time-naming
-        - name: unexported-return
-        - name: indent-error-flow
-        - name: errorf
-        - name: empty-block
-        - name: superfluous-else
-        - name: unused-parameter
-        - name: unreachable-code
-        - name: redefines-builtin-id
+        - name: argument-limit
+          arguments: [4]
+        - name: max-control-nesting
+          arguments: [2]
+        - name: modifies-parameter
   exclusions:
     rules:
       - path: _test\.go
         linters:
+          - cyclop
+          - dupl
+          - funlen
+          - gocognit
+          - goconst
+      - path: _test\.go
+        linters:
+          - revive
+        text: max-control-nesting
+      - path: _test\.go
+        linters:
+          - lll
+      - path: internal/learn/
+        linters:
           - gosec
-        text: G30[26]
+        text: G204|G304
+
 formatters:
   enable:
     - gofmt
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+severity:
+  default: error
