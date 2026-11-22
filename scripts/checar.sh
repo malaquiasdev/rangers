@@ -50,7 +50,7 @@ for item in dados.get("dependency", []):
 PY
 
 personagens=$(cat scripts/personagens.txt)
-achados=$(grep -rnwE "$personagens" --exclude-dir=.git --exclude-dir=.serena --exclude-dir=agents --exclude-dir=skills --exclude=personagens.txt . | grep -v -- '--agent ' || true)
+achados=$(grep -rnwE "$personagens" --exclude-dir=.git --exclude-dir=.serena --exclude-dir=agents --exclude-dir=skills --exclude=personagens.txt --exclude=README.md . | grep -v -- '--agent ' || true)
 if [ -n "$achados" ]; then
   printf '%s\n' "$achados"
   falha "nome de personagem fora de agents/ e skills/"

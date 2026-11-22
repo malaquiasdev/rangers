@@ -16,16 +16,21 @@ Rangers is a set of Claude Code agents, rules and a small Go program, built on o
 
 ## The cast
 
-| Role | What it does |
-| --- | --- |
-| 🔴 Red | Coordinator. Refines the task with you, plans, and hands the work out. Never writes code. |
-| ⚫ Black | Author. Writes one test per scenario, then the code, and opens its own pull request. |
-| 🩷 Pink | Reviewer. Reads the pull request, and only a finding with proof counts. |
-| 🔵 Blue | Explorer. Finds out how code and data work, read only, with a file and line for every claim. |
-| 🟡 Yellow | Docs writer. Builds the `docs` folder by the Diátaxis method. Called only by you. |
-| 🟢 Green | Gate. A program with no model that checks your yes and the CI before a merge. |
+| | Agent | What it does |
+| --- | --- | --- |
+| 🔴 | Jason | Coordinator. Refines the task with you, plans, and hands the work out. Never writes code. |
+| ⚫ | Zack | Author. Writes one test per scenario, then the code, and opens its own pull request. |
+| 🩷 | Kimberly | Reviewer. Reads the pull request, and only a finding with proof counts. |
+| 🔵 | Billy | Explorer. Finds out how code and data work, read only, with a file and line for every claim. |
+| 🟡 | Trini | Docs writer. Builds the `docs` folder by the Diátaxis method. Called only by you. |
+| 🟢 | Tommy | Gate. A program with no model that checks your yes and the CI before a merge. |
+| ✨ | Zordon | Mentor. Learns from your corrections and writes the notes. |
+| 🤖 | Alpha 5 | Courier. Delivers the plan as a page and sends the reminder. |
+| 🟣 | Rita Repulsa | Adversarial reviewer. Attacks risky changes before they go in. |
+| 👾 | Lord Zedd | QA. Tests each scenario and tries to break it. |
+| 🪨 | The Putties | Swarm. Several workers in parallel on separate units. |
 
-A mentor learns from your corrections, a courier delivers plans and reminders, and two adversaries attack risky changes and run QA. The names of the characters live only in [`agents/`](agents).
+Each one is a Markdown file in [`agents/`](agents).
 
 ## Install
 
