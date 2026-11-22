@@ -75,3 +75,29 @@ func TestDirBrainProbe(t *testing.T) {
 		}
 	})
 }
+
+func TestGitCLIBranchExists(t *testing.T) {
+	t.Run("given a branch that exists, when asking, then it answers true", func(t *testing.T) {
+		s := newScenario(t)
+		s.branch("learn/exists")
+		exists, err := GitCLI{}.BranchExists(t.Context(), s.cfg.Repo, "learn/exists")
+		if err != nil || !exists {
+			t.Fatalf("exists %v, error %v", exists, err)
+		}
+	})
+
+	t.Run("given a branch that does not exist, when asking, then it answers false with no error", func(t *testing.T) {
+		s := newScenario(t)
+		exists, err := GitCLI{}.BranchExists(t.Context(), s.cfg.Repo, "learn/missing")
+		if err != nil || exists {
+			t.Fatalf("exists %v, error %v", exists, err)
+		}
+	})
+
+	t.Run("given a folder that is not a repository, when asking, then it returns an error", func(t *testing.T) {
+		exists, err := GitCLI{}.BranchExists(t.Context(), t.TempDir(), "learn/any")
+		if err == nil || exists {
+			t.Fatalf("exists %v, error %v", exists, err)
+		}
+	})
+}

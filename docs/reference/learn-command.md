@@ -104,7 +104,7 @@ The command reads the `*.jsonl` files in `--projects` and one folder below it, w
 5. Prints the answer and `ramo learn/<stamp> em <worktree>`.
 6. Creates a reminder titled `Revisar as regras propostas` in the Reminders list `Tarefas Claude`, with the branch and the worktree in its body. It uses `osascript` and gives up after 10 seconds.
 
-If the reminder fails, the command prints a warning to standard error and appends the reminder to `pending-reminders.txt`. The round still counts as done.
+If the reminder fails, the command prints a warning to standard error and appends the reminder to `pending-reminders.txt`. The round still counts as done. At the start of each round, the command drops the lines of that file whose `Ramo <branch> em` names a branch that no longer exists, and leaves the file as it is when git fails.
 
 Each call to `claude` is killed after `--call-timeout-minutes`. The round then fails with `o claude passou de <time> sem terminar; processo encerrado` and writes no metrics row and no checkpoint.
 
