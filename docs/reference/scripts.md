@@ -7,7 +7,7 @@ The scripts in [`scripts/`](../../scripts/) are Bash. They run the repository ch
 | [`check.sh`](#scriptschecksh) | Runs the repository checks |
 | [`install-hooks.sh`](#scriptsinstall-hookssh) | Points Git to the hooks in `.githooks/` |
 
-`scripts/characters.txt` is not a script. It holds the names that the checks forbid outside `agents/` and `skills/`, as one extended regular expression.
+`scripts/characters.txt` is not a script. It holds the names that the checks forbid, as one extended regular expression. Which files are exempt is in the [checks and release reference](checks-and-release.md#what-scriptschecksh-checks).
 
 ## `scripts/check.sh`
 

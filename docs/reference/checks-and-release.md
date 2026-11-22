@@ -33,7 +33,7 @@ The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refacto
 | Agent files | In a file of `agents/`, `name` differs from the file name, `model` is not `opus`, `sonnet` or `haiku`, `effort` is not `low`, `medium`, `high`, `xhigh` or `max`, `description` is empty, or the `Character:` line is missing | both |
 | Skill files | In `skills/<folder>/SKILL.md`, `name` differs from the folder | both |
 | `deps.toml` | Python's `tomllib` cannot read it, or a dependency lacks `name`, `kind`, `license` or `function` | both |
-| Character names | A name from `scripts/characters.txt` appears outside `agents/`, `skills/` and `.git/`. Lines with `--agent ` are ignored | both |
+| Character names | A name from `scripts/characters.txt` appears outside `agents/`, `skills/`, `.git/`, `.serena/`, any file named `README.md` and `scripts/characters.txt` itself. Lines with `--agent ` are ignored | both |
 | Privacy | A pattern from the privacy file appears anywhere outside `.git/` | both |
 | Go comments | A `.go` file has `//` or a line starting with `/*` | both |
 | Go format | `gofmt -l .` lists a file | both |

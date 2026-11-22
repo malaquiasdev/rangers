@@ -51,4 +51,4 @@ Each agent declares its model and effort in its own file. Roles that need broad 
 
 ## The voice of each agent
 
-Each file has a `Character:` line that gives the agent its own voice. The voice is for the conversation between agents. Most files forbid the character name in what the agent writes, such as code, commits, pull requests and comments. The repository checks refuse those names outside `agents/` and `skills/`, and the commit hook refuses them in commit messages.
+Each file has a `Character:` line that gives the agent its own voice. The voice is for the conversation between agents. Most files forbid the character name in what the agent writes, such as code, commits, pull requests and comments. The repository checks refuse those names outside `agents/`, `skills/` and the README, where the cast is presented, and the commit hook refuses them in commit messages.
