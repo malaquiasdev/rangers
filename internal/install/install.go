@@ -48,10 +48,10 @@ func Command(ctx context.Context, args []string, env func(string) string, dep *D
 		return err
 	}
 	in := &installer{runner: dep.Runner, files: dep.Files, opts: opts, out: newPrinter(dep.Out, deps)}
-	if !opts.check {
-		return errors.New("only --check is available")
+	if opts.check {
+		return in.check(ctx, deps)
 	}
-	return in.check(ctx, deps)
+	return in.install(ctx, deps)
 }
 
 func resolve(dep *Dependencies, opts *options) ([]Dependency, error) {

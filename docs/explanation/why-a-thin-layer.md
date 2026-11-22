@@ -23,7 +23,7 @@ Little is left, on purpose:
 - the agents, which tell each open source project how to work the way the owner of the repository wants (see [how the agents split the work](how-agents-split-work.md));
 - the `/rangers` skill, the single entry point that hands an activity to the coordinator;
 - the rules for every agent, in [`rules/`](../../rules/);
-- the list of what is installed and the scripts that install and check it;
+- the list of what is installed and the command that installs and checks it;
 - the `rangers learn` program, which turns the human's corrections into proposed rules (see [how the learning loop works](how-learning-works.md));
 - the local checks and the release workflow;
 - the test plan that decides whether the idea works.

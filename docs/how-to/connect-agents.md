@@ -1,6 +1,6 @@
 # How to connect the agents and the skill to Claude Code
 
-Claude Code loads the user's subagents from `~/.claude/agents/` and the user's skills from `~/.claude/skills/`. The scripts do not create these links. This guide links the files of the clone, so a change in the repository applies in the next session without copying anything.
+Claude Code loads the user's subagents from `~/.claude/agents/` and the user's skills from `~/.claude/skills/`. `rangers install` creates these links. This guide does the same by hand, so a change in the repository applies in the next session without copying anything.
 
 ## Connect the agents
 

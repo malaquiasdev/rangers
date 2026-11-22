@@ -16,6 +16,6 @@ Then run `rangers install --check`. The removed piece shows as `MISSING` and the
 4. Restart Claude Code.
 5. Run `rangers install --check`. Every piece shows as `MISSING`.
 
-The skills listed in `deps.toml` live in `~/.claude/skills/`. The scripts did not install them, so the commands above do not remove them. Delete the folder of each skill if you want them gone too.
+The skills listed in `deps.toml` live in `~/.claude/skills/`, each with a `.rangers-commit` file. The commands above do not remove them. Delete the folder of each skill if you want them gone too.
 
 To turn off the Git hooks of a clone, run `git config --unset core.hooksPath` in it.

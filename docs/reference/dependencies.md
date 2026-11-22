@@ -1,6 +1,6 @@
 # Dependencies
 
-The list of what Rangers uses, with a pinned version or commit, the license and the source, is in [`deps.toml`](../../deps.toml). This page describes the format of that file, what the scripts cover and what the machine needs. For the version of a piece, read the file.
+The list of what Rangers uses, with a pinned version or commit, the license and the source, is in [`deps.toml`](../../deps.toml). This page describes the format of that file, what `rangers install` covers and what the machine needs. For the version of a piece, read the file.
 
 ## Format of `deps.toml`
 
@@ -19,7 +19,7 @@ Optional field:
 
 | Field | What it holds |
 | --- | --- |
-| `optional` | `true` when Rangers works without the piece. `rangers install --check` does not count it as missing, and `install.sh` installs it only when asked |
+| `optional` | `true` when Rangers works without the piece. `rangers install --check` does not count it as missing, and `rangers install` installs it only with `--optional` |
 
 Fields by kind:
 
@@ -33,19 +33,19 @@ Fields by kind:
 
 `requires` says what must exist on the machine for the piece to work.
 
-## What the scripts cover
+## What `rangers install` covers
 
-`deps.toml` and the scripts do not list the same pieces:
+`deps.toml` and the command do not cover the same pieces:
 
-| Piece | Pinned in `deps.toml` | Installed by `install.sh` | Checked by `rangers install --check` |
+| Piece | Pinned in `deps.toml` | Installed by `rangers install` | Checked by `rangers install --check` |
 | --- | --- | --- | --- |
 | pstack, i-have-adhd, container-use | Yes | Yes | Yes |
-| openspec (`optional = true`) | Yes | Only with `INSTALL_OPTIONAL=1` | Shows `not installed (optional)` without counting it as missing |
-| lychee (container image) | Yes | No | Yes |
-| Skills (`kind = "skill"`) | Yes | No | Yes |
+| openspec (`optional = true`) | Yes | Only with `--optional` | Shows `not installed (optional)` without counting it as missing |
+| lychee (container image) | Yes | Yes | Yes |
+| Skills (`kind = "skill"`) | Yes | Yes | Yes |
 | Container runtime (`docker`) | No | No | Yes |
 
-The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. The steps to copy one are in [how to install the skills](../how-to/install-skills.md).
+The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. `rangers install` copies each one and writes a `.rangers-commit` file with the commit. The steps to do it by hand are in [how to install the skills](../how-to/install-skills.md).
 
 ## How to install and remove each piece
 
@@ -56,7 +56,7 @@ The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gi
 | container-use | `brew install dagger/tap/container-use` | `brew uninstall container-use` |
 | openspec | `npm install -g @fission-ai/openspec` | `npm uninstall -g @fission-ai/openspec` |
 
-The install commands are the same as in [`scripts/install.sh`](../../scripts/install.sh).
+`rangers install` runs the same commands, and `npm install -g` uses the pinned `version`.
 
 ## What the machine needs
 

@@ -20,7 +20,7 @@ Rangers is a repository of agents and rules for Claude Code, on top of open sour
 
 ## To look something up
 
-- [Dependencies](reference/dependencies.md): format of `deps.toml`, what the scripts cover, install and remove commands, what the machine needs.
+- [Dependencies](reference/dependencies.md): format of `deps.toml`, what `rangers install` covers, install and remove commands, what the machine needs.
 - [The `rangers install` command](reference/install-command.md): the check of each piece, flags and exit codes.
 - [Scripts](reference/scripts.md): what each script in `scripts/` does and returns.
 - [The `rangers learn` command](reference/learn-command.md): flags, passes, gates, state folder and schedule.

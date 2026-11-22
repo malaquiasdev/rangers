@@ -39,18 +39,12 @@ You need Claude Code, `gh`, Go 1.26, `golangci-lint`, Podman and Python 3.11 or 
 ```sh
 git clone https://github.com/malaquiasdev/rangers
 cd rangers
-scripts/install.sh
 make hooks
 go build -o ~/.local/bin/rangers ./cmd/rangers
-rangers install --check
+rangers install
 ```
 
-Then link the agents and the entry skill, restart Claude Code and run `/pstack:setup-pstack` once:
-
-```sh
-for f in agents/*.md; do ln -sfn "$PWD/$f" ~/.claude/agents/$(basename "$f"); done
-ln -sfn "$PWD/skills/rangers" ~/.claude/skills/rangers
-```
+`rangers install` installs the pieces in `deps.toml` and links the agents, the rules and the entry skill into `~/.claude`. Then restart Claude Code and run `/pstack:setup-pstack` once. `rangers install --check` shows what is in place.
 
 ## Use
 

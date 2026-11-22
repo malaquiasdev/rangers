@@ -49,6 +49,7 @@ type memFiles struct {
 	removed  []string
 	written  []string
 	copyErr  error
+	linkErr  error
 	tempDirs int
 }
 
@@ -69,6 +70,9 @@ func (f *fakeRunner) Output(_ context.Context, name string, args ...string) (str
 	f.calls = append(f.calls, cmd)
 	if r, ok := f.replies[cmd]; ok {
 		return r.out, r.err
+	}
+	if name == "git" {
+		return "", nil
 	}
 	return "", errors.New("no reply for " + cmd)
 }
@@ -120,6 +124,9 @@ func (m *memFiles) Glob(pattern string) ([]string, error) {
 }
 
 func (m *memFiles) Symlink(target, link string) error {
+	if m.linkErr != nil {
+		return m.linkErr
+	}
 	m.links[link] = target
 	return nil
 }

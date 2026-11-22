@@ -27,12 +27,12 @@ Do not worry about the `MISSING` lines: the next step takes care of them.
 ## 2. Install what is missing
 
 ```sh
-scripts/install.sh
+rangers install
 ```
 
-The script installs only what was missing. Then run `rangers install --check` again. Look at the last line: now it says `All in place.`.
+The command installs only what was missing and links the agents, the rules and the skill into `~/.claude`. Then run `rangers install --check` again. Look at the last line: now it says `All in place.`.
 
-If it still says `item(s) missing`, look in the lines above for the piece marked `MISSING` or `NOT RESPONDING`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `rangers install --check` again.
+If it still says `item(s) missing`, look in the lines above for the piece marked `MISSING` or `NOT RESPONDING`. The most common one is the `docker` line: the command does not start the container runtime. Start Podman with `podman machine start` and run `rangers install --check` again.
 
 ## 3. Set up pstack
 
@@ -44,17 +44,9 @@ Close Claude Code, if it is open, and open a new session. In the session, run:
 
 pstack finds the models you have and writes a rule with the model of each role. Follow what it asks. You only do this once.
 
-## 4. Connect the agents and the skill
+## 4. See the agents and the skill
 
-Back in the terminal, at the root of the clone:
-
-```sh
-mkdir -p ~/.claude/agents ~/.claude/skills
-ln -s "$PWD"/agents/*.md ~/.claude/agents/
-ln -s "$PWD/skills/rangers" ~/.claude/skills/rangers
-```
-
-Open another new Claude Code session and run:
+`rangers install` already linked them. Open another new Claude Code session and run:
 
 ```
 /agents
@@ -64,6 +56,6 @@ The agents of this repository are in the list, each with its role in the descrip
 
 ## What you did
 
-The machine has the open source pieces installed, pstack set up, and the agents and the `/rangers` skill connected. The agents also call skills from other repositories, such as `grilling`; install them with [how to install the skills](../how-to/install-skills.md). Then start a real activity: see [how to start an activity](../how-to/start-activity.md).
+The machine has the open source pieces and the skills the agents call installed, pstack set up, and the agents and the `/rangers` skill connected. Then start a real activity: see [how to start an activity](../how-to/start-activity.md).
 
 To understand why the repository is so small, read [why a thin layer](../explanation/why-a-thin-layer.md).

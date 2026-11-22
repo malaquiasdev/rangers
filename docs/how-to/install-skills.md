@@ -1,6 +1,6 @@
 # How to install the skills the agents use
 
-The agents call skills that live outside this repository, such as `grilling` for the coordinator. `deps.toml` pins each one with `kind = "skill"`, but no script installs them. This guide copies one skill at the pinned commit into `~/.claude/skills/`.
+The agents call skills that live outside this repository, such as `grilling` for the coordinator. `deps.toml` pins each one with `kind = "skill"`, and `rangers install` copies them at the pinned commit into `~/.claude/skills/`. This guide does the same by hand for one skill, for example to repair it.
 
 1. Read the entry of the skill in [`deps.toml`](../../deps.toml): `name`, `repository`, `path` and `commit`.
 
