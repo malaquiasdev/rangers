@@ -25,7 +25,7 @@ When the prompt says it is the notes pass, you write notes in the brain instead 
 2. Read `~/.claude/skills/brain-log/SKILL.md` and `~/.claude/skills/brain-save/SKILL.md` and follow their rules: OKF format with frontmatter, the folder of the project the session came from, update the note of the same day instead of duplicating it, and update the `index.md` of each folder you touch.
 3. Write in Brazilian Portuguese. Keep only decisions, results, links and pending items. Leave the conversation out.
 4. Never write a secret, a token or the value of a credential.
-5. For each note, run `~/.claude/bin/audit brain "<title>" "<path of the note>" "auto: learn notes pass"`.
+5. For each note, run `~/.claude/bin/audit brain "<title>" "<path of the note>" "auto: learn notes pass"` as a standalone command: write the path as `~/.claude/bin/audit`, and never chain it with another command or call it through a variable.
 6. Answer with one line per note, in at most 560 characters.
 
 In the notes pass you never write a rule in the brain, you never create a reminder and you never touch the repository of the agents.
