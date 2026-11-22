@@ -13,7 +13,11 @@ rangers learn metrics [flags]
 | --- | --- |
 | `rangers learn` | Runs the rules pass and then the notes pass |
 | `rangers learn metrics` | Prints the table of past rounds from the state folder and runs no model |
-| `rangers` with any other first word | Prints `uso: rangers learn [metrics] [flags]` and exits with code `2` |
+| `rangers` with no word, or a first word other than `learn`, `schedule`, `install` or `gate` | Prints the usage line below to standard error and exits with code `2` |
+
+```text
+uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]
+```
 
 When a pass fails, the command prints `rangers learn: <error>` to standard error and exits with code `1`. A pass that a gate stops is not a failure: it prints the reason and exits with `0`.
 
