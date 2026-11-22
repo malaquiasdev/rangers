@@ -55,6 +55,8 @@ Start a task with a Linear issue, a GitHub issue or a short description:
 /rangers ABC-123
 ```
 
+To follow it from a tablet or a phone, see [how to use Rangers from a tablet or a phone](docs/how-to/use-from-a-tablet.md).
+
 To let it learn from your sessions, schedule it every two hours. This needs macOS. The job reads fixed default folders, so check them first in [how to schedule the learning job](docs/how-to/schedule-learning.md).
 
 ```sh

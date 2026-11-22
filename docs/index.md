@@ -11,6 +11,7 @@ Rangers is a repository of agents and rules for Claude Code, on top of open sour
 - [How to connect the agents, the rules and the skill to Claude Code](how-to/connect-agents.md)
 - [How to install the skills the agents use](how-to/install-skills.md)
 - [How to start an activity](how-to/start-activity.md)
+- [How to use Rangers from a tablet or a phone](how-to/use-from-a-tablet.md)
 - [How to run the test with a real activity](how-to/run-test.md)
 - [How to schedule the learning job](how-to/schedule-learning.md)
 - [How to review the rules a learning round proposed](how-to/review-proposed-rules.md)
