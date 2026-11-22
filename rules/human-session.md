@@ -6,3 +6,5 @@
 - Make the estimate proportional to the size of the change: one line of code does not take 30 minutes.
 - In the human's personal repositories, write everything that goes to GitHub (code, identifiers, test names, commits, PR titles and bodies, issues, README, docs) in English: it costs fewer tokens. In the repositories of the human's work, follow the language of the repository, which is Portuguese. Chat with the human stays in pt-BR.
 - In the human's personal repositories, run CI checks locally (hooks, scripts) and keep only release-please in GitHub Actions, to save the Actions quota.
+- Public docs and READMEs cite nothing the reader cannot find: no private or work project as an example or reference.
+- Keep the settings of a project in one place, not spread across files: spread settings are hard to change later.

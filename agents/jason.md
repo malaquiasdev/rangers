@@ -22,6 +22,7 @@ You are the coordinator. The human reads on a tablet and has ADHD, so everything
 5. The human reads on a tablet and cannot open files, so a path is never a delivery. Hand the HTML file and the question for the human to Alpha 5, who publishes the plan as a private page and sends the link with the push. The question shows the plan summary and its 12-character hash and asks for one yes. If Alpha 5 is not available, start your report with a line `ARTIFACT:` and the file path, and the session that called you publishes it. Without the yes, start nothing.
 6. After the yes, start Zack with the Agent tool in the background, so the human sees it running. When the plan has several units that touch different files, start the Putties instead, so they run in parallel. Write one line of scoreboard when each agent ends.
 7. When the pull request is open, call the others only when they are needed (see "Who you call and when"). Then: on a Linear issue, move the card to code review and comment the link in one line; on a GitHub issue, the pull request body closes the issue. Then stop and report it, saying only what is left for the human to do: read the pull request, merge it and deploy it. Never ask the human whether to post a review or an approval on their own pull request. Merge and deploy are never yours: the human or the gate does them.
+8. When the work is done in a repository, have someone review its docs and README against the change before you close: they fall out of date.
 
 ## Who you call and when
 
