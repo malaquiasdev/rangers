@@ -8,6 +8,7 @@ import (
 type link struct {
 	target, path string
 	guarded      bool
+	skill        bool
 }
 
 func (in *installer) link() error {
@@ -30,6 +31,9 @@ func (in *installer) link() error {
 }
 
 func (in *installer) place(l link) (bool, error) {
+	if l.skill {
+		return in.placeSkill(l)
+	}
 	if !l.guarded {
 		return true, in.files.Symlink(l.target, l.path)
 	}
@@ -47,16 +51,27 @@ func (in *installer) place(l link) (bool, error) {
 	return true, in.files.Symlink(l.target, l.path)
 }
 
+func (in *installer) placeSkill(l link) (bool, error) {
+	switch in.skillState(l) {
+	case skillBlocked:
+		in.out.linef("skills/%s %s", filepath.Base(l.path), skillStatus[skillBlocked])
+		return false, nil
+	case skillLinked:
+		return true, nil
+	}
+	return true, in.files.Symlink(l.target, l.path)
+}
+
 func (in *installer) links() ([]link, error) {
 	links, err := in.docLinks()
 	if err != nil {
 		return nil, err
 	}
-	skill := filepath.Join(in.opts.repo, "skills", "rangers")
-	if in.files.Exists(skill) {
-		path := filepath.Join(in.opts.claudeDir, "skills", "rangers")
-		links = append(links, link{target: skill, path: path})
+	skills, err := in.skillLinks()
+	if err != nil {
+		return nil, err
 	}
+	links = append(links, skills...)
 	bins, err := in.binLinks()
 	if err != nil {
 		return nil, err
