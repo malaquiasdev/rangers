@@ -4,7 +4,7 @@ The agents get better when the human's corrections become written rules. The lea
 
 ## Corrections live in the transcripts
 
-When the human corrects an agent ("that was not a review, do not rewrite it"), the correction is in the Claude Code transcript of that session. If nobody writes it down, the next session makes the same mistake. The learning agent reads what the human typed since the last round and keeps what is worth keeping six months from now: a correction, a repeated mistake, a rule that was missing. Each rule cites its origin, the session and the human's own words, so the human can judge it.
+When the human corrects an agent ("that was not a review, do not rewrite it"), the correction is in the Claude Code transcript of that session. If nobody writes it down, the next session makes the same mistake. The learning agent reads what the human typed since the last round and keeps what is worth keeping six months from now: a correction, a repeated mistake, a rule that was missing. The rules carry no quotes or session ids, because the repository may become public. The agent reports the origin of each rule, the session and the human's own words, in its final message, and the round files that report in the private brain notes so the human can judge each rule.
 
 A rule for one agent goes into that agent's file. A rule for every agent goes into [`rules/`](../../rules/).
 

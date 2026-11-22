@@ -17,7 +17,7 @@ A rules round leaves a local branch `learn/<stamp>` in a worktree and a reminder
    git diff main...learn/<stamp>
    ```
 
-   Each rule cites its origin: the session and the words the human typed.
+   The rules do not cite their origin. Read it in the round output or, when the brain folder is writable, in the `claude/estudos/origem-das-regras-rangers.md` note of the brain, under the heading `## <stamp>` of the round.
 
 3. Decide:
 
