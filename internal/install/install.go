@@ -109,15 +109,24 @@ func (in *installer) check(ctx context.Context, deps []Dependency) error {
 			missing++
 		}
 	}
-	bins, err := in.checkBins()
+	links, err := in.checkLinks()
 	if err != nil {
 		return err
 	}
-	missing += bins
+	missing += links
 	if !in.checkRuntime(ctx) {
 		missing++
 	}
 	return in.out.summary(missing)
+}
+
+func (in *installer) checkLinks() (int, error) {
+	skills, err := in.checkSkills()
+	if err != nil {
+		return 0, err
+	}
+	bins, err := in.checkBins()
+	return skills + bins, err
 }
 
 func (in *installer) checkStatus(ctx context.Context, d Dependency) (string, bool) {

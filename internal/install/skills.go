@@ -42,3 +42,19 @@ func (in *installer) skillState(l link) skillState {
 	}
 	return skillLinkable
 }
+
+func (in *installer) checkSkills() (int, error) {
+	links, err := in.skillLinks()
+	if err != nil {
+		return 0, err
+	}
+	missing := 0
+	for _, l := range links {
+		state := in.skillState(l)
+		in.out.row("skills/"+filepath.Base(l.path), skillStatus[state])
+		if state == skillLinkable {
+			missing++
+		}
+	}
+	return missing, nil
+}

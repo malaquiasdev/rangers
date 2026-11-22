@@ -2,6 +2,7 @@ package install
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -151,6 +152,52 @@ func TestInstallSkillLinks(t *testing.T) {
 		}
 		if _, ok := s.files.links[claudeDir+"/skills/draft"]; ok {
 			t.Fatalf("got %v", s.files.links)
+		}
+	})
+}
+
+func TestCheckSkillLinks(t *testing.T) {
+	t.Run("given the skill link in place, when checking, then it lists it before the runtime and says All in place", func(t *testing.T) {
+		s := withSessions(t)
+		s.files.links[sessionsInstalled] = sessionsSource
+		if err := s.run("--check"); err != nil {
+			t.Fatal(err)
+		}
+		want := row("grilling", "abeeaf95660b") +
+			row("skills/claude-sessions", "linked") +
+			row("docker", "responding") +
+			"\nAll in place.\n"
+		if !strings.HasSuffix(s.typed(), want) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given the skill link missing, when checking, then it marks it, counts it and fails", func(t *testing.T) {
+		s := withSessions(t)
+		err := s.run("--check")
+		if !errors.Is(err, ErrIncomplete) {
+			t.Fatalf("got %v", err)
+		}
+		if !strings.Contains(s.typed(), row("skills/claude-sessions", "NOT LINKED")) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if !strings.HasSuffix(s.typed(), "\n1 item(s) missing. Run rangers install\n") {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given a real folder in the way, when checking, then it reports it, does not count it and changes nothing", func(t *testing.T) {
+		s := withSessions(t)
+		s.files.files[sessionsInstalled+"/SKILL.md"] = "mine\n"
+		if err := s.run("--check"); err != nil {
+			t.Fatal(err)
+		}
+		status := "exists and is not a link, left alone"
+		if !strings.Contains(s.typed(), row("skills/claude-sessions", status)) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if len(s.files.symlinked) != 0 || s.files.files[sessionsInstalled+"/SKILL.md"] != "mine\n" {
+			t.Fatal("the check changed something")
 		}
 	})
 }
