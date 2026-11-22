@@ -27,7 +27,6 @@ const (
 	notesPass      = "notes"
 	allowedTools   = "Read,Edit,Write,Bash(git add:*),Bash(git commit:*)," +
 		"Bash(git status:*),Bash(git diff:*)"
-	notesTools    = "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)"
 	reminderTitle = "Revisar as regras propostas"
 	accessTitle   = "Dar acesso ao brain ao rangers"
 	accessSetting = "em Ajustes > Privacidade e Segurança"
@@ -48,6 +47,7 @@ type Dependencies struct {
 	Reminder Reminder
 	Brain    Brain
 	Binary   string
+	Home     string
 	Now      func() time.Time
 	Out      io.Writer
 	Err      io.Writer
@@ -181,7 +181,8 @@ func (r *round) notes(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	args := r.arguments(fmt.Sprintf(notesPrompt, input), agent, r.cfg.NotesModel, notesTools)
+	prompt := fmt.Sprintf(notesPrompt, input)
+	args := r.arguments(prompt, agent, r.cfg.NotesModel, notesAllowed(r.dep.Home))
 	resp, err := r.invoke(ctx, "notes-output-", r.cfg.Brain, args)
 	if err != nil {
 		return err

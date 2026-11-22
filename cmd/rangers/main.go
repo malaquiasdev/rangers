@@ -80,9 +80,14 @@ func learnDependencies() *learn.Dependencies {
 	if err != nil {
 		binary = "rangers"
 	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = os.Getenv("HOME")
+	}
 	return &learn.Dependencies{
 		Brain:    learn.DirBrain{Timeout: 10 * time.Second},
 		Binary:   binary,
+		Home:     home,
 		Claude:   learn.ClaudeCLI{},
 		Git:      learn.GitCLI{},
 		Reminder: learn.OsascriptReminder{Timeout: 10 * time.Second},

@@ -41,6 +41,7 @@ type slowAfterFirst struct{ calls int }
 type scenario struct {
 	t        *testing.T
 	cfg      Config
+	home     string
 	now      time.Time
 	log      string
 	reminder *fakeReminder
@@ -105,7 +106,8 @@ func execute(t *testing.T, dir, name string, args ...string) {
 func newScenario(t *testing.T) *scenario {
 	t.Helper()
 	root := t.TempDir()
-	t.Setenv("HOME", filepath.Join(root, "home"))
+	home := filepath.Join(root, "home")
+	t.Setenv("HOME", home)
 	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
 	repo := filepath.Join(root, "rangers")
 	if err := os.MkdirAll(filepath.Join(repo, "agents"), 0o750); err != nil {
@@ -125,6 +127,7 @@ func newScenario(t *testing.T) *scenario {
 
 	s := &scenario{
 		t:        t,
+		home:     home,
 		now:      time.Date(2026, 11, 22, 10, 30, 0, 0, time.Local),
 		log:      filepath.Join(root, "claude.log"),
 		reminder: &fakeReminder{},
@@ -221,6 +224,7 @@ func (s *scenario) run() error {
 		Claude:   claude,
 		Brain:    brain,
 		Binary:   "/opt/rangers/bin/rangers",
+		Home:     s.home,
 		Git:      GitCLI{},
 		Reminder: s.reminder,
 		Now:      func() time.Time { return s.now },
@@ -681,7 +685,7 @@ func TestRunNotesPass(t *testing.T) {
 			"--agent":           "learner",
 			"--model":           "sonnet",
 			"--permission-mode": "acceptEdits",
-			"--allowedTools":    "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)",
+			"--allowedTools":    "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*),Bash(" + s.home + "/.claude/bin/audit:*)",
 			"--output-format":   "json",
 			"--max-budget-usd":  "3",
 		} {
