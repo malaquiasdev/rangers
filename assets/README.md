@@ -1,6 +1,8 @@
 # Assets
 
-Pixel art for the Rangers repository: the banner and one sprite per agent. Everything is generated from text maps and palette ramps with Python 3 standard library only. There is no image editor step and no external tool.
+Pixel art for the Rangers repository: the cover poster, the wide banner and one sprite per agent. Everything is drawn by code from shapes, lighting rules and palette ramps, with Python 3 standard library only. There is no image editor step and no external tool.
+
+The art is fan-style and must be replaced by original art before the repository goes public. The checklist is in [before making the repository public](../docs/how-to/before-making-the-repo-public.md).
 
 ## Regenerate
 
@@ -8,40 +10,44 @@ Pixel art for the Rangers repository: the banner and one sprite per agent. Every
 python3 assets/build.py
 ```
 
-The command rewrites `assets/banner/banner.png` (1280x640) and the eleven files in `assets/sprites/` (192x256). Every image is drawn on a small native grid and scaled by a whole number with nearest neighbor, so no pixel is ever blurred.
+The command rewrites the poster, the banner and the eleven sprites. Every image is drawn on a small native grid and scaled by a whole number with nearest neighbor, so no pixel is ever blurred.
 
 | Image | Native grid | Export |
 | --- | --- | --- |
-| Banner, also the GitHub social preview | 320x160 | 4x, 1280x640 |
-| Sprites | 48x64 | 4x, 192x256 |
+| `banner/poster.png`, the cover at the top of the README | 320x480 | 4x, 1280x1920 |
+| `banner/banner.png`, also the GitHub social preview | 320x160 | 4x, 1280x640 |
+| `sprites/*.png`, one per agent | 48x64 | 4x, 192x256 |
+
+Run the tests with `make check`, or only these:
+
+```sh
+python3 -I -m unittest discover -s assets/tests -t assets
+```
 
 ## Where things live
 
 | File | What it holds |
 | --- | --- |
-| `pixelart/sprite_maps.py` | The 46x62 map of each sprite. One character per pixel, `.` is empty. |
-| `pixelart/hero_maps.py` | The six smaller full-body poses used in the banner line-up. |
-| `pixelart/title_map.py` | The hand-drawn glyphs of the title. |
-| `pixelart/palette.py` | The color ramps. Each ramp has six tones, from the dark outline tone to the specular tone. |
-| `pixelart/shade.py` | `render_map`: shading, dithering, interior and exterior outlines, rim light. |
-| `pixelart/sprites.py` | The material of every map character, the draw order and the `LEGEND`. |
-| `pixelart/title.py` | The bevelled title with gradient, extrusion, drop shadow and sparkles. |
-| `pixelart/scene.py` | The layered banner: sky, moon, mountains, city, stage, reflections. |
+| `pixelart/geometry.py` | Polygons, ellipses, capsules and strokes turned into pixel sets. |
+| `pixelart/painter.py` | Lights each part from the top left, with ordered dithering, contours, the outer outline and the two-ring rim. |
+| `pixelart/palette.py` | The color ramps. Each ramp has six tones, from the outline tone to the specular tone. |
+| `pixelart/helmets.py` | One helmet per hero, with its own crest, visor and cheek shape. Used in the poses and in the panels. |
+| `pixelart/figure.py` | The body rig and the pose of each hero, as joint angles. |
+| `pixelart/hero_sprites.py` | The six hero sprites, fitted to 48x64. |
+| `pixelart/sprite_maps.py`, `pixelart/sprites.py`, `pixelart/shade.py` | The text maps and materials of the other five sprites. |
+| `pixelart/backdrop.py`, `pixelart/noise.py` | The dark command center: mist, rings, tubes, walls, floor. |
+| `pixelart/panels.py` | The six vertical close-up panels. |
+| `pixelart/lettering.py`, `pixelart/emblem.py` | The bevelled title with its ribbon, and the gem crest. |
+| `pixelart/poster.py` | The poster and the banner, each as its own composition. |
 
-## Edit a sprite
+## Edit a hero
 
-1. Open `pixelart/sprite_maps.py` and change characters in the map of the sprite. Every row must have the same length. The `LEGEND` in `pixelart/sprites.py` says what each character means.
-2. Run `python3 assets/build.py`. The build fails with the row number if a row has the wrong width or if a character has no material.
-3. Open the PNG in `assets/sprites/` and check it at its real size too, since GitHub shows it at half the export size.
+1. Open `pixelart/figure.py` and change the angles in `POSES`. An angle is measured from straight down, clockwise, in degrees. Each leg is thigh, shin and foot, and each arm is upper arm and forearm.
+2. To change a helmet, edit the visor, crest or cheek points in `pixelart/helmets.py`. They are written in head units, so the same shape works at sprite size and in a panel.
+3. Run `python3 assets/build.py` and open the PNGs. Look at the sprites at real size too, since GitHub shows them at half the export size.
 
-You only draw the shapes. `render_map` lights each region from the top left: it picks one of the six tones of the ramp from the distance to the edge, draws a colored outline darker than the fill, adds a rim light on the shadow side and draws a one-pixel line where a part sits in front of another. The part in front is the one that comes later in the draw order list.
-
-To change a color, edit the ramp in `pixelart/palette.py` or the `Material` of the character in `pixelart/sprites.py`. `hue_ramp(base)` builds a ramp from one color: shadows drift toward blue and violet, highlights toward warm yellow.
+To change a color, edit the ramp in `pixelart/palette.py`. `hue_ramp(base)` builds a ramp from one color: shadows drift toward blue and violet, highlights toward warm yellow.
 
 ## Dithering
 
-`bayer` and `banded` in `pixelart/shade.py` turn a smooth value into a pixel-art gradient. The transition between two tones is a narrow checkerboard band, not a blur. The sky, the moon, the light beams, the glow under each hero and the reflections use them.
-
-## Originality
-
-All shapes, helmets, emblems and logos here are original. No design from any show, game or console is traced, recolored or reused.
+`bayer` in `pixelart/painter.py` turns a smooth value into a pixel-art gradient. The transition between two tones is a narrow checkerboard band, not a blur. The mist, the light beams, the glows and the floor use it too.

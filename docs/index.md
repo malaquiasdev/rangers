@@ -17,6 +17,7 @@ Rangers is a repository of agents and rules for Claude Code, on top of open sour
 - [How to run the checks before a commit](how-to/run-checks.md)
 - [How to check the documentation links](how-to/check-doc-links.md)
 - [How to uninstall](how-to/uninstall.md)
+- [How to get the repository ready before making it public](how-to/before-making-the-repo-public.md)
 
 ## To look something up
 
