@@ -55,7 +55,15 @@ func Run(ctx context.Context, cfg *Config, dep Dependencies) error {
 		_, err = fmt.Fprintln(dep.Out, reason)
 		return err
 	}
-	return runModel(ctx, cfg, dep, now, lines)
+	spent, err := spentToday(cfg.State, now)
+	if err != nil {
+		return err
+	}
+	if reason = blocksDaily(cfg.DailyBudgetUSD, spent); reason != "" {
+		_, err = fmt.Fprintln(dep.Out, reason)
+		return err
+	}
+	return runModel(ctx, cfg, dep, now, lines, roundBudget(cfg.BudgetUSD, cfg.DailyBudgetUSD, spent))
 }
 
 func collect(cfg *Config, now time.Time) ([]transcript.Line, string, error) {
@@ -80,7 +88,7 @@ func collect(cfg *Config, now time.Time) ([]transcript.Line, string, error) {
 	return lines, blocksLines(cfg.MinLines, len(lines)), nil
 }
 
-func runModel(ctx context.Context, cfg *Config, dep Dependencies, now time.Time, lines []transcript.Line) error {
+func runModel(ctx context.Context, cfg *Config, dep Dependencies, now time.Time, lines []transcript.Line, budget float64) error {
 	agent, err := findAgent(filepath.Join(cfg.Repo, "agents"))
 	if err != nil {
 		return err
@@ -104,7 +112,7 @@ func runModel(ctx context.Context, cfg *Config, dep Dependencies, now time.Time,
 		"--permission-mode", "acceptEdits",
 		"--allowedTools", allowedTools,
 		"--model", cfg.Model,
-		"--max-budget-usd", strconv.FormatFloat(cfg.BudgetUSD, 'f', -1, 64),
+		"--max-budget-usd", strconv.FormatFloat(budget, 'f', -1, 64),
 		"--output-format", "json",
 	})
 	if err != nil {

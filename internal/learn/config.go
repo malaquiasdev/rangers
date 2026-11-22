@@ -9,14 +9,15 @@ import (
 )
 
 type Config struct {
-	IntervalHours float64
-	MinLines      int
-	BudgetUSD     float64
-	Model         string
-	WindowHours   float64
-	State         string
-	Repo          string
-	Projects      string
+	IntervalHours  float64
+	MinLines       int
+	BudgetUSD      float64
+	DailyBudgetUSD float64
+	Model          string
+	WindowHours    float64
+	State          string
+	Repo           string
+	Projects       string
 }
 
 func ReadConfig(args []string, env func(string) string) (Config, error) {
@@ -57,6 +58,7 @@ func ReadConfig(args []string, env func(string) string) (Config, error) {
 	fs.Float64Var(&cfg.IntervalHours, "interval-hours", decimal("LEARN_INTERVAL_HOURS", 2), "intervalo mínimo desde o checkpoint, em horas")
 	fs.IntVar(&cfg.MinLines, "min-lines", integer("LEARN_MIN_LINES", 10), "mínimo de falas novas")
 	fs.Float64Var(&cfg.BudgetUSD, "budget-usd", decimal("LEARN_BUDGET_USD", 3), "teto em dólar por rodada")
+	fs.Float64Var(&cfg.DailyBudgetUSD, "daily-budget-usd", decimal("LEARN_DAILY_BUDGET_USD", 6), "teto em dólar por dia")
 	fs.StringVar(&cfg.Model, "model", text("LEARN_MODEL", "opus"), "modelo")
 	fs.Float64Var(&cfg.WindowHours, "window-hours", decimal("LEARN_WINDOW_HOURS", 24), "janela em horas quando não há checkpoint")
 	fs.StringVar(&cfg.State, "state", text("LEARN_STATE", filepath.Join(home, ".local", "state", "rangers", "learn")), "pasta de estado")
@@ -70,6 +72,9 @@ func ReadConfig(args []string, env func(string) string) (Config, error) {
 	}
 	if cfg.BudgetUSD <= 0 {
 		return Config{}, errors.New("o teto em dólar precisa ser maior que zero")
+	}
+	if cfg.DailyBudgetUSD <= 0 {
+		return Config{}, errors.New("o teto diário em dólar precisa ser maior que zero")
 	}
 	return cfg, nil
 }

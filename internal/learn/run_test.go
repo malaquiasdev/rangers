@@ -84,14 +84,15 @@ func newScenario(t *testing.T) *scenario {
 		reminder: &fakeReminder{},
 		out:      &bytes.Buffer{},
 		cfg: Config{
-			IntervalHours: 2,
-			MinLines:      10,
-			BudgetUSD:     3,
-			Model:         "opus",
-			WindowHours:   24,
-			State:         filepath.Join(root, "state"),
-			Repo:          repo,
-			Projects:      filepath.Join(root, "projects"),
+			IntervalHours:  2,
+			MinLines:       10,
+			BudgetUSD:      3,
+			DailyBudgetUSD: 6,
+			Model:          "opus",
+			WindowHours:    24,
+			State:          filepath.Join(root, "state"),
+			Repo:           repo,
+			Projects:       filepath.Join(root, "projects"),
 		},
 	}
 	s.fakeClaude(claudeJSON, 0)
@@ -199,6 +200,24 @@ func (s *scenario) stateFile(name string) string {
 func (s *scenario) stateHas(name string) bool {
 	_, err := os.Stat(filepath.Join(s.cfg.State, name))
 	return err == nil
+}
+
+func (s *scenario) metricsRows(rows ...string) {
+	s.t.Helper()
+	if err := os.MkdirAll(s.cfg.State, 0o750); err != nil {
+		s.t.Fatal(err)
+	}
+	content := strings.Join(rows, "\n")
+	if content != "" {
+		content += "\n"
+	}
+	if err := os.WriteFile(filepath.Join(s.cfg.State, "metrics.tsv"), []byte(content), 0o600); err != nil {
+		s.t.Fatal(err)
+	}
+}
+
+func costRow(stamp, cost string) string {
+	return stamp + "\t12\t5\t3\t" + cost + "\t1600\t50"
 }
 
 func (s *scenario) fresh(n int) {
@@ -383,6 +402,122 @@ func TestRunGates(t *testing.T) {
 		}
 		if s.claudeNotCalled() {
 			t.Fatal("claude should have run")
+		}
+	})
+}
+
+func TestRunDailyBudget(t *testing.T) {
+	budgetArgument := func(s *scenario) string {
+		for i, argument := range s.claudeArguments() {
+			if argument == "--max-budget-usd" {
+				return s.claudeArguments()[i+1]
+			}
+		}
+		return ""
+	}
+
+	t.Run("given no metrics file, when running, then it runs with the per-round budget", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := budgetArgument(s); got != "3" {
+			t.Fatalf("expected 3, got %q", got)
+		}
+	})
+
+	t.Run("given an empty metrics file, when running, then it runs with the per-round budget", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows()
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := budgetArgument(s); got != "3" {
+			t.Fatalf("expected 3, got %q", got)
+		}
+	})
+
+	t.Run("given rows from today below the daily cap with room left, when running, then it keeps the per-round budget", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows(costRow("2026-11-22-0800", "0.4"), costRow("2026-11-22-0900", "0.6"))
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := budgetArgument(s); got != "3" {
+			t.Fatalf("expected 3, got %q", got)
+		}
+	})
+
+	t.Run("given rows from today that reach the daily cap, when running, then it prints the reason and does not call the model", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows(costRow("2026-11-22-0700", "3"), costRow("2026-11-22-0900", "3"))
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		expected := "teto diário de US$ 6.00 atingido (US$ 6.00 gastos hoje): não rodo o modelo\n"
+		if s.out.String() != expected {
+			t.Fatalf("expected %q, got %q", expected, s.out.String())
+		}
+		if !s.claudeNotCalled() || s.branches() != "" || len(s.reminder.calls) != 0 || s.stateHas("input-2026-11-22-1030.txt") {
+			t.Fatal("the round should have stopped before any effect")
+		}
+	})
+
+	t.Run("given rows from today above the daily cap, when running, then it blocks the round", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows(costRow("2026-11-22-0700", "7.25"))
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(s.out.String(), "teto diário de US$ 6.00 atingido (US$ 7.25 gastos hoje)") || !s.claudeNotCalled() {
+			t.Fatalf("output: %q", s.out.String())
+		}
+	})
+
+	t.Run("given rows only from other days, when running, then it ignores them and keeps the per-round budget", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows(costRow("2026-11-21-2359", "9"), costRow("2026-11-23-0001", "9"), costRow("2025-11-22-0900", "9"))
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := budgetArgument(s); got != "3" {
+			t.Fatalf("expected 3, got %q", got)
+		}
+	})
+
+	t.Run("given a remaining balance smaller than the per-round budget, when running, then it passes the balance to claude", func(t *testing.T) {
+		s := newScenario(t)
+		s.metricsRows(costRow("2026-11-21-1000", "5"), costRow("2026-11-22-0700", "4.1"))
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := budgetArgument(s); got != "1.9" {
+			t.Fatalf("expected 1.9, got %q", got)
+		}
+	})
+
+	t.Run("given a finished round, when the next one starts the same day, then the cost of the first counts against the cap", func(t *testing.T) {
+		s := newScenario(t)
+		s.cfg.DailyBudgetUSD = 0.1
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		s.now = s.now.Add(3 * time.Hour)
+		s.fresh(12)
+		s.out.Reset()
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(s.out.String(), "teto diário de US$ 0.10 atingido (US$ 0.12 gastos hoje)") {
+			t.Fatalf("output: %q", s.out.String())
 		}
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const metricsHeader = "rodada\tfalas\tsegundos\tturnos\tcusto_usd\ttokens_entrada\ttokens_saida\n"
@@ -52,4 +53,23 @@ func decimalAt(fields []string, index int) float64 {
 
 func integerAt(fields []string, index int) int {
 	return int(decimalAt(fields, index))
+}
+
+func spentToday(state string, now time.Time) (float64, error) {
+	raw, err := os.ReadFile(filepath.Join(state, metricsName))
+	if errors.Is(err, fs.ErrNotExist) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	prefix := now.Format("2006-01-02") + "-"
+	var spent float64
+	for _, row := range strings.Split(string(raw), "\n") {
+		fields := strings.Split(row, "\t")
+		if strings.HasPrefix(fields[0], prefix) {
+			spent += decimalAt(fields, 4)
+		}
+	}
+	return spent, nil
 }
