@@ -82,7 +82,8 @@ func newRound(cfg *Config, dep *Dependencies, now time.Time, pass string) *round
 
 func Run(ctx context.Context, cfg *Config, dep *Dependencies) error {
 	now := dep.Now()
-	err := newRound(cfg, dep, now, rulesPass).run(ctx)
+	err := prunePending(ctx, cfg, dep)
+	err = errors.Join(err, newRound(cfg, dep, now, rulesPass).run(ctx))
 	if cfg.SkipNotes {
 		return err
 	}

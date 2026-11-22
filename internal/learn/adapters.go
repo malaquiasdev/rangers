@@ -16,6 +16,7 @@ type Claude interface {
 
 type Git interface {
 	NewWorktree(ctx context.Context, repo, branch, worktree string) error
+	BranchExists(ctx context.Context, repo, branch string) (bool, error)
 }
 
 type Reminder interface {
@@ -83,6 +84,21 @@ func (GitCLI) NewWorktree(ctx context.Context, repo, branch, worktree string) er
 		return fmt.Errorf("git worktree add: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+func (GitCLI) BranchExists(ctx context.Context, repo, branch string) (bool, error) {
+	args := []string{"-C", repo, "rev-parse", "--verify", "--quiet", "refs/heads/" + branch}
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Env = withoutGitVariables()
+	_, err := cmd.Output()
+	if err == nil {
+		return true, nil
+	}
+	var exited *exec.ExitError
+	if errors.As(err, &exited) && exited.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, withStderr("git rev-parse", err)
 }
 
 func (r OsascriptReminder) Create(ctx context.Context, title, body string) error {

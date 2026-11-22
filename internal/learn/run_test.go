@@ -38,6 +38,11 @@ type blockingClaude struct{}
 
 type slowAfterFirst struct{ calls int }
 
+type brokenBranchLookup struct {
+	GitCLI
+	fail error
+}
+
 type scenario struct {
 	t        *testing.T
 	cfg      Config
@@ -49,6 +54,7 @@ type scenario struct {
 	errOut   *bytes.Buffer
 	claude   Claude
 	brain    Brain
+	git      Git
 }
 
 func (f *fakeBrain) Probe(_ context.Context, dir string) error {
@@ -64,6 +70,10 @@ func (blockingClaude) Run(ctx context.Context, _ string, _ []string) ([]byte, er
 func (f *fakeReminder) Create(_ context.Context, title, body string) error {
 	f.calls = append(f.calls, [2]string{title, body})
 	return f.fail
+}
+
+func (b brokenBranchLookup) BranchExists(_ context.Context, _, _ string) (bool, error) {
+	return false, b.fail
 }
 
 func writeExecutable(t *testing.T, path, content string) {
@@ -220,12 +230,16 @@ func (s *scenario) run() error {
 	if s.brain != nil {
 		brain = s.brain
 	}
+	var git Git = GitCLI{}
+	if s.git != nil {
+		git = s.git
+	}
 	return Run(context.Background(), &s.cfg, &Dependencies{
 		Claude:   claude,
 		Brain:    brain,
 		Binary:   "/opt/rangers/bin/rangers",
 		Home:     s.home,
-		Git:      GitCLI{},
+		Git:      git,
 		Reminder: s.reminder,
 		Now:      func() time.Time { return s.now },
 		Out:      s.out,
@@ -265,6 +279,21 @@ func (s *scenario) branches() string {
 		s.t.Fatal(err)
 	}
 	return strings.TrimSpace(string(out))
+}
+
+func (s *scenario) branch(name string) {
+	s.t.Helper()
+	execute(s.t, s.cfg.Repo, "git", "branch", name, "main")
+}
+
+func (s *scenario) pending(content string) {
+	s.t.Helper()
+	if err := os.MkdirAll(s.cfg.State, 0o750); err != nil {
+		s.t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(s.cfg.State, "pending-reminders.txt"), []byte(content), 0o600); err != nil {
+		s.t.Fatal(err)
+	}
 }
 
 func (s *scenario) stateFile(name string) string {
@@ -1093,6 +1122,97 @@ func TestRunReminderFailure(t *testing.T) {
 		}
 		if s.errOut.Len() != 0 || s.stateHas("pending-reminders.txt") {
 			t.Fatalf("warning %q, pending file %v", s.errOut.String(), s.stateHas("pending-reminders.txt"))
+		}
+	})
+}
+
+func TestRunPrunesPendingReminders(t *testing.T) {
+	const title = "Revisar as regras propostas"
+	gone := title + "\tRamo learn/2026-11-20-0900 em /work/learn-2026-11-20-0900\n"
+	kept := title + "\tRamo learn/2026-11-21-0900 em /work/learn-2026-11-21-0900\n"
+	free := "Dar acesso ao brain ao rangers\tAcesso Total ao Disco para /opt/rangers/bin/rangers em Ajustes\n"
+	blocked := func(t *testing.T) *scenario {
+		t.Helper()
+		s := newScenario(t)
+		s.checkpointAgo(30 * time.Minute)
+		s.branch("learn/2026-11-21-0900")
+		return s
+	}
+
+	t.Run("given a line for a branch that no longer exists, when a round starts, then the line is removed and no reminder is created for it", func(t *testing.T) {
+		s := blocked(t)
+		s.pending(gone + kept)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.stateFile("pending-reminders.txt"); got != kept {
+			t.Fatalf("expected %q, got %q", kept, got)
+		}
+		if len(s.reminder.calls) != 0 {
+			t.Fatalf("reminders: %v", s.reminder.calls)
+		}
+	})
+
+	t.Run("given a line for a branch that still exists, when a round starts, then the file stays untouched", func(t *testing.T) {
+		s := blocked(t)
+		s.pending(kept)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.stateFile("pending-reminders.txt"); got != kept {
+			t.Fatalf("expected %q, got %q", kept, got)
+		}
+	})
+
+	t.Run("given a free-text line with no branch name, when a round starts, then the line stays untouched", func(t *testing.T) {
+		s := blocked(t)
+		s.pending(free + gone)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.stateFile("pending-reminders.txt"); got != free {
+			t.Fatalf("expected %q, got %q", free, got)
+		}
+	})
+
+	t.Run("given no pending file, when a round starts, then the round runs as before and creates no file", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.stateHas("pending-reminders.txt") || len(s.claudeCalls()) != 1 {
+			t.Fatalf("pending file %v, claude calls %d", s.stateHas("pending-reminders.txt"), len(s.claudeCalls()))
+		}
+	})
+
+	t.Run("given an empty pending file, when a round starts, then the file stays empty", func(t *testing.T) {
+		s := blocked(t)
+		s.pending("")
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.stateFile("pending-reminders.txt"); got != "" {
+			t.Fatalf("expected an empty file, got %q", got)
+		}
+	})
+
+	t.Run("given a git that fails, when a round starts, then the file stays intact, a warning goes to the error output and the round continues", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		s.git = brokenBranchLookup{fail: errors.New("fatal: not a git repository")}
+		s.pending(gone + kept)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.stateFile("pending-reminders.txt"); got != gone+kept {
+			t.Fatalf("file changed: %q", got)
+		}
+		if warning := s.errOut.String(); !strings.HasPrefix(warning, "aviso: ") || !strings.Contains(warning, "not a git repository") {
+			t.Fatalf("warning: %q", warning)
+		}
+		if len(s.claudeCalls()) != 1 {
+			t.Fatal("the round should have run")
 		}
 	})
 }
