@@ -2,7 +2,7 @@
 
 Pixel art for the Rangers repository: the cover poster, the wide banner and one sprite per agent. The poster and the banner show the backdrop, the panels and the title; the heroes live only in the panels and in the sprites. Everything is drawn by code from shapes, lighting rules and palette ramps, with Python 3 standard library only. There is no image editor step and no external tool.
 
-The art is fan-style and must be replaced by original art before the repository goes public. The checklist is in [before making the repository public](../docs/how-to/before-making-the-repo-public.md).
+The art is fan-style, drawn in the look of an existing franchise, so it is meant for a private repository.
 
 ## Regenerate
 
