@@ -6,6 +6,15 @@ repo=${RANGERS_REPO:-$HOME/Developer/me/rangers}
 state=${ZORDON_STATE:-$HOME/.local/state/rangers/zordon}
 mkdir -p "$state"
 
+intervalo=${ZORDON_INTERVALO_HORAS:-2}
+if [ -f "$state/checkpoint" ]; then
+  idade=$(( $(date +%s) - $(stat -f %m "$state/checkpoint") ))
+  if [ "$idade" -lt $((intervalo * 3600)) ]; then
+    echo "a última rodada foi há $((idade / 60)) min, menos que o intervalo de ${intervalo}h: não rodo"
+    exit 0
+  fi
+fi
+
 carimbo=$(date +%Y-%m-%d-%H%M)
 entrada="$state/entrada-$carimbo.txt"
 
@@ -28,6 +37,8 @@ cd "$arvore"
 saida="$state/saida-$carimbo.json"
 claude -p "O arquivo $entrada tem, uma por linha, as falas que o humano digitou desde o último checkpoint (sessão, hora, texto). Proponha as regras nos arquivos desta pasta e faça o commit local no ramo $ramo." \
   --agent zordon \
+  --model "${ZORDON_MODELO_REGRAS:-opus}" \
+  --max-budget-usd "${ZORDON_TETO_USD:-3}" \
   --permission-mode acceptEdits \
   --allowedTools "Read,Edit,Write,Bash(git add:*),Bash(git commit:*),Bash(git status:*),Bash(git diff:*)" \
   --output-format json > "$saida"
