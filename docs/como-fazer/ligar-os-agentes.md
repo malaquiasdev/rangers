@@ -1,34 +1,49 @@
-# Como ligar os agentes no Claude Code
+# How to connect the agents and the skill to Claude Code
 
-O Claude Code carrega os subagentes do usuário a partir de `~/.claude/agents/`. Os scripts não fazem essa ligação. Para usar os agentes deste repo, crie um link simbólico para cada arquivo de `agents/`. Assim uma mudança no repo vale na próxima sessão, sem copiar nada.
+Claude Code loads the user's subagents from `~/.claude/agents/` and the user's skills from `~/.claude/skills/`. The scripts do not create these links. This guide links the files of the clone, so a change in the repository applies in the next session without copying anything.
 
-1. Na raiz do repo, crie a pasta, se ela não existir, e os links:
+## Connect the agents
+
+1. From the root of the repository, create the folder if it does not exist, and the links:
 
    ```sh
    mkdir -p ~/.claude/agents
    ln -s "$PWD"/agents/*.md ~/.claude/agents/
    ```
 
-   Se o `ln` disser `File exists` para algum arquivo, já existe um agente com esse nome na pasta. Confira o que é com `ls -l ~/.claude/agents` antes de decidir. Não apague um arquivo comum dessa pasta sem saber de onde ele veio.
+   If `ln` says `File exists` for a file, an agent with that name is already in the folder. Check what it is with `ls -l ~/.claude/agents` before you decide. Do not delete a regular file in that folder without knowing where it came from.
 
-2. Abra uma sessão nova do Claude Code. Os agentes carregam quando a sessão começa.
+2. Open a new Claude Code session. Agents load when the session starts.
 
-3. Rode `/agents` na sessão e confira se os agentes aparecem na lista.
+3. Run `/agents` in the session and check that the agents are in the list.
 
-## Conferir quais agentes estão ligados
+## Connect the `/rangers` skill
 
-```sh
-ls -l ~/.claude/agents
-```
-
-Os agentes deste repo aparecem como links (`->`) apontando para a pasta `agents/` do clone.
-
-## Desligar os agentes
-
-Na raiz do repo, apague só os links que apontam para cá:
+The skill in [`skills/rangers/`](../../skills/rangers/) starts an activity with the coordinator. From the root of the repository:
 
 ```sh
-find ~/.claude/agents -type l -lname "$PWD/agents/*" -print -delete
+mkdir -p ~/.claude/skills
+ln -s "$PWD/skills/rangers" ~/.claude/skills/rangers
 ```
 
-O comando mostra cada link que apagou. Arquivos comuns e links para outros lugares ficam onde estão.
+If `~/.claude/skills/rangers` already exists, `ln` puts the link inside it instead. Check it with `ls -l ~/.claude/skills/rangers` first.
+
+Open a new session. Typing `/rangers` shows the skill. How to use it is in [how to start an activity](iniciar-uma-atividade.md).
+
+## Check which agents are connected
+
+```sh
+ls -l ~/.claude/agents ~/.claude/skills
+```
+
+The files from this repository show up as links (`->`) that point to the clone.
+
+## Disconnect the agents
+
+From the root of the repository, delete only the links that point here:
+
+```sh
+find ~/.claude/agents ~/.claude/skills -maxdepth 1 -type l -lname "$PWD/*" -print -delete
+```
+
+The command prints each link it deleted. Regular files and links to other places stay where they are.

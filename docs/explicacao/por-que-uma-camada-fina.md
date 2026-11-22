@@ -1,56 +1,47 @@
-# Por que uma camada fina em cima de open source
+# Why a thin layer on top of open source
 
-O Rangers começou como uma plataforma própria, a `jaiminho-suite`. Ela coordenava agentes do Claude Code com código escrito do zero. A suíte foi arquivada e este repositório tomou o lugar dela com outra aposta: usar projetos open source que já coordenam agentes e escrever só o que nenhum deles cobre.
+This repository uses open source projects that already coordinate Claude Code agents, and writes only what none of them covers.
 
-## O que fica com os projetos open source
+## What the open source projects do
 
-Os plugins e ferramentas instalados fazem o trabalho pesado. Os nomes aparecem em toda a documentação:
+The installed plugins and tools do most of the work. Their names show up across the documentation:
 
-| Peça | O que faz para o Rangers |
+| Piece | What it does for Rangers |
 | --- | --- |
-| pstack | Plugin do Claude Code com roteiros prontos por tipo de tarefa (bug, feature e outros), revisão por outro agente, verificação e reflexão. Os agentes daqui chamam os roteiros e as skills dele |
-| i-have-adhd | Plugin que muda o formato da resposta para quem tem TDAH: ação primeiro, passos numerados. Liga com `/i-have-adhd` |
-| `grilling` | Skill que refina uma atividade com uma pergunta por vez |
-| OpenSpec | Contrato e spec antes de escrever código |
-| container-use | Ambiente isolado por agente, sem poder de merge |
+| pstack | Claude Code plugin with playbooks by kind of task (bug, feature and others), review by another agent, verification and reflection. The agents here call its playbooks and skills |
+| i-have-adhd | Plugin that changes the answer format: action first, numbered steps. Turned on with `/i-have-adhd` |
+| `grilling` | Skill that refines an activity one question at a time |
+| OpenSpec | Contract and spec before code. Optional |
+| container-use | An isolated environment per agent, with no power to merge |
 
-A lista exata, com versão e origem, está em [`deps.toml`](../../deps.toml). O que cada campo quer dizer está na [referência das dependências](../referencia/dependencias.md).
+The exact list, with version and source, is in [`deps.toml`](../../deps.toml). What each field means is in the [dependencies reference](../referencia/dependencias.md).
 
-## O que fica neste repositório
+## What stays in this repository
 
-Sobra pouco, e de propósito:
+Little is left, on purpose:
 
-- os agentes, que dizem a cada projeto open source como trabalhar do jeito do dono do repo (veja [como os agentes dividem o trabalho](como-os-agentes-dividem-o-trabalho.md));
-- a lista do que está instalado e os scripts que instalam e conferem;
-- o plano de teste que decide se a ideia funciona;
-- as regras próprias que nenhum projeto cobre, que só entram depois do teste.
+- the agents, which tell each open source project how to work the way the owner of the repository wants (see [how the agents split the work](como-os-agentes-dividem-o-trabalho.md));
+- the `/rangers` skill, the single entry point that hands an activity to the coordinator;
+- the rules for every agent, in [`rules/`](../../rules/);
+- the list of what is installed and the scripts that install and check it;
+- the `rangers learn` program, which turns the human's corrections into proposed rules (see [how the learning loop works](como-o-aprendizado-funciona.md));
+- the local checks and the release workflow;
+- the test plan that decides whether the idea works.
 
-A vantagem é manter pouco código. O custo é depender do ritmo e das decisões de outros projetos. Por isso cada dependência tem versão ou commit fixo em `deps.toml`, e cada uma tem um comando de remoção em [como desfazer a instalação](../como-fazer/desfazer-a-instalacao.md).
+The upside is little code to keep. The cost is depending on the pace and the choices of other projects. That is why each dependency has a pinned version or commit in `deps.toml`, and each one has a remove command in [how to uninstall](../como-fazer/desfazer-a-instalacao.md).
 
-## O teste decide
+## The checks run on the machine
 
-A pergunta que o teste responde é esta: uma camada fina em cima de projetos open source resolve o que a plataforma antiga resolvia, com menos atrito para quem usa só iPad e tem TDAH?
+The checks run in Git hooks and `make check`, not in GitHub Actions. The only workflow is release-please. This keeps the Actions quota for the release and gives the same answer before a commit as before a push. The list is in the [checks and release reference](../referencia/checagens-e-release.md).
 
-O teste usa uma atividade real de trabalho, pequena, do tamanho de uma PR. Atividade inventada não vale, porque não mostra o atrito de verdade. As medidas e o que cada resultado decide estão na [referência do plano de teste](../referencia/plano-de-teste.md). O passo a passo está em [como rodar o teste](../como-fazer/rodar-o-teste.md).
+## The test decides
 
-Se o teste falhar em duas ou mais medidas, a decisão volta para o desenho, e a plataforma antiga pode voltar a valer a pena. Por isso ela continua guardada, e não apagada.
+The test answers one question: does a thin layer on top of open source projects take an activity to a pull request with little friction for a human who reads short answers and does not want to open files?
 
-## O que ainda não tem dono em open source
+The test uses a real work activity, small, the size of one pull request. A made-up activity does not count, because it does not show the real friction. The measures and what each result decides are in the [test plan reference](../referencia/plano-de-teste.md). The steps are in [how to run the test](../como-fazer/rodar-o-teste.md).
 
-Três peças não existem prontas em nenhum projeto:
+## What does not exist yet
 
-1. O sim do humano com prova no transcript da sessão.
-2. O portão que confere a CI antes do merge.
-3. As regras de resposta curta para TDAH.
+The gate agent runs a `rangers gate` command that checks the human's yes, the CI and production before a merge. That command does not exist yet: the `rangers` program has only `learn`. The coordinator does not call the gate today, and it stops when the pull request is open.
 
-Elas só entram se o teste mostrar que fazem falta. Os agentes já citam algumas delas. O agente de portão chama um comando `rangers gate`, e o agente de aprendizado grava regras numa pasta `rules/`. Nenhum dos dois existe ainda neste repositório.
-
-O mesmo vale para o instalador em Go. Até ele existir, os scripts em `scripts/` fazem esse papel (veja a [referência dos scripts](../referencia/scripts.md)).
-
-## O que ficou de fora
-
-| Projeto | Por que ficou de fora |
-| --- | --- |
-| orchestrate (repositório de plugins do Cursor) | O script depende dos agentes de nuvem do Cursor, e o marketplace do Claude Code só lista o pstack |
-| agent-teams (wshobson/agents) | Recusado pelo dono do repo em 21/11/2026 |
-| claude-flow (ruflo) | Um estudo de 20/11/2026 descartou: mais complexidade do que ganho |
+The gate comes in only if the test shows it is missing.

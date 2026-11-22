@@ -1,43 +1,47 @@
-# Arquivo de agente
+# Agent file
 
-Cada agente é um arquivo Markdown em [`agents/`](../../agents/), com um cabeçalho YAML e um corpo de instruções em inglês. O Claude Code lê esses arquivos como subagentes quando eles estão na pasta de agentes do usuário, `~/.claude/agents/` (veja [como ligar os agentes no Claude Code](../como-fazer/ligar-os-agentes.md)).
+Each agent is a Markdown file in [`agents/`](../../agents/), with a YAML header and a body of instructions in English. Claude Code loads these files as subagents when they are in the user's agents folder, `~/.claude/agents/` (see [how to connect the agents](../como-fazer/ligar-os-agentes.md)).
 
-## Cabeçalho
+## Header
 
-| Campo | Obrigatório | Valores usados no repo | O que define |
+| Field | Required | Values | What it sets |
 | --- | --- | --- | --- |
-| `name` | Sim | O nome do arquivo sem `.md` | Como o agente é chamado no Claude Code |
-| `description` | Sim | Começa pelo papel em inglês, seguido de uma frase | Quando usar o agente. O Claude Code mostra esse texto na lista de agentes |
-| `model` | Sim | `opus`, `sonnet`, `haiku` | O modelo em que o agente roda |
-| `effort` | Sim | `high`, `medium` | O esforço de raciocínio |
-| `tools` | Não | Lista separada por vírgula, como `Read, Grep, Glob, Bash` | As únicas ferramentas que o agente pode usar. Sem o campo, o agente recebe todas |
+| `name` | Yes | The file name without `.md` | How the agent is called in Claude Code |
+| `description` | Yes | Starts with the role in English and a period, then one sentence | When to use the agent. Claude Code shows this text in the list of agents |
+| `model` | Yes | `opus`, `sonnet`, `haiku` | The model the agent runs on |
+| `effort` | Yes | `low`, `medium`, `high`, `xhigh`, `max` | The reasoning effort |
+| `tools` | No | Comma-separated list, such as `Read, Grep, Glob, Bash` | The only tools the agent can use. Without the field, the agent gets all of them |
 
-Os agentes que só leem ou só executam um comando declaram `tools`. Os que escrevem arquivos não declaram.
+The agents that only read or only run one command declare `tools`. The ones that write files do not.
 
-## Corpo
+`scripts/checar.sh` refuses a file whose `name`, `model`, `effort` or `description` breaks the rules above (see the [checks reference](checagens-e-release.md#what-scriptschecarsh-checks)).
 
-O corpo segue a mesma ordem em todos os arquivos:
+`rangers learn` finds the learning agent by its `description`, which must start with `Learning.` (see the [`rangers learn` reference](comando-learn.md#the-two-passes)).
 
-1. Uma linha `Character:`, com a voz do agente.
-2. Um parágrafo curto que diz o papel.
-3. `## What you do`, com os passos do papel.
-4. `## What you do not do`, com os limites do papel.
+## Body
 
-O coordenador tem ainda duas seções: `## How you talk to the human`, com as regras de mensagem para o humano, e `## Push notifications`, com os momentos em que ele avisa o humano por notificação.
+The body follows the same order in every file:
 
-## Regras que se repetem
+1. A `Character:` line with the voice of the agent. The checks require it.
+2. A short paragraph that states the role.
+3. `## What you do`, with the steps of the role.
+4. `## What you do not do`, with the limits of the role.
 
-Cada arquivo traz as próprias regras. Algumas aparecem em vários deles:
+Some files have more sections. The coordinator has `## Who you call and when`, `## How you talk to the human` and `## Push notifications`. The learning agent has `## Notes pass`.
 
-- o nome do personagem não aparece em código, commit, PR, comentário ou documento;
-- a resposta para quem chamou o agente tem no máximo 560 caracteres;
-- produção espera o sim explícito do humano.
+## Rules that repeat
 
-Uma regra só vale para o agente cujo arquivo a traz.
+Each file carries its own rules. Some appear in several of them:
 
-## Onde ver cada agente
+- the name of the character does not appear in code, commits, pull requests, comments or documents;
+- the answer to whoever called the agent has at most 560 characters;
+- production waits for the human's explicit yes.
 
-Os arquivos em `agents/` são a fonte. Para listar papel, modelo e esforço de todos de uma vez, na raiz do repo:
+A rule only applies to the agent whose file carries it. Rules for every agent go in [`rules/`](../../rules/).
+
+## Where to see each agent
+
+The files in `agents/` are the source. To list the role, model and effort of all of them at once, from the root of the repository:
 
 ```sh
 grep -H -E '^(description|model|effort|tools):' agents/*.md

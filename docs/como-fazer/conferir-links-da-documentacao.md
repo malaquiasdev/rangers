@@ -1,23 +1,23 @@
-# Como conferir os links da documentação
+# How to check the documentation links
 
-Use este guia depois de mexer no `README.md` ou em `docs/`. Ele confere os links entre arquivos e as âncoras de cada título, sem acessar a internet.
+Use this guide after changing `README.md` or `docs/`. It checks the links between files and the anchor of each heading, without going to the internet. `make check` runs the same check among the others; this guide runs only this one and shows the errors.
 
-O conferidor é o lychee, numa imagem de container. A versão da imagem está em [`deps.toml`](../../deps.toml).
+The checker is lychee, in a container image. The version of the image is in [`deps.toml`](../../deps.toml).
 
-1. Garanta que o Podman está de pé:
+1. Make sure Podman is up:
 
    ```sh
    podman machine start
    ```
 
-   Se a máquina já estiver rodando, o comando avisa e não muda nada.
+   If the machine is already running, the command says so and changes nothing.
 
-2. Na raiz do repo, rode:
+2. From the root of the repository, run:
 
    ```sh
    podman run --rm -v "$PWD:/w:ro" -w /w docker.io/lycheeverse/lychee:0.24.2 --offline --include-fragments README.md 'docs/**/*.md'
    ```
 
-3. Leia o resumo no fim. Se aparecer algum erro, o lychee mostra o arquivo e o link quebrado. Corrija o caminho ou o título e rode de novo.
+3. Read the summary at the end. For each error, lychee shows the file and the broken link. Fix the path or the heading and run it again.
 
-Se a versão da imagem mudar em `deps.toml`, troque a tag no comando.
+If the image version changes in `deps.toml`, change the tag in the command and in `scripts/checar.sh`.

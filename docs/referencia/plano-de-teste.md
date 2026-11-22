@@ -1,36 +1,36 @@
-# Plano de teste
+# Test plan
 
-As medidas e os critérios que decidem se a camada fina funciona. Por que existe o teste está em [por que uma camada fina](../explicacao/por-que-uma-camada-fina.md#o-teste-decide). O passo a passo está em [como rodar o teste](../como-fazer/rodar-o-teste.md).
+The measures and criteria that decide whether the thin layer works. Why the test exists is in [why a thin layer](../explicacao/por-que-uma-camada-fina.md#the-test-decides). The steps are in [how to run the test](../como-fazer/rodar-o-teste.md).
 
-## A atividade
+## The activity
 
-- Real, de trabalho, escolhida pelo dono do repo.
-- Pequena: cabe numa PR.
-- O contexto dela fica no repositório da atividade, não neste.
+- Real work, picked by the owner of the repository.
+- Small: it fits in one pull request.
+- Its context lives in the repository of the activity, not in this one.
 
-## Medidas
+## Measures
 
-| Medida | Como anotar | Passou se |
+| Measure | How to record it | Passes if |
 | --- | --- | --- |
-| Quantos "sim" o humano precisou dar | Contar na sessão | Até 2 |
-| Viu os agentes rodando no app | Sim ou não | Sim |
-| Leu o texto da sessão sem abrir outro arquivo | Sim ou não, e onde travou | Sim |
-| Tempo da atividade até a PR pronta | Minutos | Sem meta fixa; anotar |
-| Gasto da cota | Percentual antes e depois | Anotar |
-| Algo saiu errado e ninguém avisou | Descrever | Nenhum caso |
+| How many times the human had to say yes | Count in the session | 2 or fewer |
+| Saw the agents running in the app | Yes or no | Yes |
+| Read the session text without opening another file | Yes or no, and where it got stuck | Yes |
+| Time from the activity to the pull request ready | Minutes | No fixed target; record it |
+| Quota spent | Percentage before and after | Record it |
+| Something went wrong and nobody said so | Describe it | No case |
 
-## Onde anotar
+## Where to record
 
-Em `resultados/AAAA-MM-DD.md`, na raiz deste repo, com a data do teste. A pasta ainda não existe; o primeiro teste a cria.
+In `resultados/YYYY-MM-DD.md`, at the root of this repository, with the date of the test. The folder does not exist yet; the first test creates it.
 
-## Critérios de decisão
+## Decision criteria
 
-| Resultado | Condição | O que fazer |
+| Result | Condition | What to do |
 | --- | --- | --- |
-| Funciona | Passou nas três primeiras medidas e nenhum erro ficou sem aviso | Acrescentar só o que faltou |
-| Funciona em parte | Uma medida falhou | Anotar qual e corrigir só ela, com um teste novo |
-| Não funciona | Duas ou mais medidas falharam | Voltar ao desenho e decidir se vale a plataforma antiga |
+| Works | Passed the first three measures and no error went unreported | Add only what was missing |
+| Works in part | One measure failed | Record which one and fix only that, with a new test |
+| Does not work | Two or more measures failed | Back to the design |
 
-## Depois do teste
+## After the test
 
-Se funcionou, decidir se entram as três peças sem dono em open source: o sim com prova, o portão e as regras de resposta curta. Cada uma só entra se o teste mostrou que fez falta.
+If it worked, decide whether the gate program comes in. It only comes in if the test showed it was missing.

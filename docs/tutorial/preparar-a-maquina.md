@@ -1,67 +1,68 @@
-# Preparar a máquina pela primeira vez
+# Set up the machine for the first time
 
-Neste tutorial você vai deixar uma máquina pronta para usar o Rangers: instalar as peças open source, configurar o pstack e ver os agentes deste repo na lista do Claude Code.
+In this tutorial you will get a machine ready to use Rangers: install the open source pieces, set up pstack and see the agents of this repository in the Claude Code list.
 
-## Antes de começar
+## Before you start
 
-Você precisa de:
+You need:
 
-- o clone deste repositório;
-- Claude Code instalado, com o comando `claude` no terminal;
-- Node com npm, uv e Homebrew;
-- um runtime de container que responda ao comando `docker`. Podman serve, desde que o comando `docker` chame o Podman (por exemplo, um link `docker` apontando para `podman`) e a máquina do Podman esteja ligada com `podman machine start`.
+- a clone of this repository;
+- Claude Code installed, with the `claude` command in the terminal;
+- Homebrew;
+- a container runtime that answers the `docker` command. Podman works as long as `docker` calls Podman (for example, a `docker` link that points to `podman`) and the Podman machine is up with `podman machine start`.
 
-Abra um terminal na raiz do clone. Todos os comandos abaixo rodam dali.
+Open a terminal at the root of the clone. Every command below runs from there.
 
-## 1. Veja o que já existe
+## 1. See what is already there
 
 ```sh
 scripts/conferir.sh
 ```
 
-Você vai ver uma linha por peça, com a versão ao lado. As que ainda não estão instaladas aparecem como `FALTANDO`. A última linha diz quantos itens faltam ou `Tudo no lugar.`.
+You will see one line per piece, with its version next to it. The ones not installed yet show `FALTANDO`. The last line says how many items are missing, or `Tudo no lugar.`.
 
-Não se preocupe com os `FALTANDO`: o próximo passo cuida deles.
+Do not worry about the `FALTANDO` lines: the next step takes care of them.
 
-## 2. Instale o que falta
+## 2. Install what is missing
 
 ```sh
 scripts/instalar.sh
 ```
 
-O script instala só o que faltava e, no fim, roda a conferência de novo. Repare na última linha: agora ela diz `Tudo no lugar.`.
+The script installs only what was missing and, at the end, runs the check again. Look at the last line: now it says `Tudo no lugar.`.
 
-Se ainda aparecer `item(ns) faltando`, procure nas linhas de cima qual peça está como `FALTANDO` ou `SEM RESPOSTA`. O caso mais comum é a linha do `docker`: o script não liga o runtime de container. Ligue o Podman com `podman machine start` e rode `scripts/conferir.sh` outra vez.
+If it still says `item(ns) faltando`, look in the lines above for the piece marked `FALTANDO` or `SEM RESPOSTA`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `scripts/conferir.sh` again.
 
-## 3. Configure o pstack
+## 3. Set up pstack
 
-Feche o Claude Code, se estiver aberto, e abra uma sessão nova. Na sessão, rode:
+Close Claude Code, if it is open, and open a new session. In the session, run:
 
 ```
 /pstack:setup-pstack
 ```
 
-O pstack detecta os modelos que você tem e grava uma regra com o modelo de cada papel. Siga o que ele pedir. Isso só precisa ser feito uma vez.
+pstack finds the models you have and writes a rule with the model of each role. Follow what it asks. You only do this once.
 
-## 4. Ligue os agentes
+## 4. Connect the agents and the skill
 
-De volta ao terminal, na raiz do clone:
+Back in the terminal, at the root of the clone:
 
 ```sh
-mkdir -p ~/.claude/agents
+mkdir -p ~/.claude/agents ~/.claude/skills
 ln -s "$PWD"/agents/*.md ~/.claude/agents/
+ln -s "$PWD/skills/rangers" ~/.claude/skills/rangers
 ```
 
-Abra outra sessão nova do Claude Code e rode:
+Open another new Claude Code session and run:
 
 ```
 /agents
 ```
 
-Os agentes deste repo aparecem na lista, cada um com o papel na descrição: Coordinator, Author, Reviewer e os demais.
+The agents of this repository are in the list, each with its role in the description: Coordinator, Author, Reviewer and the others. Type `/rangers` and notice that the skill shows up too.
 
-## O que você fez
+## What you did
 
-A máquina tem as peças open source instaladas, o pstack configurado e os agentes ligados. O próximo passo é rodar o teste com uma atividade real: veja [como rodar o teste](../como-fazer/rodar-o-teste.md).
+The machine has the open source pieces installed, pstack set up, and the agents and the `/rangers` skill connected. The agents also call skills from other repositories, such as `grilling`; install them with [how to install the skills](../como-fazer/instalar-as-skills.md). Then start a real activity: see [how to start an activity](../como-fazer/iniciar-uma-atividade.md).
 
-Para entender por que o repo é tão pequeno, leia [por que uma camada fina](../explicacao/por-que-uma-camada-fina.md).
+To understand why the repository is so small, read [why a thin layer](../explicacao/por-que-uma-camada-fina.md).

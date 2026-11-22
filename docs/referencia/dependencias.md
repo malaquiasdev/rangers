@@ -1,61 +1,81 @@
-# Dependências
+# Dependencies
 
-A lista do que o Rangers usa, com versão ou commit fixo, licença e origem, está em [`deps.toml`](../../deps.toml). Esta página descreve o formato desse arquivo e diz o que os scripts cobrem. Para a versão de uma peça, leia o arquivo.
+The list of what Rangers uses, with a pinned version or commit, the license and the source, is in [`deps.toml`](../../deps.toml). This page describes the format of that file, what the scripts cover and what the machine needs. For the version of a piece, read the file.
 
-## Formato do `deps.toml`
+## Format of `deps.toml`
 
-O arquivo começa com `format_version = 1`. Cada dependência é uma tabela `[[dependency]]`.
+The file starts with `format_version = 1`. Each dependency is a `[[dependency]]` table.
 
-Campos que toda dependência tem:
+Fields every dependency has. `scripts/checar.sh` fails when one is missing:
 
-| Campo | O que guarda |
+| Field | What it holds |
 | --- | --- |
-| `name` | O nome curto da peça |
-| `kind` | O tipo de peça, que define os outros campos |
-| `license` | A licença declarada pelo projeto |
-| `function` | Para que o Rangers usa a peça, em uma frase |
+| `name` | The short name of the piece |
+| `kind` | The kind of piece, which sets the other fields |
+| `license` | The license declared by the project |
+| `function` | What Rangers uses the piece for, in one sentence |
 
-Campos por tipo:
+Optional field:
 
-| `kind` | Campos próprios |
+| Field | What it holds |
+| --- | --- |
+| `optional` | `true` when Rangers works without the piece. `conferir.sh` does not count it as missing, and `instalar.sh` installs it only when asked |
+
+Fields by kind:
+
+| `kind` | Its own fields |
 | --- | --- |
 | `claude-plugin` | `marketplace`, `plugin`, `version`, `commit`, `source` |
 | `npm` | `package`, `version`, `source` |
 | `brew` | `formula`, `version`, `source`, `requires` |
-| `container-image` | `image` (com a tag), `source` |
+| `container-image` | `image` (with the tag), `source` |
 | `skill` | `repository`, `path`, `commit` |
 
-`requires` diz o que precisa existir na máquina para a peça funcionar.
+`requires` says what must exist on the machine for the piece to work.
 
-## O que os scripts cobrem
+## What the scripts cover
 
-`deps.toml` e os scripts não listam as mesmas peças:
+`deps.toml` and the scripts do not list the same pieces:
 
-| Peça | Fixada em `deps.toml` | Instalada por `instalar.sh` | Conferida por `conferir.sh` |
+| Piece | Pinned in `deps.toml` | Installed by `instalar.sh` | Checked by `conferir.sh` |
 | --- | --- | --- | --- |
-| pstack, i-have-adhd, container-use | Sim | Sim | Sim |
-| openspec (opcional) | Sim | Só com `INSTALAR_OPCIONAIS=1` | Mostra "não instalado (opcional)" sem acusar falta |
-| lychee (imagem de container) | Sim | Não | Não |
-| Skills (`kind = "skill"`) | Sim | Não | Não |
-| Runtime de container (`docker`) | Não | Não | Sim |
+| pstack, i-have-adhd, container-use | Yes | Yes | Yes |
+| openspec (`optional = true`) | Yes | Only with `INSTALAR_OPCIONAIS=1` | Shows `não instalado (opcional)` without counting it as missing |
+| lychee (container image) | Yes | No | No |
+| Skills (`kind = "skill"`) | Yes | No | No |
+| Container runtime (`docker`) | No | No | Yes |
 
-As skills ficam na pasta de skills do usuário, `~/.claude/skills/`. `deps.toml` traz o repositório, a pasta e o commit de origem de cada uma.
+The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. The steps to copy one are in [how to install the skills](../como-fazer/instalar-as-skills.md).
 
-## Como instalar e remover cada peça
+## How to install and remove each piece
 
-| Peça | Instalar | Remover |
+| Piece | Install | Remove |
 | --- | --- | --- |
-| pstack | `claude plugin marketplace add cursor/plugins` e `claude plugin install pstack@cursor-plugins` | `claude plugin uninstall pstack@cursor-plugins` e `claude plugin marketplace remove cursor-plugins` |
-| i-have-adhd | `claude plugin marketplace add ayghri/i-have-adhd` e `claude plugin install i-have-adhd@i-have-adhd` | `claude plugin uninstall i-have-adhd` e `claude plugin marketplace remove i-have-adhd` |
+| pstack | `claude plugin marketplace add cursor/plugins` and `claude plugin install pstack@cursor-plugins` | `claude plugin uninstall pstack@cursor-plugins` and `claude plugin marketplace remove cursor-plugins` |
+| i-have-adhd | `claude plugin marketplace add ayghri/i-have-adhd` and `claude plugin install i-have-adhd@i-have-adhd` | `claude plugin uninstall i-have-adhd@i-have-adhd` and `claude plugin marketplace remove i-have-adhd` |
 | container-use | `brew install dagger/tap/container-use` | `brew uninstall container-use` |
 | openspec | `npm install -g @fission-ai/openspec` | `npm uninstall -g @fission-ai/openspec` |
 
-Os comandos de instalação são os mesmos de [`scripts/instalar.sh`](../../scripts/instalar.sh).
+The install commands are the same as in [`scripts/instalar.sh`](../../scripts/instalar.sh).
 
-## Requisitos da máquina
+## What the machine needs
 
-- Claude Code, com o comando `claude` no terminal.
-- Node e npm. A máquina do teste usa Node 22.
-- uv.
-- Homebrew.
-- Um runtime de container que responda ao comando `docker`. Podman serve quando o comando `docker` chama o Podman, por exemplo por um link `docker` apontando para `podman`.
+To use the agents:
+
+- Claude Code, with the `claude` command in the terminal;
+- Homebrew, for container-use;
+- a container runtime that answers the `docker` command. Podman works when `docker` calls Podman, for example through a `docker` link that points to `podman`;
+- npm, only to install the optional openspec.
+
+To build and schedule `rangers learn`:
+
+- Go, at the version in [`go.mod`](../../go.mod);
+- macOS, because the schedule uses launchd and the reminder uses `osascript` and the Reminders app, with a list named `Tarefas Claude`;
+- Git, because the rules pass creates a worktree.
+
+To run the repository checks:
+
+- Bash and Git;
+- Go with `gofmt`, and `golangci-lint`;
+- `python3` 3.11 or newer, which has the `tomllib` module;
+- Podman, with its machine running, for the link check of `make check`.
