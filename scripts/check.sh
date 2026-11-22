@@ -84,6 +84,10 @@ if [ -f go.mod ]; then
 fi
 
 if [ "$mode" = "full" ]; then
+  PYTHONDONTWRITEBYTECODE=1 python3 -I -m unittest discover -s assets/tests -t assets > /dev/null 2>&1 || fail "testes dos assets"
+fi
+
+if [ "$mode" = "full" ]; then
   podman run --rm -v "$PWD:/w:ro" -w /w docker.io/lycheeverse/lychee:0.24.2 \
     --offline --include-fragments README.md 'docs/**/*.md' > /dev/null 2>&1 || fail "links da documentação"
 fi
