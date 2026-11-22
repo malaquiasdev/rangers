@@ -35,6 +35,7 @@ Each flag also reads an environment variable. The flag wins over the variable, a
 | `--notes-model` | `LEARN_NOTES_MODEL` | `sonnet` | Model of the notes pass |
 | `--notes-max-bytes` | `LEARN_NOTES_MAX_BYTES` | `60000` | Size limit of the notes pass input file |
 | `--skip-notes` | `LEARN_NOTES=off` | off | Skips the notes pass |
+| `--call-timeout-minutes` | `LEARN_CALL_TIMEOUT_MINUTES` | `20` | Time limit of each `claude` call, in minutes. When it runs out, the process is killed and the pass fails with an error that says so |
 | `--window-hours` | `LEARN_WINDOW_HOURS` | `24` | How far back to read when a pass has no checkpoint yet |
 | `--state` | `LEARN_STATE` | `~/.local/state/rangers/learn` | State folder |
 | `--repo` | `LEARN_REPO` | `~/Developer/me/rangers`, a fixed path | Clone of this repository, where the agents and the rules live |
@@ -43,7 +44,7 @@ Each flag also reads an environment variable. The flag wins over the variable, a
 
 The defaults of `--repo` and `--brain` are fixed paths under the home folder. The command does not look for the clone from the current folder, as `rangers install` does. When your clone or your notes folder is somewhere else, pass `--repo` and `--brain`, or set `LEARN_REPO` and `LEARN_BRAIN`. The scheduled job sets neither, so it only works with the defaults (see [Schedule](#schedule)).
 
-The command refuses to start when `--budget-usd`, `--daily-budget-usd` or `--notes-max-bytes` is zero or less, or when a variable holds a value that is not a number.
+The command refuses to start when `--budget-usd`, `--daily-budget-usd`, `--notes-max-bytes` or `--call-timeout-minutes` is zero or less, or when a variable holds a value that is not a number.
 
 ## The two passes
 
@@ -62,6 +63,16 @@ The rules pass runs first. The notes pass runs after it, even when the rules pas
 Both passes run the same agent: the first file in `<repo>/agents/` whose `description` starts with `Learning.`. If no file matches, the pass fails. The model is started with `claude -p`, permission mode `acceptEdits`, the cap of the round as `--max-budget-usd` and JSON output. Variables that start with `GIT_` are removed from its environment.
 
 `<stamp>` is the local date and time of the run, as `YYYY-MM-DD-HHMM`.
+
+## When the notes folder is not accessible
+
+Before the notes pass writes its input or calls the model, it lists `--brain` and creates and removes a temporary file in it, giving up after 10 seconds. If that fails, the pass does not call the model, does not write its input and does not touch `checkpoint-notes`. It prints this to standard output, with the path of the running program, and returns no error:
+
+```text
+[notas] sem acesso ao brain (<error>): dê Acesso Total ao Disco a <path of the rangers binary> em Ajustes > Privacidade e Segurança; pulo as notas
+```
+
+It also appends a line titled `Dar acesso ao brain ao rangers` to `pending-reminders.txt`. The rules pass is not affected. A scheduled job gets this error on a folder under `~/Documents` until the program has Full Disk Access (see [Give the job access to the notes folder](../how-to/schedule-learning.md#give-the-job-access-to-the-notes-folder)).
 
 ## Gates
 
@@ -95,6 +106,8 @@ The command reads the `*.jsonl` files in `--projects` and one folder below it, w
 
 If the reminder fails, the command prints a warning to standard error and appends the reminder to `pending-reminders.txt`. The round still counts as done.
 
+Each call to `claude` is killed after `--call-timeout-minutes`. The round then fails with `o claude passou de <time> sem terminar; processo encerrado` and writes no metrics row and no checkpoint.
+
 The command never pushes, never opens a pull request and never merges.
 
 ## The state folder
@@ -105,7 +118,7 @@ The command never pushes, never opens a pull request and never merges.
 | `metrics.tsv` | One row per round of the model |
 | `input-<stamp>.txt`, `notes-input-<stamp>.txt` | The input given to the model |
 | `output-<stamp>.json`, `notes-output-<stamp>.json` | The raw answer of `claude` |
-| `pending-reminders.txt` | Reminders that could not be created: title and body, one per line |
+| `pending-reminders.txt` | Reminders that could not be created, and the notice that the notes folder is not accessible: title and body, one per line |
 | `launchd.log` | Output of the scheduled job, when it was installed by `rangers schedule install` |
 
 ## `metrics.tsv` columns

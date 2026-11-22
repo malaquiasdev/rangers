@@ -36,6 +36,14 @@ The scheduled job runs with no flags, so it uses the default folders. Before you
 
 To see what the rounds cost, run `~/.local/bin/rangers learn metrics`.
 
+## Give the job access to the notes folder
+
+macOS blocks a scheduled job from reading folders such as `~/Documents`, where the notes folder lives. Without access, the notes pass prints `[notas] sem acesso ao brain` in `launchd.log`, skips the notes and leaves a line in `~/.local/state/rangers/learn/pending-reminders.txt`. The rules pass keeps working.
+
+1. Open System Settings > Privacy & Security > Full Disk Access.
+2. Add `~/.local/bin/rangers` to the list and turn it on. In the file picker, press Cmd+Shift+G to type the path.
+3. Wait for the next round. The `[notas] sem acesso ao brain` line should stop appearing in new output of `launchd.log`.
+
 ## Update the program
 
 After pulling changes to the Go code, rebuild with the command from step 1. The job runs the new binary on its next run.
