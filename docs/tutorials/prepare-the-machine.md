@@ -8,6 +8,9 @@ You need:
 
 - a clone of this repository;
 - Claude Code installed, with the `claude` command in the terminal;
+- Go 1.26, to build the `rangers` program;
+- Git and Podman, because `rangers install` clones the skills with Git and pulls an image with Podman;
+- `~/.local/bin` in your `PATH`, because step 1 builds the program there;
 - Homebrew;
 - a container runtime that answers the `docker` command. Podman works as long as `docker` calls Podman (for example, a `docker` link that points to `podman`) and the Podman machine is up with `podman machine start`.
 
@@ -16,6 +19,7 @@ Open a terminal at the root of the clone. Every command below runs from there.
 ## 1. See what is already there
 
 ```sh
+mkdir -p ~/.local/bin
 go build -o ~/.local/bin/rangers ./cmd/rangers
 rangers install --check
 ```

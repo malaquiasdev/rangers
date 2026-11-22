@@ -61,16 +61,22 @@ The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gi
 
 ## What the machine needs
 
+To build the `rangers` program and run `rangers install`:
+
+- Go, at the version in [`go.mod`](../../go.mod);
+- Git, because `rangers install` clones each skill;
+- Podman, because `rangers install` pulls the lychee image and `--check` looks for it with `podman image exists`.
+
 To use the agents:
 
 - Claude Code, with the `claude` command in the terminal;
 - Homebrew, for container-use;
 - a container runtime that answers the `docker` command. Podman works when `docker` calls Podman, for example through a `docker` link that points to `podman`;
+- `gh`, logged in, because the gate agent runs `rangers gate`, which reads and merges the pull request with `gh`;
 - npm, only to install the optional openspec.
 
-To build and schedule `rangers learn`:
+To schedule `rangers learn`:
 
-- Go, at the version in [`go.mod`](../../go.mod);
 - macOS, because the schedule uses launchd and the reminder uses `osascript` and the Reminders app, with a list named `Tarefas Claude`;
 - Git, because the rules pass creates a worktree.
 
