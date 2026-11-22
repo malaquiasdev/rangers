@@ -37,9 +37,11 @@ Each flag also reads an environment variable. The flag wins over the variable, a
 | `--skip-notes` | `LEARN_NOTES=off` | off | Skips the notes pass |
 | `--window-hours` | `LEARN_WINDOW_HOURS` | `24` | How far back to read when a pass has no checkpoint yet |
 | `--state` | `LEARN_STATE` | `~/.local/state/rangers/learn` | State folder |
-| `--repo` | `LEARN_REPO` | `~/Developer/me/rangers` | Clone of this repository, where the agents and the rules live |
+| `--repo` | `LEARN_REPO` | `~/Developer/me/rangers`, a fixed path | Clone of this repository, where the agents and the rules live |
 | `--projects` | `LEARN_PROJECTS` | `~/.claude/projects` | Folder of the Claude Code transcripts |
-| `--brain` | `LEARN_BRAIN` | `~/Documents/brain` | Notes folder where the notes pass writes |
+| `--brain` | `LEARN_BRAIN` | `~/Documents/brain`, a fixed path | Notes folder where the notes pass writes |
+
+The defaults of `--repo` and `--brain` are fixed paths under the home folder. The command does not look for the clone from the current folder, as `rangers install` does. When your clone or your notes folder is somewhere else, pass `--repo` and `--brain`, or set `LEARN_REPO` and `LEARN_BRAIN`. The scheduled job sets neither, so it only works with the defaults (see [Schedule](#schedule)).
 
 The command refuses to start when `--budget-usd`, `--daily-budget-usd` or `--notes-max-bytes` is zero or less, or when a variable holds a value that is not a number.
 
