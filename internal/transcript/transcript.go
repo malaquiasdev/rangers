@@ -48,6 +48,7 @@ type source struct {
 	session       string
 	cutoff        time.Time
 	withAssistant bool
+	whole         bool
 }
 
 func (l Line) String() string {
@@ -85,17 +86,23 @@ func (s source) line(e *entry) (Line, bool) {
 	if text == "" || (who == humanSpeaker && ignored(text)) {
 		return Line{}, false
 	}
-	limit := textLimit
-	if who == modelSpeaker {
-		limit = assistantLimit
-	}
 	return Line{
 		Project:   s.project,
 		Session:   s.session,
 		Time:      e.Timestamp,
-		Text:      clip(text, limit),
+		Text:      clip(text, s.limit(who)),
 		Assistant: who == modelSpeaker,
 	}, true
+}
+
+func (s source) limit(who string) int {
+	switch {
+	case s.whole:
+		return 0
+	case who == modelSpeaker:
+		return assistantLimit
+	}
+	return textLimit
 }
 
 func (s source) after(timestamp string) bool {
@@ -119,16 +126,20 @@ func Format(lines []Line, maxBytes int) string {
 }
 
 func Extract(projects string, cutoff time.Time) ([]Line, error) {
-	return collect(projects, cutoff, false)
+	return collect(projects, source{cutoff: cutoff})
 }
 
 func ExtractWithAssistant(projects string, cutoff time.Time) ([]Line, error) {
-	lines, err := collect(projects, cutoff, true)
+	lines, err := collect(projects, source{cutoff: cutoff, withAssistant: true})
 	sort.SliceStable(lines, func(i, j int) bool { return lines[i].Time < lines[j].Time })
 	return lines, err
 }
 
-func collect(projects string, cutoff time.Time, withAssistant bool) ([]Line, error) {
+func Conversation(projects string, cutoff time.Time) ([]Line, error) {
+	return collect(projects, source{cutoff: cutoff, withAssistant: true, whole: true})
+}
+
+func collect(projects string, base source) ([]Line, error) {
 	root, err := os.OpenRoot(projects)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -136,13 +147,13 @@ func collect(projects string, cutoff time.Time, withAssistant bool) ([]Line, err
 	if err != nil {
 		return nil, err
 	}
-	lines, err := readAll(root, cutoff, withAssistant)
+	lines, err := readAll(root, base)
 	return lines, errors.Join(err, root.Close())
 }
 
-func readAll(root *os.Root, cutoff time.Time, withAssistant bool) ([]Line, error) {
+func readAll(root *os.Root, base source) ([]Line, error) {
 	fsys := root.FS()
-	files, err := changedFiles(fsys, cutoff)
+	files, err := changedFiles(fsys, base.cutoff)
 	if err != nil {
 		return nil, err
 	}
@@ -152,12 +163,9 @@ func readAll(root *os.Root, cutoff time.Time, withAssistant bool) ([]Line, error
 		if err != nil {
 			return nil, err
 		}
-		src := source{
-			project:       projectOf(root, file),
-			session:       strings.TrimSuffix(path.Base(file), ".jsonl"),
-			cutoff:        cutoff,
-			withAssistant: withAssistant,
-		}
+		src := base
+		src.project = projectOf(root, file)
+		src.session = strings.TrimSuffix(path.Base(file), ".jsonl")
 		lines = append(lines, src.read(raw)...)
 	}
 	return lines, nil
@@ -215,7 +223,7 @@ func speaker(e *entry, withAssistant bool) string {
 
 func clip(text string, limit int) string {
 	flat := strings.ReplaceAll(text, "\n", " ")
-	if body := []rune(flat); len(body) > limit {
+	if body := []rune(flat); limit > 0 && len(body) > limit {
 		return string(body[:limit])
 	}
 	return flat
