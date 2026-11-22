@@ -1,11 +1,13 @@
 from pathlib import Path
 
-from pixelart import hero_sprites, sprites
+from pixelart import hero_sprites, poster, sprites
 from pixelart.sprite_maps import SPRITE_MAPS
 
 HERE = Path(__file__).resolve().parent
 SCALE = 4
 SPRITE_SIZE = (48, 64)
+POSTER_SIZE = (320, 480)
+BANNER_SIZE = (320, 160)
 HERO_FILES = {
     "red": "jason",
     "black": "zack",
@@ -30,8 +32,18 @@ def build_sprites():
         save(sprites.build_sprite(name), SPRITE_SIZE, f"sprites/{name}.png")
 
 
+def build_poster():
+    save(poster.build_poster(), POSTER_SIZE, "banner/poster.png")
+
+
+def build_banner():
+    save(poster.build_banner(), BANNER_SIZE, "banner/banner.png")
+
+
 def main():
     build_sprites()
+    build_poster()
+    build_banner()
 
 
 if __name__ == "__main__":
