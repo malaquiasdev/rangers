@@ -65,6 +65,18 @@ else
   echo "aviso: sem $padroes, a checagem de privacidade foi pulada"
 fi
 
+if [ -f go.mod ]; then
+  if grep -rnE '(^|[[:space:]])//|^[[:space:]]*/\*' --include='*.go' --exclude-dir=.git --exclude-dir=.serena . ; then
+    falha "comentário em arquivo Go"
+  fi
+  [ -z "$(gofmt -l .)" ] || falha "gofmt: $(gofmt -l . | tr '\n' ' ')"
+  if [ "$modo" = "completo" ]; then
+    go vet ./... || falha "go vet"
+    go test ./... || falha "go test"
+    golangci-lint run || falha "golangci-lint"
+  fi
+fi
+
 if [ "$modo" = "completo" ]; then
   podman run --rm -v "$PWD:/w:ro" -w /w docker.io/lycheeverse/lychee:0.24.2 \
     --offline --include-fragments README.md 'docs/**/*.md' > /dev/null 2>&1 || falha "links da documentação"
