@@ -50,6 +50,18 @@ def paint_suit(painter, width, height, ramp, top, helmet_radius):
     painter.add(rim - polygon([(cx, diamond_top + 17), (cx + 8, diamond_top + 34), (cx, diamond_top + 53), (cx - 8, diamond_top + 34)]), ramp, flat=3.0, bias=lambda x, y: (cx - x) * -0.04, dither=0.5, contour=False, outline=False)
 
 
+def paint_belt(painter, width, height, ramp):
+    top = height - 38
+    band = polygon([(-4, top), (width + 4, top), (width + 4, top + 15), (-4, top + 15)])
+    painter.add(band, P.WHITE, relief=5.0, gain=3.6, ceiling=4.8)
+    buckle = polygon([(width / 2 - 8, top - 2), (width / 2 + 8, top - 2), (width / 2 + 8, top + 17), (width / 2 - 8, top + 17)])
+    painter.add(buckle, P.GOLD, relief=5.0, gain=4.0, ceiling=5.0)
+    slot = polygon([(width / 2 - 4, top + 4), (width / 2 + 4, top + 4), (width / 2 + 4, top + 11), (width / 2 - 4, top + 11)])
+    painter.add(slot, P.GOLD, flat=1, contour=False, outline=False)
+    hips = polygon([(-4, top + 15), (width + 4, top + 15), (width + 4, height + 10), (-4, height + 10)])
+    painter.add(hips, ramp, relief=8.0, gain=3.0, ceiling=3.6, bias=lambda x, y: -0.4)
+
+
 def build_panel(width, height, key, ramp, helmet_radius, helmet_top, gem=None):
     canvas = Canvas(width, height)
     paint_backdrop_panel(canvas, width, height, ramp)
@@ -59,6 +71,8 @@ def build_panel(width, height, key, ramp, helmet_radius, helmet_top, gem=None):
     paint_suit(painter, width, height, ramp, helmet_y + helmet_radius * 0.82, helmet_radius)
     shell = helmet_shell(cx, helmet_y, helmet_radius)
     under = {(x, y) for x, y in grow(shell, 3) - shell if y > helmet_y + helmet_radius * 0.5}
+    if height > 150:
+        paint_belt(painter, width, height, ramp)
     painter.add(under, ramp, flat=1, contour=False, outline=False, bias=lambda x, y: -0.2 + 0.4 * ((x - cx) ** 2) / (helmet_radius ** 2), dither=0.7)
     paint_helmet(painter, key, cx, helmet_y, helmet_radius, ramp, gem=gem)
     painter.draw(canvas, outline=False)

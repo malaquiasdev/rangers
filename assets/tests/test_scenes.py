@@ -64,10 +64,20 @@ class PosterTest(unittest.TestCase):
         cyan = [self.canvas.get(x, y) for x in range(145, 176) for y in range(30, 95)]
         self.assertGreater(len([color for color in cyan if color[2] > 180 and color[0] < 120]), 150)
 
-    def test_each_hero_has_a_bright_rim_around_the_figure(self):
+    def test_no_hero_stands_on_the_stage_so_the_floor_stays_open(self):
         rows = [self.canvas.get(x, 440) for x in range(0, 320)]
-        whites = [color for color in rows if min(color) > 240]
-        self.assertGreater(len(whites), 10)
+        self.assertEqual([color for color in rows if min(color) > 240], [])
+
+    def test_the_stage_floor_glows_in_the_lower_third(self):
+        floor = [self.canvas.get(x, y) for x in range(40, 280) for y in range(420, 470)]
+        teal = [color for color in floor if color[1] > 150 and color[0] < 140]
+        self.assertGreater(len(teal), 300)
+
+    def test_each_panel_is_reflected_on_the_floor_in_its_own_color(self):
+        warm = self.canvas.get(PANEL_X[2] + 20, 408)
+        cool = self.canvas.get(PANEL_X[0] + 20, 408)
+        self.assertGreater(warm[0], warm[2])
+        self.assertGreater(cool[2], cool[0])
 
 
 class BannerTest(unittest.TestCase):
@@ -79,11 +89,11 @@ class BannerTest(unittest.TestCase):
         self.assertEqual((self.canvas.width, self.canvas.height), (320, 160))
         self.assertTrue(all(pixel is not None for pixel in self.canvas.pixels))
 
-    def test_the_six_panels_and_heroes_keep_the_poster_order(self):
+    def test_the_six_panels_keep_the_poster_order(self):
         expected = ["blue", "pink", "red", "green", "yellow", "black"]
         for index, name in enumerate(expected):
             left = 14 + index * 49
-            self.assertEqual(dominant(self.canvas, left + 8, 74, left + 38, 84), name)
+            self.assertEqual(dominant(self.canvas, left + 6, 96, left + 40, 112), name)
 
 
 class ExportedSceneTest(unittest.TestCase):
