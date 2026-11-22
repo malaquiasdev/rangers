@@ -1,3 +1,5 @@
+![Rangers: pixel art banner with the title and six colored helmets](assets/banner/banner.png)
+
 # rangers
 
 Um repositório de agentes e regras em cima de projetos open source que já coordenam agentes. Substitui a plataforma `jaiminho-suite`, que foi arquivada.
