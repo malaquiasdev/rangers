@@ -37,6 +37,14 @@ type scenario struct {
 	reminder *fakeReminder
 	out      *bytes.Buffer
 	errOut   *bytes.Buffer
+	claude   Claude
+}
+
+type blockingClaude struct{}
+
+func (blockingClaude) Run(ctx context.Context, _ string, _ []string) ([]byte, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
 }
 
 func (f *fakeReminder) Create(_ context.Context, title, body string) error {
@@ -110,19 +118,20 @@ func newScenario(t *testing.T) *scenario {
 		out:      &bytes.Buffer{},
 		errOut:   &bytes.Buffer{},
 		cfg: Config{
-			IntervalHours:  2,
-			MinLines:       10,
-			BudgetUSD:      3,
-			DailyBudgetUSD: 6,
-			Model:          "opus",
-			WindowHours:    24,
-			State:          filepath.Join(root, "state"),
-			Repo:           repo,
-			Projects:       filepath.Join(root, "projects"),
-			Brain:          filepath.Join(root, "brain"),
-			NotesModel:     "sonnet",
-			NotesMaxBytes:  60000,
-			SkipNotes:      true,
+			IntervalHours:      2,
+			MinLines:           10,
+			BudgetUSD:          3,
+			DailyBudgetUSD:     6,
+			Model:              "opus",
+			WindowHours:        24,
+			State:              filepath.Join(root, "state"),
+			Repo:               repo,
+			Projects:           filepath.Join(root, "projects"),
+			Brain:              filepath.Join(root, "brain"),
+			NotesModel:         "sonnet",
+			NotesMaxBytes:      60000,
+			SkipNotes:          true,
+			CallTimeoutMinutes: 20,
 		},
 	}
 	s.fakeClaude(claudeJSON, 0)
@@ -187,8 +196,12 @@ func (s *scenario) checkpointAgo(ago time.Duration) {
 }
 
 func (s *scenario) run() error {
+	var claude Claude = ClaudeCLI{}
+	if s.claude != nil {
+		claude = s.claude
+	}
 	return Run(context.Background(), &s.cfg, &Dependencies{
-		Claude:   ClaudeCLI{},
+		Claude:   claude,
 		Git:      GitCLI{},
 		Reminder: s.reminder,
 		Now:      func() time.Time { return s.now },
@@ -978,4 +991,61 @@ func TestReminderScript(t *testing.T) {
 			t.Fatalf("missing the list: %s", script)
 		}
 	})
+}
+
+func TestRunCallTimeout(t *testing.T) {
+	hanging := func(t *testing.T) *scenario {
+		t.Helper()
+		s := newScenario(t)
+		s.cfg.CallTimeoutMinutes = 0.001
+		s.claude = blockingClaude{}
+		s.fresh(12)
+		return s
+	}
+
+	t.Run("given a claude that never answers, when running, then it returns the timeout error within the configured limit", func(t *testing.T) {
+		s := hanging(t)
+		started := time.Now()
+		err := s.run()
+		if err == nil || !strings.Contains(err.Error(), "passou de") || !strings.Contains(err.Error(), "encerrado") {
+			t.Fatalf("got %v", err)
+		}
+		if elapsed := time.Since(started); elapsed > 10*time.Second {
+			t.Fatalf("took %v", elapsed)
+		}
+	})
+
+	t.Run("given a claude that never answers, when running, then it leaves no metrics, no checkpoint and no reminder", func(t *testing.T) {
+		s := hanging(t)
+		if err := s.run(); err == nil {
+			t.Fatal("expected an error")
+		}
+		if s.stateHas("metrics.tsv") || s.stateHas("checkpoint") || len(s.reminder.calls) != 0 {
+			t.Fatal("a timed out round must leave no trace of success")
+		}
+	})
+
+	t.Run("given a claude that never answers in the notes pass, when running, then the rules pass still finishes and the notes error is returned", func(t *testing.T) {
+		s := hanging(t)
+		s.cfg.SkipNotes = false
+		s.claude = &slowAfterFirst{}
+		s.assistant("new-session", "decided to use the cache", s.now.Add(-30*time.Minute))
+		err := s.run()
+		if err == nil || !strings.Contains(err.Error(), "passou de") {
+			t.Fatalf("got %v", err)
+		}
+		if !s.stateHas("checkpoint") || s.stateHas("checkpoint-notes") {
+			t.Fatal("only the rules checkpoint should exist")
+		}
+	})
+}
+
+type slowAfterFirst struct{ calls int }
+
+func (c *slowAfterFirst) Run(ctx context.Context, dir string, args []string) ([]byte, error) {
+	c.calls++
+	if c.calls == 1 {
+		return []byte(claudeJSON), nil
+	}
+	return blockingClaude{}.Run(ctx, dir, args)
 }

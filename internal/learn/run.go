@@ -204,7 +204,7 @@ func (r *round) arguments(prompt, agent, model, tools string) []string {
 
 func (r *round) invoke(ctx context.Context, prefix, dir string, args []string) (response, error) {
 	var resp response
-	raw, err := r.dep.Claude.Run(ctx, dir, args)
+	raw, err := r.call(ctx, dir, args)
 	if err != nil {
 		return resp, err
 	}
@@ -217,6 +217,17 @@ func (r *round) invoke(ctx context.Context, prefix, dir string, args []string) (
 		return resp, fmt.Errorf("resposta do claude não é JSON: %w", err)
 	}
 	return resp, nil
+}
+
+func (r *round) call(ctx context.Context, dir string, args []string) ([]byte, error) {
+	limit := time.Duration(r.cfg.CallTimeoutMinutes * float64(time.Minute))
+	limited, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	raw, err := r.dep.Claude.Run(limited, dir, args)
+	if err != nil && errors.Is(limited.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+		return nil, fmt.Errorf("o claude passou de %s sem terminar; processo encerrado: %w", limit, err)
+	}
+	return raw, err
 }
 
 func (r *round) settle(resp *response) error {
