@@ -56,6 +56,12 @@ if [ -n "$findings" ]; then
   fail "nome de personagem fora de agents/ e skills/"
 fi
 
+origins=$(grep -rnE 'Origin:[[:space:]]*session' rules agents || true)
+if [ -n "$origins" ]; then
+  printf '%s\n' "$origins"
+  fail "origem de regra (Origin: session) em rules/ ou agents/: sessão e frase ficam só nas notas privadas"
+fi
+
 patterns=${PRIVACY_FILE:-$HOME/.config/rangers/privacy.txt}
 if [ -f "$patterns" ]; then
   if grep -rniEf "$patterns" --exclude-dir=.git --exclude-dir=.serena . ; then
