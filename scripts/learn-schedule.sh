@@ -30,7 +30,7 @@ case "${1:-status}" in
     <key>HOME</key>
     <string>$HOME</string>
     <key>PATH</key>
-    <string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
   <key>StandardOutPath</key>
   <string>$state/launchd.log</string>
