@@ -1,30 +1,75 @@
 ![Rangers: pixel art banner with the title and six colored helmets](assets/banner/banner.png)
 
-# rangers
+# Rangers
 
-Um repositório de agentes e regras em cima de projetos open source que já coordenam agentes. Substitui a plataforma `jaiminho-suite`, que foi arquivada.
+A cast of coding agents that plan, build and review your work. Answer them from your tablet.
 
-Os plugins instalados fazem o trabalho pesado. Este repo guarda os agentes, a lista exata do que está instalado, os scripts que instalam e conferem, e o plano de teste que decide se a ideia funciona. O porquê está em [por que uma camada fina](docs/explicacao/por-que-uma-camada-fina.md).
+[Docs](docs/index.md) · [Agents](agents) · [Rules](rules) · [Dependencies](deps.toml)
 
-## O que tem aqui
+Rangers is a set of Claude Code agents, rules and a small Go program, built on open source parts that already coordinate agents: pstack, grilling, i-have-adhd and container-use. Each agent is one short Markdown file with its role, model and limits. Everything runs on your own computer with your own Claude account. There is no hosted service.
 
-| Caminho | Para quê |
+- **Plans you can read anywhere.** Each plan is a private page in plain words, with the scenarios, a flowchart and a before-and-after data table. One yes starts the work.
+- **One role per agent.** A coordinator, an author, a reviewer, QA, an explorer, a docs writer, a courier and a learner, each with its own model and effort.
+- **It learns from your corrections.** `rangers learn` reads what you typed in your sessions, proposes rules on a local branch and writes notes to your notes folder.
+- **Cheap on purpose.** Four gates keep it from running when there is nothing new: a minimum interval, a minimum number of new lines, a cap per round and a cap per day. Every round logs its time, tokens and cost.
+- **You stay in control.** Nothing merges or deploys without you, and production always needs your explicit yes.
+
+## The cast
+
+| Role | What it does |
 | --- | --- |
-| `agents/` | Um arquivo por agente, com nome, papel, modelo e limites |
-| `deps.toml` | Cada dependência, com a versão ou o commit fixo, a licença e a origem |
-| `scripts/` | Instala e confere o que faltar, até o instalador em Go existir |
-| `docs/` | A documentação, começando pelo [índice](docs/index.md) |
+| 🔴 Red | Coordinator. Refines the task with you, plans, and hands the work out. Never writes code. |
+| ⚫ Black | Author. Writes one test per scenario, then the code, and opens its own pull request. |
+| 🩷 Pink | Reviewer. Reads the pull request, and only a finding with proof counts. |
+| 🔵 Blue | Explorer. Finds out how code and data work, read only, with a file and line for every claim. |
+| 🟡 Yellow | Docs writer. Builds the `docs` folder by the Diátaxis method. Called only by you. |
+| 🟢 Green | Gate. A program with no model that checks your yes and the CI before a merge. |
 
-## Começo rápido
+A mentor learns from your corrections, a courier delivers plans and reminders, and two adversaries attack risky changes and run QA. The names of the characters live only in [`agents/`](agents).
 
-1. `scripts/conferir.sh` mostra o estado.
-2. `scripts/instalar.sh` completa o que faltar.
-3. Reinicie o Claude Code e rode `/pstack:setup-pstack` uma vez.
-4. Ligue os agentes: [como ligar os agentes](docs/como-fazer/ligar-os-agentes.md).
-5. Rode o teste: [como rodar o teste](docs/como-fazer/rodar-o-teste.md).
+## Install
 
-Primeira vez? Siga o tutorial [preparar a máquina](docs/tutorial/preparar-a-maquina.md).
+You need Claude Code, `gh`, Go 1.26, `golangci-lint`, `jq`, Podman and Python 3.11 or newer.
 
-## Voltar atrás
+```sh
+git clone https://github.com/malaquiasdev/rangers
+cd rangers
+scripts/instalar.sh
+make hooks
+```
 
-[Como desfazer a instalação](docs/como-fazer/desfazer-a-instalacao.md) traz o comando de remoção de cada peça e onde está a plataforma antiga.
+Then link the agents and the entry skill, restart Claude Code and run `/pstack:setup-pstack` once:
+
+```sh
+for f in agents/*.md; do ln -sfn "$PWD/$f" ~/.claude/agents/$(basename "$f"); done
+ln -sfn "$PWD/skills/rangers" ~/.claude/skills/rangers
+```
+
+## Use
+
+Start a task with a Linear issue, a GitHub issue or a short description:
+
+```
+/rangers ABC-123
+```
+
+To let it learn from your sessions, build the program and schedule it every two hours:
+
+```sh
+go build -o ~/.local/bin/rangers ./cmd/rangers
+scripts/learn-schedule.sh install
+```
+
+## Develop
+
+```sh
+make check
+```
+
+The checks run locally through git hooks, so the only GitHub workflow is release-please. More in the [docs](docs/index.md).
+
+## Credits and license
+
+Built on [pstack](https://github.com/cursor/plugins/tree/main/pstack), [i-have-adhd](https://github.com/ayghri/i-have-adhd), [grilling](https://github.com/mattpocock/skills), [container-use](https://github.com/dagger/container-use), [lychee](https://github.com/lycheeverse/lychee), [humanizer](https://github.com/blader/humanizer) and the [Diátaxis skill](https://github.com/sammcj/agentic-coding). Thank you to everyone behind them.
+
+Released under the [MIT License](LICENSE).
