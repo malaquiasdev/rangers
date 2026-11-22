@@ -55,7 +55,7 @@ The rules pass runs first. The notes pass runs after it, even when the rules pas
 | Reads | Only what the human typed | What the human typed and what the assistant answered, in time order |
 | Runs in | A new worktree of `--repo` | The `--brain` folder |
 | Model | `--model` | `--notes-model` |
-| Tools the model may use | `Read`, `Edit`, `Write`, and `git add`, `git commit`, `git status`, `git diff` | `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `~/.claude/bin/audit` |
+| Tools the model may use | `Read`, `Edit`, `Write`, and `git add`, `git commit`, `git status`, `git diff` | `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `audit`, allowed as `~/.claude/bin/audit`, as the same path with the home folder written out, and, when that file is a link, as the path it points to. A call that goes through a shell variable or is chained with other commands still needs approval |
 | Leaves | A local commit on branch `learn/<stamp>` and a reminder | Notes in the notes folder |
 | Checkpoint file | `checkpoint` | `checkpoint-notes` |
 | Prefix of its messages | none | `[notas] ` |
