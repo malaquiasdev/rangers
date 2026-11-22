@@ -7,14 +7,16 @@ projetos=${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}
 
 if [ -f "$state/checkpoint" ]; then
   mudados=$(find "$projetos" -maxdepth 2 -name '*.jsonl' -newer "$state/checkpoint")
+  desde=$(date -u -r "$(stat -f %m "$state/checkpoint")" +%Y-%m-%dT%H:%M:%S)
 else
   mudados=$(find "$projetos" -maxdepth 2 -name '*.jsonl' -mmin -$((janela * 60)))
+  desde=$(date -u -v-"${janela}"H +%Y-%m-%dT%H:%M:%S)
 fi
 
 for arquivo in $mudados; do
   sessao=$(basename "$arquivo" .jsonl)
-  jq -r --arg sessao "$sessao" '
-    select(.type == "user" and .message.role == "user")
+  jq -r --arg sessao "$sessao" --arg desde "$desde" '
+    select(.type == "user" and .message.role == "user" and .timestamp >= $desde)
     | .timestamp as $quando
     | .message.content
     | if type == "string" then . else (map(select(.type == "text").text) | join(" ")) end
