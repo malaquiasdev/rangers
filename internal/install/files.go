@@ -36,6 +36,15 @@ func (OSFiles) RemoveAll(path string) error {
 	return os.RemoveAll(path)
 }
 
+func (OSFiles) Readlink(path string) (string, error) {
+	return os.Readlink(path)
+}
+
+func (OSFiles) IsRegular(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
 func (OSFiles) Symlink(target, link string) error {
 	if current, err := os.Readlink(link); err == nil && current == target {
 		return nil

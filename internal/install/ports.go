@@ -14,6 +14,8 @@ type Files interface {
 	WriteFile(path string, data []byte) error
 	Glob(pattern string) ([]string, error)
 	Symlink(target, link string) error
+	Readlink(path string) (string, error)
+	IsRegular(path string) bool
 	CopyDir(src, dst string) error
 	MkdirTemp() (string, error)
 	RemoveAll(path string) error

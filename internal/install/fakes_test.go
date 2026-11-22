@@ -127,8 +127,22 @@ func (m *memFiles) Symlink(target, link string) error {
 	if m.linkErr != nil {
 		return m.linkErr
 	}
+	delete(m.files, link)
 	m.links[link] = target
 	return nil
+}
+
+func (m *memFiles) Readlink(path string) (string, error) {
+	target, ok := m.links[path]
+	if !ok {
+		return "", errors.New("not a link: " + path)
+	}
+	return target, nil
+}
+
+func (m *memFiles) IsRegular(path string) bool {
+	_, ok := m.files[path]
+	return ok
 }
 
 func (m *memFiles) CopyDir(src, dst string) error {

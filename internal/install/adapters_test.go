@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -235,6 +236,47 @@ func TestOSFilesBasics(t *testing.T) {
 		}
 		if (OSFiles{}).Exists(tmp) {
 			t.Fatal("the folder is still there")
+		}
+	})
+}
+
+func TestOSFilesKinds(t *testing.T) {
+	t.Run("given a link, when reading it, then it returns the target", func(t *testing.T) {
+		link := filepath.Join(t.TempDir(), "link")
+		if err := os.Symlink("/some/target", link); err != nil {
+			t.Fatal(err)
+		}
+		got, err := (OSFiles{}).Readlink(link)
+		if err != nil || got != "/some/target" {
+			t.Fatalf("got %q, %v", got, err)
+		}
+	})
+
+	t.Run("given a regular file, when reading it as a link, then it fails", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "file")
+		write(t, path, "x")
+		if _, err := (OSFiles{}).Readlink(path); err == nil {
+			t.Fatal("a regular file has no link target")
+		}
+	})
+
+	t.Run("given a file, a link, a folder and nothing, when asking if each is a regular file, then only the file is", func(t *testing.T) {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "file")
+		write(t, file, "x")
+		link := filepath.Join(dir, "link")
+		if err := os.Symlink(file, link); err != nil {
+			t.Fatal(err)
+		}
+		got := []bool{
+			(OSFiles{}).IsRegular(file),
+			(OSFiles{}).IsRegular(link),
+			(OSFiles{}).IsRegular(dir),
+			(OSFiles{}).IsRegular(filepath.Join(dir, "missing")),
+		}
+		want := []bool{true, false, false, false}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
 		}
 	})
 }
