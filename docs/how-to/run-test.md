@@ -6,7 +6,7 @@ Before you start, pick a real, small activity that fits in one pull request.
 
 1. Run `rangers install --check` and check that the last line says `All in place.`. If something is missing, run `rangers install` (see the [install command reference](../reference/install-command.md)).
 2. If you just installed pstack, restart Claude Code and run `/pstack:setup-pstack` once.
-3. Check that the agents and the skill are connected with `ls -l ~/.claude/agents ~/.claude/skills`. If they are not, run `rangers install` again or follow [how to connect the agents and the skill](connect-agents.md).
+3. Check that the agents, the rules and the skill are connected with `ls -l ~/.claude/agents ~/.claude/rules ~/.claude/skills`. If they are not, run `rangers install` again or follow [how to connect the agents, the rules and the skill](connect-agents.md).
 4. Open a new Claude Code session in the repository of the activity, not in this one.
 5. Run `/i-have-adhd` to turn on the short answer format.
 6. Start the activity with `/rangers`, as in [how to start an activity](start-activity.md), and follow it until the pull request is ready.

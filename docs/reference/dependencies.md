@@ -55,6 +55,7 @@ The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gi
 | i-have-adhd | `claude plugin marketplace add ayghri/i-have-adhd` and `claude plugin install i-have-adhd@i-have-adhd` | `claude plugin uninstall i-have-adhd@i-have-adhd` and `claude plugin marketplace remove i-have-adhd` |
 | container-use | `brew install dagger/tap/container-use` | `brew uninstall container-use` |
 | openspec | `npm install -g @fission-ai/openspec` | `npm uninstall -g @fission-ai/openspec` |
+| lychee | `podman pull <image>`, with the `image` from `deps.toml` | `podman rmi <image>` |
 
 `rangers install` runs the same commands, and `npm install -g` uses the pinned `version`.
 
