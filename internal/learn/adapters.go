@@ -32,6 +32,7 @@ type OsascriptReminder struct {
 
 func (ClaudeCLI) Run(ctx context.Context, dir string, args []string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, "claude", args...)
+	cmd.WaitDelay = time.Second
 	cmd.Dir = dir
 	cmd.Env = withoutGitVariables()
 	out, err := cmd.Output()
