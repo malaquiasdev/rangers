@@ -85,3 +85,39 @@ path = "."
 commit = "a32f24407364c74c812b43c15926d638bee1e072"
 license = "MIT"
 function = "Rewrites text so it reads naturally"
+
+[[dependency]]
+name = "grill-with-docs"
+kind = "skill"
+repository = "mattpocock/skills"
+path = "skills/engineering/grill-with-docs"
+commit = "abeeaf95660ba9e8b7c753eb38f441ca707a8823"
+license = "MIT"
+function = "Refines a plan against the project's own docs and language"
+
+[[dependency]]
+name = "domain-modeling"
+kind = "skill"
+repository = "mattpocock/skills"
+path = "skills/engineering/domain-modeling"
+commit = "abeeaf95660ba9e8b7c753eb38f441ca707a8823"
+license = "MIT"
+function = "Builds and sharpens a project's domain model and decision records"
+
+[[dependency]]
+name = "obsidian-markdown"
+kind = "skill"
+repository = "kepano/obsidian-skills"
+path = "plugins/obsidian/skills/obsidian-markdown"
+commit = "b110b2f8e9eb1f287892f937050dfd40af862cbb"
+license = "MIT"
+function = "Writes Obsidian Markdown: links, embeds, callouts and properties"
+
+[[dependency]]
+name = "obsidian-bases"
+kind = "skill"
+repository = "kepano/obsidian-skills"
+path = "plugins/obsidian/skills/obsidian-bases"
+commit = "b110b2f8e9eb1f287892f937050dfd40af862cbb"
+license = "MIT"
+function = "Creates Obsidian Bases: database-like views of notes"

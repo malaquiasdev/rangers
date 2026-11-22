@@ -71,6 +71,6 @@ The checks also need `golangci-lint` and Python 3.11 or newer. They run locally 
 
 ## Credits and license
 
-Built on [pstack](https://github.com/cursor/plugins/tree/main/pstack), [i-have-adhd](https://github.com/ayghri/i-have-adhd), [grilling](https://github.com/mattpocock/skills), [container-use](https://github.com/dagger/container-use), [lychee](https://github.com/lycheeverse/lychee), [humanizer](https://github.com/blader/humanizer) and the [Diátaxis skill](https://github.com/sammcj/agentic-coding). Thank you to everyone behind them.
+Built on [pstack](https://github.com/cursor/plugins/tree/main/pstack), [i-have-adhd](https://github.com/ayghri/i-have-adhd), [Matt Pocock's skills](https://github.com/mattpocock/skills) (grilling, grill-with-docs, domain-modeling), [Obsidian skills](https://github.com/kepano/obsidian-skills), [container-use](https://github.com/dagger/container-use), [lychee](https://github.com/lycheeverse/lychee), [humanizer](https://github.com/blader/humanizer) and the [Diátaxis skill](https://github.com/sammcj/agentic-coding). Thank you to everyone behind them.
 
 Released under the [MIT License](LICENSE).
