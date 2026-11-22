@@ -9,9 +9,9 @@ A cast of coding agents that plan, build and review your work. Answer them from 
 Rangers is a set of Claude Code agents, rules and a small Go program, built on open source parts that already coordinate agents: pstack, grilling, i-have-adhd and container-use. Each agent is one short Markdown file with its role, model and limits. Everything runs on your own computer with your own Claude account. There is no hosted service.
 
 - **Plans you can read anywhere.** Each plan is a private page in plain words, with the scenarios, a flowchart and a before-and-after data table. One yes starts the work.
-- **One role per agent.** A coordinator, an author, a reviewer, QA, an explorer, a docs writer, a courier and a learner, each with its own model and effort.
+- **One role per agent.** A coordinator, an author, a swarm of authors, two reviewers, QA, an explorer, a docs writer, a gate, a courier and a learner, each with its own model and effort.
 - **It learns from your corrections.** `rangers learn` reads what you typed in your sessions, proposes rules on a local branch and writes notes to your notes folder.
-- **Cheap on purpose.** Four gates keep it from running when there is nothing new: a minimum interval, a minimum number of new lines, a cap per round and a cap per day. Every round logs its time, tokens and cost.
+- **Cheap on purpose.** Three gates keep it from running when there is nothing new: a minimum interval, a minimum number of new lines and a cap per day. Each round also has its own dollar cap, and logs its time, tokens and cost.
 - **You stay in control.** Nothing merges or deploys without you, and production always needs your explicit yes.
 
 ## The cast
@@ -34,12 +34,13 @@ Each one is a Markdown file in [`agents/`](agents).
 
 ## Install
 
-You need Claude Code, `gh`, Go 1.26, `golangci-lint`, Podman and Python 3.11 or newer.
+You need Claude Code, Git, `gh` logged in, Go 1.26, Homebrew and Podman, with the `docker` command answering (a `docker` link to `podman` works). `~/.local/bin` must be in your `PATH`. The full list is in [what the machine needs](docs/reference/dependencies.md#what-the-machine-needs).
 
 ```sh
 git clone https://github.com/malaquiasdev/rangers
 cd rangers
 make hooks
+mkdir -p ~/.local/bin
 go build -o ~/.local/bin/rangers ./cmd/rangers
 rangers install
 ```
@@ -54,10 +55,9 @@ Start a task with a Linear issue, a GitHub issue or a short description:
 /rangers ABC-123
 ```
 
-To let it learn from your sessions, build the program and schedule it every two hours:
+To let it learn from your sessions, schedule it every two hours. This needs macOS. The job reads fixed default folders, so check them first in [how to schedule the learning job](docs/how-to/schedule-learning.md).
 
 ```sh
-go build -o ~/.local/bin/rangers ./cmd/rangers
 ~/.local/bin/rangers schedule install
 ```
 
@@ -67,7 +67,7 @@ go build -o ~/.local/bin/rangers ./cmd/rangers
 make check
 ```
 
-The checks run locally through git hooks, so the only GitHub workflow is release-please. More in the [docs](docs/index.md).
+The checks also need `golangci-lint` and Python 3.11 or newer. They run locally through git hooks, so the only GitHub workflow is release-please. More in the [docs](docs/index.md).
 
 ## Credits and license
 
