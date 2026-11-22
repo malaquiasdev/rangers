@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-state=${ZORDON_STATE:-$HOME/.local/state/rangers/zordon}
+state=${APRENDER_STATE:-$HOME/.local/state/rangers/aprender}
 arquivo="$state/metricas.tsv"
 
 if [ ! -s "$arquivo" ]; then

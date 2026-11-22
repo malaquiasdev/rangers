@@ -2,7 +2,7 @@
 set -eu
 
 state=${1:?pasta de estado}
-janela=${ZORDON_JANELA_HORAS:-24}
+janela=${APRENDER_JANELA_HORAS:-24}
 projetos=${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}
 
 if [ -f "$state/checkpoint" ]; then

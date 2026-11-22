@@ -3,10 +3,10 @@ set -eu
 
 aqui=$(cd "$(dirname "$0")" && pwd)
 repo=${RANGERS_REPO:-$HOME/Developer/me/rangers}
-state=${ZORDON_STATE:-$HOME/.local/state/rangers/zordon}
+state=${APRENDER_STATE:-$HOME/.local/state/rangers/aprender}
 mkdir -p "$state"
 
-intervalo=${ZORDON_INTERVALO_HORAS:-2}
+intervalo=${APRENDER_INTERVALO_HORAS:-2}
 if [ -f "$state/checkpoint" ]; then
   idade=$(( $(date +%s) - $(stat -f %m "$state/checkpoint") ))
   if [ "$idade" -lt $((intervalo * 3600)) ]; then
@@ -18,10 +18,10 @@ fi
 carimbo=$(date +%Y-%m-%d-%H%M)
 entrada="$state/entrada-$carimbo.txt"
 
-"$aqui/zordon-extrair.sh" "$state" > "$entrada"
+"$aqui/aprender-extrair.sh" "$state" > "$entrada"
 
 falas=$(wc -l < "$entrada" | tr -d ' ')
-minimo=${ZORDON_MIN_FALAS:-10}
+minimo=${APRENDER_MIN_FALAS:-10}
 
 if [ "$falas" -lt "$minimo" ]; then
   rm -f "$entrada"
@@ -29,16 +29,16 @@ if [ "$falas" -lt "$minimo" ]; then
   exit 0
 fi
 
-ramo="zordon/$carimbo"
-arvore="$repo-worktrees/zordon-$carimbo"
+ramo="aprender/$carimbo"
+arvore="$repo-worktrees/aprender-$carimbo"
 git -C "$repo" worktree add -q -b "$ramo" "$arvore" main
 
 cd "$arvore"
 saida="$state/saida-$carimbo.json"
 claude -p "O arquivo $entrada tem, uma por linha, as falas que o humano digitou desde o último checkpoint (sessão, hora, texto). Proponha as regras nos arquivos desta pasta e faça o commit local no ramo $ramo." \
   --agent zordon \
-  --model "${ZORDON_MODELO_REGRAS:-opus}" \
-  --max-budget-usd "${ZORDON_TETO_USD:-3}" \
+  --model "${APRENDER_MODELO_REGRAS:-opus}" \
+  --max-budget-usd "${APRENDER_TETO_USD:-3}" \
   --permission-mode acceptEdits \
   --allowedTools "Read,Edit,Write,Bash(git add:*),Bash(git commit:*),Bash(git status:*),Bash(git diff:*)" \
   --output-format json > "$saida"
@@ -57,7 +57,7 @@ touch "$state/checkpoint"
 osascript <<EOF
 tell application "Reminders"
   tell list "Tarefas Claude"
-    make new reminder with properties {name:"Revisar as regras que o Zordon propôs", body:"Ramo $ramo em $arvore"}
+    make new reminder with properties {name:"Revisar as regras que as regras propostas", body:"Ramo $ramo em $arvore"}
   end tell
 end tell
 EOF
