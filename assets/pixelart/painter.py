@@ -1,7 +1,5 @@
 import math
 
-from .canvas import mix
-
 BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 LIGHT = (-0.46, -0.62, 0.64)
 NEIGHBORS = ((1, 0), (-1, 0), (0, 1), (0, -1))
