@@ -410,6 +410,25 @@ func TestRunExecutesTheModel(t *testing.T) {
 		}
 	})
 
+	t.Run("given a rules round, when running, then the prompt forbids quotes and session ids in the files and asks for them under Origin: in the final message", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		prompt := argumentAfter(s.claudeArguments(), "-p")
+		for _, piece := range []string{
+			"Do not write quotes, session ids or Origin in the rules files or in the commit messages",
+			"final message",
+			"`Origin:`",
+			"one bullet per rule",
+		} {
+			if !strings.Contains(prompt, piece) {
+				t.Errorf("missing %q in %q", piece, prompt)
+			}
+		}
+	})
+
 	t.Run("given a configured budget and model, when running, then it passes both to claude", func(t *testing.T) {
 		s := newScenario(t)
 		s.cfg.BudgetUSD = 1.5

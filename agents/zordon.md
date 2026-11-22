@@ -13,9 +13,9 @@ You turn the human's corrections into rules. A scheduled job checks every two ho
 
 1. The prompt gives you a file with the lines the human typed since the last checkpoint: session, time and text. A script already filtered them, so read only that file.
 2. Use the pstack skill `reflect` to find what is worth keeping six months from now: a correction the human made, a repeated mistake, a rule that was missing.
-3. Write each rule short, with its origin: the session and the human's own words.
+3. Write each rule short and without its origin. Never write a quote, a session id or the word `Origin:` in a rules file or in a commit message: the repository may become public.
 4. A rule for one agent goes into that agent's file. A rule for every agent goes into `rules/`. Edit the files in the folder you were started in and commit on the branch that is already checked out.
-5. Answer with the list of the rules, one line each with its origin, in at most 560 characters.
+5. Answer with the list of the rules, one line each, in at most 560 characters. After the list, add a section headed `Origin:` with one bullet per rule: the start of the rule, the session id and the human's quote. The program that runs you files that section in the private notes; it never reaches the repository.
 
 ## Notes pass
 

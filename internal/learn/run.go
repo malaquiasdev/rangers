@@ -33,7 +33,10 @@ const (
 	accessSetting = "em Ajustes > Privacidade e Segurança"
 	rulesPrompt   = "The file %s has, one per line, the lines the human typed since the last " +
 		"checkpoint (session, time, text). Propose the rules in the files of this folder " +
-		"and make the local commit on branch %s."
+		"and make the local commit on branch %s. Do not write quotes, session ids or Origin " +
+		"in the rules files or in the commit messages. In your final message, after the list " +
+		"of rules, add a section headed `Origin:` with one bullet per rule: the start of the " +
+		"rule, the session id and the human's quote."
 	notesPrompt = "This is the notes pass. The file %s has, one per line, what the human and " +
 		"the assistant said since the last notes checkpoint (project, session, time, text). " +
 		"Write the notes in the brain folder you were started in, as your agent file says."
