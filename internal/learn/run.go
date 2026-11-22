@@ -29,6 +29,8 @@ const (
 		"Bash(git status:*),Bash(git diff:*)"
 	notesTools    = "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)"
 	reminderTitle = "Revisar as regras propostas"
+	accessTitle   = "Dar acesso ao brain ao rangers"
+	accessSetting = "em Ajustes > Privacidade e Segurança"
 	rulesPrompt   = "The file %s has, one per line, the lines the human typed since the last " +
 		"checkpoint (session, time, text). Propose the rules in the files of this folder " +
 		"and make the local commit on branch %s."
@@ -41,6 +43,8 @@ type Dependencies struct {
 	Claude   Claude
 	Git      Git
 	Reminder Reminder
+	Brain    Brain
+	Binary   string
 	Now      func() time.Time
 	Out      io.Writer
 	Err      io.Writer
@@ -167,6 +171,9 @@ func (r *round) notes(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if err = r.dep.Brain.Probe(ctx, r.cfg.Brain); err != nil {
+		return r.skipNotes(err)
+	}
 	input, err := r.writeInput("notes-input-", transcript.Format(r.lines, r.cfg.NotesMaxBytes))
 	if err != nil {
 		return err
@@ -177,6 +184,16 @@ func (r *round) notes(ctx context.Context) error {
 		return err
 	}
 	return r.settle(&resp)
+}
+
+func (r *round) skipNotes(cause error) error {
+	notice := "sem acesso ao brain (%v): dê Acesso Total ao Disco a %s %s; pulo as notas"
+	err := r.say(fmt.Sprintf(notice, cause, r.dep.Binary, accessSetting))
+	if err != nil {
+		return err
+	}
+	body := fmt.Sprintf("Acesso Total ao Disco para %s %s", r.dep.Binary, accessSetting)
+	return appendLine(filepath.Join(r.cfg.State, pendingName), accessTitle+"\t"+body)
 }
 
 func (r *round) newWorktree(ctx context.Context) (string, string, error) {

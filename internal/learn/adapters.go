@@ -22,7 +22,15 @@ type Reminder interface {
 	Create(ctx context.Context, title, body string) error
 }
 
+type Brain interface {
+	Probe(ctx context.Context, dir string) error
+}
+
 type ClaudeCLI struct{}
+
+type DirBrain struct {
+	Timeout time.Duration
+}
 
 type GitCLI struct{}
 
@@ -40,6 +48,30 @@ func (ClaudeCLI) Run(ctx context.Context, dir string, args []string) ([]byte, er
 		return nil, withStderr("claude", err)
 	}
 	return out, nil
+}
+
+func (b DirBrain) Probe(ctx context.Context, dir string) error {
+	limited, cancel := context.WithTimeout(ctx, b.Timeout)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- probeDir(dir) }()
+	select {
+	case err := <-done:
+		return err
+	case <-limited.Done():
+		return fmt.Errorf("sem resposta de %s em %s", dir, b.Timeout)
+	}
+}
+
+func probeDir(dir string) error {
+	if _, err := os.ReadDir(dir); err != nil {
+		return err
+	}
+	file, err := os.CreateTemp(dir, ".rangers-probe-*")
+	if err != nil {
+		return err
+	}
+	return errors.Join(file.Close(), os.Remove(file.Name()))
 }
 
 func (GitCLI) NewWorktree(ctx context.Context, repo, branch, worktree string) error {

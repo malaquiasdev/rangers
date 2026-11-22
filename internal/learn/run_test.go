@@ -29,6 +29,15 @@ type fakeReminder struct {
 	fail  error
 }
 
+type fakeBrain struct {
+	dirs []string
+	fail error
+}
+
+type blockingClaude struct{}
+
+type slowAfterFirst struct{ calls int }
+
 type scenario struct {
 	t        *testing.T
 	cfg      Config
@@ -38,9 +47,13 @@ type scenario struct {
 	out      *bytes.Buffer
 	errOut   *bytes.Buffer
 	claude   Claude
+	brain    Brain
 }
 
-type blockingClaude struct{}
+func (f *fakeBrain) Probe(_ context.Context, dir string) error {
+	f.dirs = append(f.dirs, dir)
+	return f.fail
+}
 
 func (blockingClaude) Run(ctx context.Context, _ string, _ []string) ([]byte, error) {
 	<-ctx.Done()
@@ -200,8 +213,14 @@ func (s *scenario) run() error {
 	if s.claude != nil {
 		claude = s.claude
 	}
+	var brain Brain = DirBrain{Timeout: time.Second}
+	if s.brain != nil {
+		brain = s.brain
+	}
 	return Run(context.Background(), &s.cfg, &Dependencies{
 		Claude:   claude,
+		Brain:    brain,
+		Binary:   "/opt/rangers/bin/rangers",
 		Git:      GitCLI{},
 		Reminder: s.reminder,
 		Now:      func() time.Time { return s.now },
@@ -1040,12 +1059,103 @@ func TestRunCallTimeout(t *testing.T) {
 	})
 }
 
-type slowAfterFirst struct{ calls int }
-
 func (c *slowAfterFirst) Run(ctx context.Context, dir string, args []string) ([]byte, error) {
 	c.calls++
 	if c.calls == 1 {
 		return []byte(claudeJSON), nil
 	}
 	return blockingClaude{}.Run(ctx, dir, args)
+}
+
+func TestRunBrainAccess(t *testing.T) {
+	const message = "[notas] sem acesso ao brain (operation not permitted): dê Acesso Total ao Disco a " +
+		"/opt/rangers/bin/rangers em Ajustes > Privacidade e Segurança; pulo as notas\n"
+	denied := func(t *testing.T) *scenario {
+		t.Helper()
+		s := newScenario(t)
+		s.withNotes()
+		s.brain = &fakeBrain{fail: errors.New("operation not permitted")}
+		return s
+	}
+
+	t.Run("given a brain folder the job cannot use, when running, then claude is called only for the rules pass and no notes input is written", func(t *testing.T) {
+		s := denied(t)
+		if err := s.run(); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		calls := s.claudeCalls()
+		if len(calls) != 1 || argumentAfter(calls[0], "--model") != "opus" {
+			t.Fatalf("calls: %q", calls)
+		}
+		if s.stateHas("notes-input-2026-11-22-1030.txt") || s.stateHas("notes-output-2026-11-22-1030.json") {
+			t.Fatal("the notes pass must not write its input or output")
+		}
+		if dirs := s.brain.(*fakeBrain).dirs; len(dirs) != 1 || dirs[0] != s.cfg.Brain {
+			t.Fatalf("probed %q", dirs)
+		}
+	})
+
+	t.Run("given a brain folder the job cannot use, when running, then it prints the notice once, with the binary path, on the output", func(t *testing.T) {
+		s := denied(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Count(s.out.String(), message); got != 1 {
+			t.Fatalf("notice appeared %d times in %q", got, s.out.String())
+		}
+	})
+
+	t.Run("given a brain folder the job cannot use, when running, then it appends a reminder line to pending-reminders.txt", func(t *testing.T) {
+		s := denied(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		expected := "Dar acesso ao brain ao rangers\tAcesso Total ao Disco para /opt/rangers/bin/rangers em Ajustes > Privacidade e Segurança\n"
+		if got := s.stateFile("pending-reminders.txt"); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("given a brain folder the job cannot use, when running, then the rules pass is unaffected and the notes checkpoint stays where it was", func(t *testing.T) {
+		s := denied(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if !s.stateHas("checkpoint") || !s.stateHas("metrics.tsv") || s.branches() == "" {
+			t.Fatal("the rules pass should have finished")
+		}
+		if s.stateHas("checkpoint-notes") {
+			t.Fatal("the notes checkpoint must not advance")
+		}
+		if strings.Contains(s.stateFile("metrics.tsv"), "notes") {
+			t.Fatalf("metrics: %q", s.stateFile("metrics.tsv"))
+		}
+	})
+
+	t.Run("given a brain folder that works, when running, then the notes pass runs as before and no notice or pending line appears", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.brain = &fakeBrain{}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.claudeCalls()) != 2 || !s.stateHas("checkpoint-notes") || s.stateHas("pending-reminders.txt") {
+			t.Fatal("the notes pass should have run")
+		}
+		if strings.Contains(s.out.String(), "sem acesso ao brain") {
+			t.Fatalf("output: %q", s.out.String())
+		}
+	})
+
+	t.Run("given a skipped notes pass, when running, then the brain folder is not probed", func(t *testing.T) {
+		s := newScenario(t)
+		s.fresh(12)
+		s.brain = &fakeBrain{fail: errors.New("operation not permitted")}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.brain.(*fakeBrain).dirs) != 0 {
+			t.Fatal("nothing should be probed")
+		}
+	})
 }

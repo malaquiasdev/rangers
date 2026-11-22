@@ -76,7 +76,13 @@ func gateDependencies() *gate.Dependencies {
 }
 
 func learnDependencies() *learn.Dependencies {
+	binary, err := os.Executable()
+	if err != nil {
+		binary = "rangers"
+	}
 	return &learn.Dependencies{
+		Brain:    learn.DirBrain{Timeout: 10 * time.Second},
+		Binary:   binary,
 		Claude:   learn.ClaudeCLI{},
 		Git:      learn.GitCLI{},
 		Reminder: learn.OsascriptReminder{Timeout: 10 * time.Second},

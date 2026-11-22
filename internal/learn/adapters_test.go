@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -38,6 +39,39 @@ func TestClaudeCLITimeout(t *testing.T) {
 		}
 		if elapsed := time.Since(started); elapsed > 10*time.Second {
 			t.Fatalf("took %v", elapsed)
+		}
+	})
+}
+
+func TestDirBrainProbe(t *testing.T) {
+	probe := DirBrain{Timeout: 2 * time.Second}
+
+	t.Run("given a folder that can be listed and written, when probing, then it succeeds and leaves no file behind", func(t *testing.T) {
+		dir := t.TempDir()
+		if err := probe.Probe(t.Context(), dir); err != nil {
+			t.Fatal(err)
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil || len(entries) != 0 {
+			t.Fatalf("entries %v, err %v", entries, err)
+		}
+	})
+
+	t.Run("given a folder that does not exist, when probing, then it returns an error naming the folder", func(t *testing.T) {
+		dir := filepath.Join(t.TempDir(), "missing")
+		err := probe.Probe(t.Context(), dir)
+		if err == nil || !strings.Contains(err.Error(), dir) {
+			t.Fatalf("got %v", err)
+		}
+	})
+
+	t.Run("given a path that is a file, when probing, then it returns an error", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "notes")
+		if err := os.WriteFile(file, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := probe.Probe(t.Context(), file); err == nil {
+			t.Fatal("expected an error")
 		}
 	})
 }
