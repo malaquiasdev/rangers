@@ -80,6 +80,44 @@ func TestCI(t *testing.T) {
 		}
 	})
 
+	t.Run("given gh reporting no checks with empty output and exit 1, when running the gate, then it refuses with exit 1 and no merge call even with --merge", func(t *testing.T) {
+		s := approvedScenario(t)
+		s.runner.replies[checkCmd] = reply{err: errors.New(checkCmd + ": exit status 1: no checks reported on the 'feat/endpoint' branch")}
+		if err := s.run("--merge"); !errors.Is(err, ErrRefused) {
+			t.Fatalf("got %v", err)
+		}
+		if got := s.lastLine(); got != "refused: ci has no checks for this head" {
+			t.Fatalf("got %q", got)
+		}
+		if n := s.runner.called(mergeCmd); n != 0 {
+			t.Fatalf("merge called %d times: %v", n, s.runner.calls)
+		}
+	})
+
+	t.Run("given an unrelated gh failure with empty output, when running the gate, then it returns the error and does not refuse", func(t *testing.T) {
+		s := approvedScenario(t)
+		s.runner.replies[checkCmd] = reply{err: errors.New(checkCmd + ": exit status 1: could not resolve to a PullRequest with the number of 7")}
+		err := s.run("--merge")
+		if err == nil || errors.Is(err, ErrRefused) || !strings.Contains(err.Error(), "could not resolve") {
+			t.Fatalf("got %v", err)
+		}
+		if n := s.runner.called(mergeCmd); n != 0 {
+			t.Fatalf("merge called %d times: %v", n, s.runner.calls)
+		}
+	})
+
+	t.Run("given malformed JSON from gh, when running the gate, then it returns the error and does not refuse", func(t *testing.T) {
+		s := approvedScenario(t)
+		s.runner.replies[checkCmd] = reply{out: `{"name":`}
+		err := s.run("--merge")
+		if err == nil || errors.Is(err, ErrRefused) {
+			t.Fatalf("got %v", err)
+		}
+		if n := s.runner.called(mergeCmd); n != 0 {
+			t.Fatalf("merge called %d times: %v", n, s.runner.calls)
+		}
+	})
+
 	t.Run("given no approval, when running the gate, then the checks are not even asked", func(t *testing.T) {
 		s := newScenario(t, openPR())
 		if err := s.run(); !errors.Is(err, ErrRefused) {
