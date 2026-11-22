@@ -34,7 +34,7 @@ Each one is a Markdown file in [`agents/`](agents).
 
 ## Install
 
-You need Claude Code, `gh`, Go 1.26, `golangci-lint`, `jq`, Podman and Python 3.11 or newer.
+You need Claude Code, `gh`, Go 1.26, `golangci-lint`, Podman and Python 3.11 or newer.
 
 ```sh
 git clone https://github.com/malaquiasdev/rangers
