@@ -6,10 +6,6 @@ RIM = (150, 200, 255)
 WHITE = [(255, 255, 255)] * 6
 
 
-def under(ramp):
-    return [ramp[0], ramp[0], ramp[1], ramp[2], ramp[3], ramp[4]]
-
-
 def shine(flat=5):
     return Material(P.CYAN, flat=flat, outline=False)
 
@@ -18,7 +14,6 @@ def common():
     return {
         "t": Material(P.GOLD),
         "e": shine(),
-        "+": shine(),
         "*": Material(WHITE, flat=3, outline=False),
         "G": Material(P.OBSIDIAN),
         "g": Material(P.STEEL),
@@ -26,37 +21,6 @@ def common():
         "v": Material(P.VISOR, lit=0.0, shade=0.0),
     }
 
-
-RANGER_ORDER = ["u", "c", "n", "U", "r", "g", "G", "S", "m", "k", "q", "p", "h", "v", "t", "e", "*", "+"]
-
-
-def ranger(main):
-    materials = common()
-    materials.update(
-        {
-            "u": Material(under(main)),
-            "U": Material(under(main)),
-            "c": Material(main),
-            "r": Material(main),
-            "p": Material(main),
-            "h": Material(main),
-            "S": Material(P.GOLD),
-            "m": Material(P.STEEL),
-            "k": Material(P.CRIMSON),
-            "q": Material(P.CREAM),
-        }
-    )
-    return materials
-
-
-RANGER_RAMPS = {
-    "jason": P.RED,
-    "zack": P.BLACK,
-    "kimberly": P.PINK,
-    "billy": P.BLUE,
-    "trini": P.YELLOW,
-    "tommy": P.GREEN,
-}
 
 CAST_ORDER = ["z", "y", "w", "u", "c", "n", "U", "r", "g", "G", "T", "d", "F", "f", "k", "q", "p", "h", "v", "x", "t", "E", "e", "*", "+"]
 
@@ -157,8 +121,6 @@ def tube_glow(canvas, rows, center, radius):
 
 def build_sprite(name):
     rows = SPRITE_MAPS[name]
-    if name in RANGER_RAMPS:
-        return render_map(rows, ranger(RANGER_RAMPS[name]), RANGER_ORDER, rim=RIM)
     makers = {"zordon": zordon, "alpha-5": alpha, "rita": rita, "lord-zedd": zedd, "putties": putties}
     canvas = render_map(rows, makers[name](), CAST_ORDER, rim=RIM)
     if name == "zordon":
@@ -185,9 +147,6 @@ LEGEND = {
     "t": "gold trim",
     "e": "emissive glow",
     "*": "specular highlight",
-    "+": "cool glint",
-    "S": "shield rim",
-    "m": "shield face",
     "k": "book cover",
     "q": "book pages",
 }
