@@ -1,6 +1,6 @@
 ---
-name: megazord
-description: Starts an activity with the coordinator. Use when the human types /megazord followed by a Linear issue, a GitHub issue or a short description.
+name: rangers
+description: Starts an activity with the coordinator. Use when the human types /rangers followed by a Linear issue, a GitHub issue or a short description.
 ---
 
 Activity: $ARGUMENTS

@@ -2,8 +2,8 @@
 set -eu
 
 aqui=$(cd "$(dirname "$0")" && pwd)
-repo=${MEGAZORD_REPO:-$HOME/Developer/me/megazord}
-state=${ZORDON_STATE:-$HOME/.local/state/megazord/zordon}
+repo=${RANGERS_REPO:-$HOME/Developer/me/rangers}
+state=${ZORDON_STATE:-$HOME/.local/state/rangers/zordon}
 mkdir -p "$state"
 
 carimbo=$(date +%Y-%m-%d-%H%M)

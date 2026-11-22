@@ -1,6 +1,6 @@
 # Como desfazer a instalação
 
-Este guia mostra como tirar o Megazord da máquina, por inteiro ou peça por peça.
+Este guia mostra como tirar o Rangers da máquina, por inteiro ou peça por peça.
 
 ## Tirar uma peça só
 

@@ -1,4 +1,4 @@
-# megazord
+# rangers
 
 Um repositório de agentes e regras em cima de projetos open source que já coordenam agentes. Substitui a plataforma `jaiminho-suite`, que foi arquivada.
 

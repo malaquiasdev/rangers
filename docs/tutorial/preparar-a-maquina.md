@@ -1,6 +1,6 @@
 # Preparar a máquina pela primeira vez
 
-Neste tutorial você vai deixar uma máquina pronta para usar o Megazord: instalar as peças open source, configurar o pstack e ver os agentes deste repo na lista do Claude Code.
+Neste tutorial você vai deixar uma máquina pronta para usar o Rangers: instalar as peças open source, configurar o pstack e ver os agentes deste repo na lista do Claude Code.
 
 ## Antes de começar
 

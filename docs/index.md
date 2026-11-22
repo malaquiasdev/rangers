@@ -1,6 +1,6 @@
-# Documentação do Megazord
+# Documentação do Rangers
 
-O Megazord é um repositório de agentes e regras para o Claude Code em cima de projetos open source que já coordenam agentes. As páginas estão separadas pelo que você precisa agora.
+O Rangers é um repositório de agentes e regras para o Claude Code em cima de projetos open source que já coordenam agentes. As páginas estão separadas pelo que você precisa agora.
 
 ## Para aprender
 
