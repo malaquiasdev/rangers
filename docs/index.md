@@ -1,6 +1,6 @@
-# Documentação do Jaiminho
+# Documentação do Centro de Comando
 
-O Jaiminho é um repositório de agentes e regras para o Claude Code em cima de projetos open source que já coordenam agentes. As páginas estão separadas pelo que você precisa agora.
+O Centro de Comando é um repositório de agentes e regras para o Claude Code em cima de projetos open source que já coordenam agentes. As páginas estão separadas pelo que você precisa agora.
 
 ## Para aprender
 

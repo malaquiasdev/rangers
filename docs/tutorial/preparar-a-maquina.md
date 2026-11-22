@@ -1,6 +1,6 @@
 # Preparar a máquina pela primeira vez
 
-Neste tutorial você vai deixar uma máquina pronta para usar o Jaiminho: instalar as peças open source, configurar o pstack e ver os agentes deste repo na lista do Claude Code.
+Neste tutorial você vai deixar uma máquina pronta para usar o Centro de Comando: instalar as peças open source, configurar o pstack e ver os agentes deste repo na lista do Claude Code.
 
 ## Antes de começar
 

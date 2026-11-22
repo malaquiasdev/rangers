@@ -11,7 +11,7 @@ Os papéis estão nos arquivos de [`agents/`](../../agents/). O campo `descripti
 1. O coordenador (Coordinator) refina a atividade com o humano usando a skill `grilling`, uma pergunta por vez. Escolhe o roteiro do pstack que serve, escreve o plano e pede um único sim, mostrando o resumo e um hash de 12 caracteres do plano. Sem esse sim, nada começa.
 2. O autor (Author) implementa uma unidade no próprio worktree. Escreve o teste que falha antes do código, faz commits pequenos e abre a própria PR. Não faz merge nem deploy.
 3. O revisor (Reviewer) lê a PR numa sessão nova, sem o contexto do autor. Cada achado precisa de prova e de uma gravidade: BLOQUEIA, MÉDIO ou NIT. Só um BLOQUEIA com prova segura o merge. São no máximo duas rodadas.
-4. O portão (Gate) roda o programa `jaiminho gate`, que confere o sim do humano, a CI e produção antes do merge. A decisão é do programa, não do modelo. Esse programa ainda não existe neste repositório (veja [o que ainda não tem dono](por-que-uma-camada-fina.md#o-que-ainda-não-tem-dono-em-open-source)).
+4. O portão (Gate) roda o programa `comando gate`, que confere o sim do humano, a CI e produção antes do merge. A decisão é do programa, não do modelo. Esse programa ainda não existe neste repositório (veja [o que ainda não tem dono](por-que-uma-camada-fina.md#o-que-ainda-não-tem-dono-em-open-source)).
 5. O QA testa em dev o que foi mergeado, pela porta de entrada do serviço, e registra a evidência completa. Só lê o banco, dentro de uma transação somente leitura.
 
 ## Os papéis fora do caminho

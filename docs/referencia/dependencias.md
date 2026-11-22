@@ -1,6 +1,6 @@
 # Dependências
 
-A lista do que o Jaiminho usa, com versão ou commit fixo, licença e origem, está em [`deps.toml`](../../deps.toml). Esta página descreve o formato desse arquivo e diz o que os scripts cobrem. Para a versão de uma peça, leia o arquivo.
+A lista do que o Centro de Comando usa, com versão ou commit fixo, licença e origem, está em [`deps.toml`](../../deps.toml). Esta página descreve o formato desse arquivo e diz o que os scripts cobrem. Para a versão de uma peça, leia o arquivo.
 
 ## Formato do `deps.toml`
 
@@ -13,7 +13,7 @@ Campos que toda dependência tem:
 | `name` | O nome curto da peça |
 | `kind` | O tipo de peça, que define os outros campos |
 | `license` | A licença declarada pelo projeto |
-| `function` | Para que o Jaiminho usa a peça, em uma frase |
+| `function` | Para que o Centro de Comando usa a peça, em uma frase |
 
 Campos por tipo:
 
