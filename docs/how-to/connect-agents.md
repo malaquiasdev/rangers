@@ -39,6 +39,8 @@ ln -s "$PWD/skills/rangers" ~/.claude/skills/rangers
 
 If `~/.claude/skills/rangers` already exists, `ln` puts the link inside it instead. Check it with `ls -l ~/.claude/skills/rangers` first.
 
+The other folders in [`skills/`](../../skills/), `claude-sessions` and `pr-description`, are linked the same way, one `ln -s` per folder.
+
 Open a new session. Typing `/rangers` shows the skill. How to use it is in [how to start an activity](start-activity.md).
 
 ## Check what is connected
