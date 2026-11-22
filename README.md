@@ -1,4 +1,4 @@
-![Rangers: 16-bit pixel art banner with a bevelled title and six armored heroes in a line-up on a lit stage, under a moon and a city skyline](assets/banner/banner.png)
+<img src="assets/banner/poster.png" width="640" alt="Rangers: a 16-bit pixel art cover poster. Six armored heroes in action poses stand in front of six tall close-up panels of their helmets and chest diamonds, under a bevelled gold title on a red ribbon with a gem crest, in a dark command center with a green mist and energy rings">
 
 # Rangers
 
@@ -18,12 +18,12 @@ Rangers is a set of Claude Code agents, rules and a small Go program, built on o
 
 | | Agent | What it does |
 | --- | --- | --- |
-| <img src="assets/sprites/jason.png" width="64" alt="Pixel art of Jason, a red armored ranger with an antenna crest and one fist raised"> | Jason | Coordinator. Refines the task with you, plans, and hands the work out. Never writes code. |
-| <img src="assets/sprites/zack.png" width="64" alt="Pixel art of Zack, a heavy black armored ranger with spiked shoulders"> | Zack | Author. Writes one test per scenario, then the code, and opens its own pull request. |
-| <img src="assets/sprites/kimberly.png" width="64" alt="Pixel art of Kimberly, a pink armored ranger with a swept crest and a magnifier"> | Kimberly | Reviewer. Reads the pull request, and only a finding with proof counts. |
-| <img src="assets/sprites/billy.png" width="64" alt="Pixel art of Billy, a blue armored ranger with a scanner dish and a lantern"> | Billy | Explorer. Finds out how code and data work, read only, with a file and line for every claim. |
-| <img src="assets/sprites/trini.png" width="64" alt="Pixel art of Trini, a yellow armored ranger with winged helmet and an open book"> | Trini | Docs writer. Builds the `docs` folder by the Diátaxis method. Called only by you. |
-| <img src="assets/sprites/tommy.png" width="64" alt="Pixel art of Tommy, a green armored ranger with a shield marked with a lock"> | Tommy | Gate. A program with no model that checks your yes and the CI before a merge. |
+| <img src="assets/sprites/jason.png" width="64" alt="Pixel art of Jason, a red armored ranger flexing with both fists raised beside a crested helmet"> | Jason | Coordinator. Refines the task with you, plans, and hands the work out. Never writes code. |
+| <img src="assets/sprites/zack.png" width="64" alt="Pixel art of Zack, a black armored ranger with one fist guarding and one fist out"> | Zack | Author. Writes one test per scenario, then the code, and opens its own pull request. |
+| <img src="assets/sprites/kimberly.png" width="64" alt="Pixel art of Kimberly, a pink armored ranger in a high kick with a pointed-ear helmet"> | Kimberly | Reviewer. Reads the pull request, and only a finding with proof counts. |
+| <img src="assets/sprites/billy.png" width="64" alt="Pixel art of Billy, a blue armored ranger in a guard stance with a spiked helmet"> | Billy | Explorer. Finds out how code and data work, read only, with a file and line for every claim. |
+| <img src="assets/sprites/trini.png" width="64" alt="Pixel art of Trini, a yellow armored ranger with pointed ears and one fist overhead"> | Trini | Docs writer. Builds the `docs` folder by the Diátaxis method. Called only by you. |
+| <img src="assets/sprites/tommy.png" width="64" alt="Pixel art of Tommy, a green armored ranger with a forehead gem, horns and open arms"> | Tommy | Gate. A program with no model that checks your yes and the CI before a merge. |
 | <img src="assets/sprites/zordon.png" width="64" alt="Pixel art of Zordon, a glowing sage head floating in a glass tube with gold caps"> | Zordon | Mentor. Learns from your corrections and writes the notes. |
 | <img src="assets/sprites/alpha-5.png" width="64" alt="Pixel art of Alpha 5, a small round silver-blue robot with its arms up and sparks"> | Alpha 5 | Courier. Delivers the plan as a page and sends the reminder. |
 | <img src="assets/sprites/rita.png" width="64" alt="Pixel art of Rita Repulsa, a sorceress in purple and magenta with a crystal staff"> | Rita Repulsa | Adversarial reviewer. Attacks risky changes before they go in. |
