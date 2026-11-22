@@ -39,7 +39,7 @@ You need Claude Code, `gh`, Go 1.26, `golangci-lint`, Podman and Python 3.11 or 
 ```sh
 git clone https://github.com/malaquiasdev/rangers
 cd rangers
-scripts/instalar.sh
+scripts/install.sh
 make hooks
 ```
 

@@ -6,7 +6,7 @@ The list of what Rangers uses, with a pinned version or commit, the license and 
 
 The file starts with `format_version = 1`. Each dependency is a `[[dependency]]` table.
 
-Fields every dependency has. `scripts/checar.sh` fails when one is missing:
+Fields every dependency has. `scripts/check.sh` fails when one is missing:
 
 | Field | What it holds |
 | --- | --- |
@@ -19,7 +19,7 @@ Optional field:
 
 | Field | What it holds |
 | --- | --- |
-| `optional` | `true` when Rangers works without the piece. `conferir.sh` does not count it as missing, and `instalar.sh` installs it only when asked |
+| `optional` | `true` when Rangers works without the piece. `verify.sh` does not count it as missing, and `install.sh` installs it only when asked |
 
 Fields by kind:
 
@@ -37,15 +37,15 @@ Fields by kind:
 
 `deps.toml` and the scripts do not list the same pieces:
 
-| Piece | Pinned in `deps.toml` | Installed by `instalar.sh` | Checked by `conferir.sh` |
+| Piece | Pinned in `deps.toml` | Installed by `install.sh` | Checked by `verify.sh` |
 | --- | --- | --- | --- |
 | pstack, i-have-adhd, container-use | Yes | Yes | Yes |
-| openspec (`optional = true`) | Yes | Only with `INSTALAR_OPCIONAIS=1` | Shows `não instalado (opcional)` without counting it as missing |
+| openspec (`optional = true`) | Yes | Only with `INSTALL_OPTIONAL=1` | Shows `não instalado (opcional)` without counting it as missing |
 | lychee (container image) | Yes | No | No |
 | Skills (`kind = "skill"`) | Yes | No | No |
 | Container runtime (`docker`) | No | No | Yes |
 
-The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. The steps to copy one are in [how to install the skills](../como-fazer/instalar-as-skills.md).
+The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gives the repository, folder and commit each one comes from. The steps to copy one are in [how to install the skills](../how-to/install-skills.md).
 
 ## How to install and remove each piece
 
@@ -56,7 +56,7 @@ The skills live in the user's skills folder, `~/.claude/skills/`. `deps.toml` gi
 | container-use | `brew install dagger/tap/container-use` | `brew uninstall container-use` |
 | openspec | `npm install -g @fission-ai/openspec` | `npm uninstall -g @fission-ai/openspec` |
 
-The install commands are the same as in [`scripts/instalar.sh`](../../scripts/instalar.sh).
+The install commands are the same as in [`scripts/install.sh`](../../scripts/install.sh).
 
 ## What the machine needs
 

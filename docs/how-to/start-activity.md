@@ -1,6 +1,6 @@
 # How to start an activity
 
-This guide starts a piece of work with the coordinator through the `/rangers` skill. You need the agents and the skill connected (see [how to connect the agents and the skill](ligar-os-agentes.md)).
+This guide starts a piece of work with the coordinator through the `/rangers` skill. You need the agents and the skill connected (see [how to connect the agents and the skill](connect-agents.md)).
 
 1. Open a Claude Code session.
 2. Type `/rangers` followed by one of these:
@@ -13,4 +13,4 @@ This guide starts a piece of work with the coordinator through the `/rangers` sk
 
 If the coordinator cannot tell which repository the work belongs to, it asks. It looks for the repository two levels below `~/Developer/`, such as `~/Developer/<group>/<repository>`.
 
-What each agent does along the way is in [how the agents split the work](../explicacao/como-os-agentes-dividem-o-trabalho.md).
+What each agent does along the way is in [how the agents split the work](../explanation/how-agents-split-work.md).

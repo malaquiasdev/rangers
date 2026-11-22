@@ -14,31 +14,31 @@ The installed plugins and tools do most of the work. Their names show up across 
 | OpenSpec | Contract and spec before code. Optional |
 | container-use | An isolated environment per agent, with no power to merge |
 
-The exact list, with version and source, is in [`deps.toml`](../../deps.toml). What each field means is in the [dependencies reference](../referencia/dependencias.md).
+The exact list, with version and source, is in [`deps.toml`](../../deps.toml). What each field means is in the [dependencies reference](../reference/dependencies.md).
 
 ## What stays in this repository
 
 Little is left, on purpose:
 
-- the agents, which tell each open source project how to work the way the owner of the repository wants (see [how the agents split the work](como-os-agentes-dividem-o-trabalho.md));
+- the agents, which tell each open source project how to work the way the owner of the repository wants (see [how the agents split the work](how-agents-split-work.md));
 - the `/rangers` skill, the single entry point that hands an activity to the coordinator;
 - the rules for every agent, in [`rules/`](../../rules/);
 - the list of what is installed and the scripts that install and check it;
-- the `rangers learn` program, which turns the human's corrections into proposed rules (see [how the learning loop works](como-o-aprendizado-funciona.md));
+- the `rangers learn` program, which turns the human's corrections into proposed rules (see [how the learning loop works](how-learning-works.md));
 - the local checks and the release workflow;
 - the test plan that decides whether the idea works.
 
-The upside is little code to keep. The cost is depending on the pace and the choices of other projects. That is why each dependency has a pinned version or commit in `deps.toml`, and each one has a remove command in [how to uninstall](../como-fazer/desfazer-a-instalacao.md).
+The upside is little code to keep. The cost is depending on the pace and the choices of other projects. That is why each dependency has a pinned version or commit in `deps.toml`, and each one has a remove command in [how to uninstall](../how-to/uninstall.md).
 
 ## The checks run on the machine
 
-The checks run in Git hooks and `make check`, not in GitHub Actions. The only workflow is release-please. This keeps the Actions quota for the release and gives the same answer before a commit as before a push. The list is in the [checks and release reference](../referencia/checagens-e-release.md).
+The checks run in Git hooks and `make check`, not in GitHub Actions. The only workflow is release-please. This keeps the Actions quota for the release and gives the same answer before a commit as before a push. The list is in the [checks and release reference](../reference/checks-and-release.md).
 
 ## The test decides
 
 The test answers one question: does a thin layer on top of open source projects take an activity to a pull request with little friction for a human who reads short answers and does not want to open files?
 
-The test uses a real work activity, small, the size of one pull request. A made-up activity does not count, because it does not show the real friction. The measures and what each result decides are in the [test plan reference](../referencia/plano-de-teste.md). The steps are in [how to run the test](../como-fazer/rodar-o-teste.md).
+The test uses a real work activity, small, the size of one pull request. A made-up activity does not count, because it does not show the real friction. The measures and what each result decides are in the [test plan reference](../reference/test-plan.md). The steps are in [how to run the test](../how-to/run-test.md).
 
 ## What does not exist yet
 

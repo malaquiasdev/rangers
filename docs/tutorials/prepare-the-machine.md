@@ -16,7 +16,7 @@ Open a terminal at the root of the clone. Every command below runs from there.
 ## 1. See what is already there
 
 ```sh
-scripts/conferir.sh
+scripts/verify.sh
 ```
 
 You will see one line per piece, with its version next to it. The ones not installed yet show `FALTANDO`. The last line says how many items are missing, or `Tudo no lugar.`.
@@ -26,12 +26,12 @@ Do not worry about the `FALTANDO` lines: the next step takes care of them.
 ## 2. Install what is missing
 
 ```sh
-scripts/instalar.sh
+scripts/install.sh
 ```
 
 The script installs only what was missing and, at the end, runs the check again. Look at the last line: now it says `Tudo no lugar.`.
 
-If it still says `item(ns) faltando`, look in the lines above for the piece marked `FALTANDO` or `SEM RESPOSTA`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `scripts/conferir.sh` again.
+If it still says `item(ns) faltando`, look in the lines above for the piece marked `FALTANDO` or `SEM RESPOSTA`. The most common one is the `docker` line: the script does not start the container runtime. Start Podman with `podman machine start` and run `scripts/verify.sh` again.
 
 ## 3. Set up pstack
 
@@ -63,6 +63,6 @@ The agents of this repository are in the list, each with its role in the descrip
 
 ## What you did
 
-The machine has the open source pieces installed, pstack set up, and the agents and the `/rangers` skill connected. The agents also call skills from other repositories, such as `grilling`; install them with [how to install the skills](../como-fazer/instalar-as-skills.md). Then start a real activity: see [how to start an activity](../como-fazer/iniciar-uma-atividade.md).
+The machine has the open source pieces installed, pstack set up, and the agents and the `/rangers` skill connected. The agents also call skills from other repositories, such as `grilling`; install them with [how to install the skills](../how-to/install-skills.md). Then start a real activity: see [how to start an activity](../how-to/start-activity.md).
 
-To understand why the repository is so small, read [why a thin layer](../explicacao/por-que-uma-camada-fina.md).
+To understand why the repository is so small, read [why a thin layer](../explanation/why-a-thin-layer.md).

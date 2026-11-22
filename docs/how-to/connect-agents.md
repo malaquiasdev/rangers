@@ -28,7 +28,7 @@ ln -s "$PWD/skills/rangers" ~/.claude/skills/rangers
 
 If `~/.claude/skills/rangers` already exists, `ln` puts the link inside it instead. Check it with `ls -l ~/.claude/skills/rangers` first.
 
-Open a new session. Typing `/rangers` shows the skill. How to use it is in [how to start an activity](iniciar-uma-atividade.md).
+Open a new session. Typing `/rangers` shows the skill. How to use it is in [how to start an activity](start-activity.md).
 
 ## Check which agents are connected
 

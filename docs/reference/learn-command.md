@@ -1,6 +1,6 @@
 # The `rangers learn` command
 
-`rangers learn` reads the Claude Code session transcripts that changed and runs the learning agent on them. The source is in [`cmd/rangers/`](../../cmd/rangers/) and [`internal/learn/`](../../internal/learn/). Why it works this way is in [how the learning loop works](../explicacao/como-o-aprendizado-funciona.md).
+`rangers learn` reads the Claude Code session transcripts that changed and runs the learning agent on them. The source is in [`cmd/rangers/`](../../cmd/rangers/) and [`internal/learn/`](../../internal/learn/). Why it works this way is in [how the learning loop works](../explanation/how-learning-works.md).
 
 ## Usage
 

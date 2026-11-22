@@ -1,6 +1,6 @@
 # Test plan
 
-The measures and criteria that decide whether the thin layer works. Why the test exists is in [why a thin layer](../explicacao/por-que-uma-camada-fina.md#the-test-decides). The steps are in [how to run the test](../como-fazer/rodar-o-teste.md).
+The measures and criteria that decide whether the thin layer works. Why the test exists is in [why a thin layer](../explanation/why-a-thin-layer.md#the-test-decides). The steps are in [how to run the test](../how-to/run-test.md).
 
 ## The activity
 

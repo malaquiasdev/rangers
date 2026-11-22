@@ -1,10 +1,10 @@
-.PHONY: check rapido hooks
+.PHONY: check quick hooks
 
 check:
-	scripts/checar.sh completo
+	scripts/check.sh full
 
-rapido:
-	scripts/checar.sh rapido
+quick:
+	scripts/check.sh quick
 
 hooks:
-	scripts/hooks-instalar.sh
+	scripts/install-hooks.sh

@@ -1,6 +1,6 @@
 # How to schedule the learning job
 
-This guide builds `rangers learn` and schedules it to run every 2 hours on macOS. What the command reads and writes is in the [`rangers learn` reference](../referencia/comando-learn.md).
+This guide builds `rangers learn` and schedules it to run every 2 hours on macOS. What the command reads and writes is in the [`rangers learn` reference](../reference/learn-command.md).
 
 The scheduled job runs with no flags, so it uses the default folders. Before you start, check that they match your machine: the clone at `~/Developer/me/rangers`, the transcripts at `~/.claude/projects` and the notes folder at `~/Documents/brain`. If one is somewhere else, the job will not find it.
 

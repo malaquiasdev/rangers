@@ -20,4 +20,4 @@ The checker is lychee, in a container image. The version of the image is in [`de
 
 3. Read the summary at the end. For each error, lychee shows the file and the broken link. Fix the path or the heading and run it again.
 
-If the image version changes in `deps.toml`, change the tag in the command and in `scripts/checar.sh`.
+If the image version changes in `deps.toml`, change the tag in the command and in `scripts/check.sh`.

@@ -1,6 +1,6 @@
 # Agent file
 
-Each agent is a Markdown file in [`agents/`](../../agents/), with a YAML header and a body of instructions in English. Claude Code loads these files as subagents when they are in the user's agents folder, `~/.claude/agents/` (see [how to connect the agents](../como-fazer/ligar-os-agentes.md)).
+Each agent is a Markdown file in [`agents/`](../../agents/), with a YAML header and a body of instructions in English. Claude Code loads these files as subagents when they are in the user's agents folder, `~/.claude/agents/` (see [how to connect the agents](../how-to/connect-agents.md)).
 
 ## Header
 
@@ -14,9 +14,9 @@ Each agent is a Markdown file in [`agents/`](../../agents/), with a YAML header 
 
 The agents that only read or only run one command declare `tools`. The ones that write files do not.
 
-`scripts/checar.sh` refuses a file whose `name`, `model`, `effort` or `description` breaks the rules above (see the [checks reference](checagens-e-release.md#what-scriptschecarsh-checks)).
+`scripts/check.sh` refuses a file whose `name`, `model`, `effort` or `description` breaks the rules above (see the [checks reference](checks-and-release.md#what-scriptschecksh-checks)).
 
-`rangers learn` finds the learning agent by its `description`, which must start with `Learning.` (see the [`rangers learn` reference](comando-learn.md#the-two-passes)).
+`rangers learn` finds the learning agent by its `description`, which must start with `Learning.` (see the [`rangers learn` reference](learn-command.md#the-two-passes)).
 
 ## Body
 

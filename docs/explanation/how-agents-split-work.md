@@ -4,11 +4,11 @@ Each agent has one role and a clear limit on what it does not do. The split foll
 
 No agent file gives an agent the power to merge or deploy. The coordinator, the author and the swarm are forbidden to merge. The gate only runs a program and reports what it says; it never merges by hand.
 
-The roles are in the files of [`agents/`](../../agents/). The `description` of each one starts with the role in English: Coordinator, Author, Reviewer and so on. The file format is in the [agent file reference](../referencia/arquivo-de-agente.md).
+The roles are in the files of [`agents/`](../../agents/). The `description` of each one starts with the role in English: Coordinator, Author, Reviewer and so on. The file format is in the [agent file reference](../reference/agent-file.md).
 
 ## The path of an activity
 
-1. The human types `/rangers` with an issue or a short description (see [how to start an activity](../como-fazer/iniciar-uma-atividade.md)). The skill hands the text to the coordinator as it is.
+1. The human types `/rangers` with an issue or a short description (see [how to start an activity](../how-to/start-activity.md)). The skill hands the text to the coordinator as it is.
 2. The **coordinator** finds the repository, reads the issue and refines the activity with the human using the `grilling` skill, one question at a time. It picks the pstack playbook that fits and writes the plan for a reader who is not technical: a three-line summary, the scenarios as "given, when, then", a flowchart when there is a decision or a flow, and the technical detail in a closed block at the end.
 3. The **courier** publishes the plan as a private page and sends the link with the question. The question shows the summary and a 12-character hash of the plan and asks for one yes. Without the yes, nothing starts.
 4. After the yes, the coordinator starts the **author** for one unit, or the **swarm** when the plan has several units that touch different files. The author works in its own worktree, writes the failing test before the code, makes small commits and opens its own pull request.
@@ -25,11 +25,11 @@ The roles are in the files of [`agents/`](../../agents/). The `description` of e
 
 ## The roles outside the path
 
-The **gate** runs the `rangers gate` program, which checks the human's yes, the CI and production before a merge. The program decides, not the model. That program does not exist yet (see [what does not exist yet](por-que-uma-camada-fina.md#what-does-not-exist-yet)).
+The **gate** runs the `rangers gate` program, which checks the human's yes, the CI and production before a merge. The program decides, not the model. That program does not exist yet (see [what does not exist yet](why-a-thin-layer.md#what-does-not-exist-yet)).
 
 The **documentation** agent organizes the `docs/` folder of a repository by the Diataxis method. Only the human calls it, and it never opens a pull request or changes code.
 
-The **learning** agent turns the human's corrections into proposed rules. The `rangers learn` program runs it on a schedule; no agent calls it. It commits on a local branch and never pushes or opens a pull request. How it works is in [how the learning loop works](como-o-aprendizado-funciona.md).
+The **learning** agent turns the human's corrections into proposed rules. The `rangers learn` program runs it on a schedule; no agent calls it. It commits on a local branch and never pushes or opens a pull request. How it works is in [how the learning loop works](how-learning-works.md).
 
 ## Who tells the human
 

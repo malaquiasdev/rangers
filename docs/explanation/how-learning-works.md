@@ -1,6 +1,6 @@
 # How the learning loop works
 
-The agents get better when the human's corrections become written rules. The learning loop does that without the human asking: it reads the sessions, proposes rules and waits for the human to accept them. The facts of each step are in the [`rangers learn` reference](../referencia/comando-learn.md).
+The agents get better when the human's corrections become written rules. The learning loop does that without the human asking: it reads the sessions, proposes rules and waits for the human to accept them. The facts of each step are in the [`rangers learn` reference](../reference/learn-command.md).
 
 ## Corrections live in the transcripts
 
@@ -22,7 +22,7 @@ launchd runs the program every two hours. A run that stops at a gate calls no mo
 
 ## Rules are proposed, never applied
 
-The rules pass works in a new worktree, on a local branch `learn/<stamp>`, and commits there. It never pushes, never opens a pull request and never merges. A reminder tells the human that a branch is waiting. The human reads the diff and keeps all, some or none of the rules (see [how to review the proposed rules](../como-fazer/revisar-as-regras-propostas.md)).
+The rules pass works in a new worktree, on a local branch `learn/<stamp>`, and commits there. It never pushes, never opens a pull request and never merges. A reminder tells the human that a branch is waiting. The human reads the diff and keeps all, some or none of the rules (see [how to review the proposed rules](../how-to/review-proposed-rules.md)).
 
 This keeps the human in charge of what the agents become. A wrong rule would change every future session, so it costs more than a missed one.
 

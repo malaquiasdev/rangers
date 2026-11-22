@@ -1,6 +1,6 @@
 # Checks and release
 
-The repository runs its checks on the machine, through `make` and Git hooks. GitHub Actions runs only the release. How to turn the checks on is in [how to run the checks](../como-fazer/rodar-as-checagens.md).
+The repository runs its checks on the machine, through `make` and Git hooks. GitHub Actions runs only the release. How to turn the checks on is in [how to run the checks](../how-to/run-checks.md).
 
 ## `make` targets
 
@@ -8,9 +8,9 @@ The targets are in the [`Makefile`](../../Makefile).
 
 | Target | What it runs |
 | --- | --- |
-| `make check` | `scripts/checar.sh completo` |
-| `make rapido` | `scripts/checar.sh rapido` |
-| `make hooks` | `scripts/hooks-instalar.sh` |
+| `make check` | `scripts/check.sh full` |
+| `make quick` | `scripts/check.sh quick` |
+| `make hooks` | `scripts/install-hooks.sh` |
 
 ## Git hooks
 
@@ -18,13 +18,13 @@ The hooks are in [`.githooks/`](../../.githooks/). Git uses them after `make hoo
 
 | Hook | What it does |
 | --- | --- |
-| `pre-commit` | Runs `scripts/checar.sh rapido` |
-| `commit-msg` | Refuses a message whose first line does not follow Conventional Commits, and a message that has a name from `scripts/personagens.txt` |
-| `pre-push` | Runs `scripts/checar.sh completo` |
+| `pre-commit` | Runs `scripts/check.sh quick` |
+| `commit-msg` | Refuses a message whose first line does not follow Conventional Commits, and a message that has a name from `scripts/characters.txt` |
+| `pre-push` | Runs `scripts/check.sh full` |
 
 The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`, `perf`, `style` and `revert`, with an optional scope in lower case and an optional `!`.
 
-## What `scripts/checar.sh` checks
+## What `scripts/check.sh` checks
 
 | Check | Fails when | Mode |
 | --- | --- | --- |
@@ -33,13 +33,13 @@ The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refacto
 | Agent files | In a file of `agents/`, `name` differs from the file name, `model` is not `opus`, `sonnet` or `haiku`, `effort` is not `low`, `medium`, `high`, `xhigh` or `max`, `description` is empty, or the `Character:` line is missing | both |
 | Skill files | In `skills/<folder>/SKILL.md`, `name` differs from the folder | both |
 | `deps.toml` | Python's `tomllib` cannot read it, or a dependency lacks `name`, `kind`, `license` or `function` | both |
-| Character names | A name from `scripts/personagens.txt` appears outside `agents/`, `skills/` and `.git/`. Lines with `--agent ` are ignored | both |
+| Character names | A name from `scripts/characters.txt` appears outside `agents/`, `skills/` and `.git/`. Lines with `--agent ` are ignored | both |
 | Privacy | A pattern from the privacy file appears anywhere outside `.git/` | both |
 | Go comments | A `.go` file has `//` or a line starting with `/*` | both |
 | Go format | `gofmt -l .` lists a file | both |
-| Go vet and tests | `go vet ./...` or `go test ./...` fails | `completo` |
-| Go lint | `golangci-lint run` fails, with the rules in [`.golangci.yml`](../../.golangci.yml) | `completo` |
-| Documentation links | lychee, run with Podman, finds a broken link or anchor in `README.md` or `docs/` | `completo` |
+| Go vet and tests | `go vet ./...` or `go test ./...` fails | `full` |
+| Go lint | `golangci-lint run` fails, with the rules in [`.golangci.yml`](../../.golangci.yml) | `full` |
+| Documentation links | lychee, run with Podman, finds a broken link or anchor in `README.md` or `docs/` | `full` |
 
 The Go checks run only when `go.mod` exists. The checks skip the `.serena/` folder.
 
@@ -47,11 +47,11 @@ The Go checks run only when `go.mod` exists. The checks skip the `.serena/` fold
 
 The privacy check reads a file of patterns that never go into the repository, such as company names.
 
-- Path: `~/.config/rangers/privacidade.txt`, or the path in the `PRIVACIDADE_ARQUIVO` variable.
+- Path: `~/.config/rangers/privacy.txt`, or the path in the `PRIVACY_FILE` variable.
 - Format: one extended regular expression per line. The match ignores case.
 - The file lives only on the machine. It is not in the repository.
 
-When the file does not exist, the check is skipped and the script prints `aviso: sem <path>, a checagem de privacidade foi pulada`. The run does not fail.
+When the file does not exist, the check is skipped and the script prints `aviso: sem <path>, a checagem de nomes de empresa foi pulada`. The run does not fail.
 
 ## Release
 
