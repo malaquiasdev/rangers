@@ -18,6 +18,10 @@ type Config struct {
 	State          string
 	Repo           string
 	Projects       string
+	Brain          string
+	NotesModel     string
+	NotesMaxBytes  int
+	SkipNotes      bool
 }
 
 func ReadConfig(args []string, env func(string) string) (Config, error) {
@@ -64,6 +68,10 @@ func ReadConfig(args []string, env func(string) string) (Config, error) {
 	fs.StringVar(&cfg.State, "state", text("LEARN_STATE", filepath.Join(home, ".local", "state", "rangers", "learn")), "pasta de estado")
 	fs.StringVar(&cfg.Repo, "repo", text("LEARN_REPO", filepath.Join(home, "Developer", "me", "rangers")), "repositório das regras")
 	fs.StringVar(&cfg.Projects, "projects", text("LEARN_PROJECTS", filepath.Join(home, ".claude", "projects")), "pasta das transcrições")
+	fs.StringVar(&cfg.Brain, "brain", text("LEARN_BRAIN", filepath.Join(home, "Documents", "brain")), "pasta do brain")
+	fs.StringVar(&cfg.NotesModel, "notes-model", text("LEARN_NOTES_MODEL", "sonnet"), "modelo da passada de notas")
+	fs.IntVar(&cfg.NotesMaxBytes, "notes-max-bytes", integer("LEARN_NOTES_MAX_BYTES", 60000), "limite de bytes da entrada das notas")
+	fs.BoolVar(&cfg.SkipNotes, "skip-notes", env("LEARN_NOTES") == "off", "pula a passada de notas")
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
 	}
@@ -72,6 +80,9 @@ func ReadConfig(args []string, env func(string) string) (Config, error) {
 	}
 	if cfg.BudgetUSD <= 0 {
 		return Config{}, errors.New("o teto em dólar precisa ser maior que zero")
+	}
+	if cfg.NotesMaxBytes <= 0 {
+		return Config{}, errors.New("o limite de bytes das notas precisa ser maior que zero")
 	}
 	if cfg.DailyBudgetUSD <= 0 {
 		return Config{}, errors.New("o teto diário em dólar precisa ser maior que zero")

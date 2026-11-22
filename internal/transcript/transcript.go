@@ -12,18 +12,46 @@ import (
 	"time"
 )
 
-const textLimit = 600
+const (
+	textLimit      = 600
+	assistantLimit = 400
+)
 
 var ignoredPrefixes = []string{"<", "Base directory", "Another Claude", "[Request interrupted", "Caveat:", "[Cross-session", "[Subagent"}
 
 type Line struct {
-	Session string
-	Time    string
-	Text    string
+	Project   string
+	Session   string
+	Time      string
+	Text      string
+	Assistant bool
 }
 
 func (l Line) String() string {
 	return l.Session + "\t" + l.Time + "\t" + l.Text
+}
+
+func (l Line) Notes() string {
+	text := l.Text
+	if l.Assistant {
+		text = "[assistant] " + text
+	}
+	return l.Project + "\t" + l.Session + "\t" + l.Time + "\t" + text
+}
+
+func Format(lines []Line, maxBytes int) string {
+	rows := make([]string, len(lines))
+	total := 0
+	for i, line := range lines {
+		rows[i] = line.Notes() + "\n"
+		total += len(rows[i])
+	}
+	start := 0
+	for start < len(rows) && total > maxBytes {
+		total -= len(rows[start])
+		start++
+	}
+	return strings.Join(rows[start:], "")
 }
 
 type entry struct {
@@ -36,6 +64,16 @@ type entry struct {
 }
 
 func Extract(projects string, cutoff time.Time) ([]Line, error) {
+	return collect(projects, cutoff, false)
+}
+
+func ExtractWithAssistant(projects string, cutoff time.Time) ([]Line, error) {
+	lines, err := collect(projects, cutoff, true)
+	sort.SliceStable(lines, func(i, j int) bool { return lines[i].Time < lines[j].Time })
+	return lines, err
+}
+
+func collect(projects string, cutoff time.Time, withAssistant bool) ([]Line, error) {
 	files, err := changedFiles(projects, cutoff)
 	if err != nil {
 		return nil, err
@@ -43,7 +81,8 @@ func Extract(projects string, cutoff time.Time) ([]Line, error) {
 	var lines []Line
 	for _, file := range files {
 		session := strings.TrimSuffix(filepath.Base(file), ".jsonl")
-		found, err := readLines(file, session, cutoff)
+		project := filepath.Base(filepath.Dir(file))
+		found, err := readLines(file, project, session, cutoff, withAssistant)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +117,7 @@ func changedFiles(projects string, cutoff time.Time) ([]string, error) {
 	return changed, nil
 }
 
-func readLines(file, session string, cutoff time.Time) ([]Line, error) {
+func readLines(file, project, session string, cutoff time.Time, withAssistant bool) ([]Line, error) {
 	raw, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -90,7 +129,9 @@ func readLines(file, session string, cutoff time.Time) ([]Line, error) {
 		if decoder.Decode(&r) != nil {
 			return lines, nil
 		}
-		if r.Kind != "user" || r.Message.Role != "user" {
+		human := r.Kind == "user" && r.Message.Role == "user"
+		assistant := withAssistant && r.Kind == "assistant" && r.Message.Role == "assistant"
+		if !human && !assistant {
 			continue
 		}
 		at, err := time.Parse(time.RFC3339Nano, r.Timestamp)
@@ -98,14 +139,18 @@ func readLines(file, session string, cutoff time.Time) ([]Line, error) {
 			continue
 		}
 		text := content(r.Message.Content)
-		if text == "" || ignored(text) {
+		if text == "" || (human && ignored(text)) {
 			continue
 		}
-		text = strings.ReplaceAll(text, "\n", " ")
-		if body := []rune(text); len(body) > textLimit {
-			text = string(body[:textLimit])
+		limit := textLimit
+		if assistant {
+			limit = assistantLimit
 		}
-		lines = append(lines, Line{Session: session, Time: r.Timestamp, Text: text})
+		text = strings.ReplaceAll(text, "\n", " ")
+		if body := []rune(text); len(body) > limit {
+			text = string(body[:limit])
+		}
+		lines = append(lines, Line{Project: project, Session: session, Time: r.Timestamp, Text: text, Assistant: assistant})
 	}
 }
 

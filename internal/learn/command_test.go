@@ -35,7 +35,7 @@ func TestCommand(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(out, row) || !strings.Contains(out, "1 rodadas") {
+		if !strings.Contains(out, strings.TrimSuffix(row, "\n")+"\trules\n") || !strings.Contains(out, "1 rodadas") {
 			t.Fatalf("got %q", out)
 		}
 	})

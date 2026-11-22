@@ -177,3 +177,92 @@ func TestExtract(t *testing.T) {
 		}
 	})
 }
+
+func TestExtractWithAssistant(t *testing.T) {
+	t.Run("given an assistant text message, when extracting with the assistant, then it returns the line marked and cut at 400 characters", func(t *testing.T) {
+		projects := t.TempDir()
+		long := strings.Repeat("ç", 500)
+		parts := []map[string]any{{"type": "text", "text": long}, {"type": "tool_use", "name": "Bash"}}
+		write(t, projects, "-Users-x-proj/s1.jsonl", after(), entryLine(t, "assistant", "assistant", after(), parts))
+		lines, err := ExtractWithAssistant(projects, cutoff)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(lines) != 1 || !lines[0].Assistant || len([]rune(lines[0].Text)) != 400 {
+			t.Fatalf("got %+v", lines)
+		}
+		if !strings.HasPrefix(lines[0].Notes(), "-Users-x-proj\ts1\t2026-11-20T13:00:00.000Z\t[assistant] çç") {
+			t.Fatalf("got %q", lines[0].Notes())
+		}
+	})
+
+	t.Run("given an assistant message with no text part, when extracting with the assistant, then it drops the message", func(t *testing.T) {
+		projects := t.TempDir()
+		parts := []map[string]any{{"type": "tool_use", "name": "Bash"}}
+		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "assistant", "assistant", after(), parts))
+		lines, err := ExtractWithAssistant(projects, cutoff)
+		if err != nil || len(lines) != 0 {
+			t.Fatalf("got %+v, %v", lines, err)
+		}
+	})
+
+	t.Run("given human and assistant lines in two sessions, when extracting with the assistant, then it returns them in time order with the project of each", func(t *testing.T) {
+		projects := t.TempDir()
+		write(t, projects, "-p-one/a.jsonl", after(),
+			entryLine(t, "user", "user", cutoff.Add(10*time.Minute), "human first"),
+			entryLine(t, "assistant", "assistant", cutoff.Add(30*time.Minute), "assistant third"),
+		)
+		write(t, projects, "-p-two/b.jsonl", after(), entryLine(t, "user", "user", cutoff.Add(20*time.Minute), "human second"))
+		lines, err := ExtractWithAssistant(projects, cutoff)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, line := range lines {
+			got = append(got, line.Project+":"+line.Text)
+		}
+		if strings.Join(got, ",") != "-p-one:human first,-p-two:human second,-p-one:assistant third" {
+			t.Fatalf("got %v", got)
+		}
+	})
+
+	t.Run("given assistant messages, when extracting only the human lines, then they stay out", func(t *testing.T) {
+		projects := t.TempDir()
+		write(t, projects, "proj/s.jsonl", after(), entryLine(t, "assistant", "assistant", after(), "answer"))
+		if lines := extract(t, projects); len(lines) != 0 {
+			t.Fatalf("got %+v", lines)
+		}
+	})
+}
+
+func TestFormat(t *testing.T) {
+	lines := []Line{
+		{Project: "p", Session: "s", Time: "t1", Text: "first"},
+		{Project: "p", Session: "s", Time: "t2", Text: "second", Assistant: true},
+		{Project: "p", Session: "s", Time: "t3", Text: "third"},
+	}
+
+	t.Run("given a limit that fits everything, when formatting, then it renders one row per line", func(t *testing.T) {
+		expected := "p\ts\tt1\tfirst\np\ts\tt2\t[assistant] second\np\ts\tt3\tthird\n"
+		if got := Format(lines, 1000); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("given a limit smaller than the whole text, when formatting, then it cuts from the start and keeps the most recent lines", func(t *testing.T) {
+		limit := len("p\ts\tt2\t[assistant] second\np\ts\tt3\tthird\n")
+		expected := "p\ts\tt2\t[assistant] second\np\ts\tt3\tthird\n"
+		if got := Format(lines, limit); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+		if got := Format(lines, limit-1); got != "p\ts\tt3\tthird\n" {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	t.Run("given a limit smaller than the last line, when formatting, then it returns nothing", func(t *testing.T) {
+		if got := Format(lines, 5); got != "" {
+			t.Fatalf("got %q", got)
+		}
+	})
+}

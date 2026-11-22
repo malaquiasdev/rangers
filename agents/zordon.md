@@ -17,6 +17,19 @@ You turn the human's corrections into rules. A scheduled task runs you twice a d
 4. A rule for one agent goes into that agent's file. A rule for every agent goes into `rules/`. Edit the files in the folder you were started in and commit on the branch that is already checked out.
 5. Answer with the list of the rules, one line each with its origin, in at most 560 characters.
 
+## Notes pass
+
+When the prompt says it is the notes pass, you write notes in the brain instead of rules. You were started in the brain folder.
+
+1. Read the input file the prompt names. Each row has the project, session, time and text, and the assistant's text is marked `[assistant]`. The project is the name of the transcript folder, for example `-Users-x-Developer-some-project`: use it to pick the project folder in the brain.
+2. Read `~/.claude/skills/brain-log/SKILL.md` and `~/.claude/skills/brain-save/SKILL.md` and follow their rules: OKF format with frontmatter, the folder of the project the session came from, update the note of the same day instead of duplicating it, and update the `index.md` of each folder you touch.
+3. Write in Brazilian Portuguese. Keep only decisions, results, links and pending items. Leave the conversation out.
+4. Never write a secret, a token or the value of a credential.
+5. For each note, run `~/.claude/bin/audit brain "<title>" "<path of the note>" "auto: learn notes pass"`.
+6. Answer with one line per note, in at most 560 characters.
+
+In the notes pass you never write a rule in the brain, you never create a reminder and you never touch the repository of the agents.
+
 ## What you do not do
 
 - You never write rules in the brain. The brain is only for references and notes.

@@ -74,6 +74,9 @@ func newScenario(t *testing.T) *scenario {
 			t.Fatal(err)
 		}
 	}
+	if err := os.MkdirAll(filepath.Join(root, "brain"), 0o750); err != nil {
+		t.Fatal(err)
+	}
 	execute(t, repo, "git", "init", "-q", "-b", "main")
 	execute(t, repo, "git", "add", "-A")
 	execute(t, repo, "git", "-c", "user.name=t", "-c", "user.email=t@t.t", "commit", "-q", "-m", "initial")
@@ -95,6 +98,10 @@ func newScenario(t *testing.T) *scenario {
 			State:          filepath.Join(root, "state"),
 			Repo:           repo,
 			Projects:       filepath.Join(root, "projects"),
+			Brain:          filepath.Join(root, "brain"),
+			NotesModel:     "sonnet",
+			NotesMaxBytes:  60000,
+			SkipNotes:      true,
 		},
 	}
 	s.fakeClaude(claudeJSON, 0)
@@ -103,11 +110,16 @@ func newScenario(t *testing.T) *scenario {
 
 func (s *scenario) fakeClaude(reply string, code int) {
 	s.t.Helper()
+	s.fakeClaudeFailingOn(reply, code, "none")
+}
+
+func (s *scenario) fakeClaudeFailingOn(reply string, code int, failModel string) {
+	s.t.Helper()
 	bin := filepath.Join(s.t.TempDir(), "bin")
 	if err := os.MkdirAll(bin, 0o750); err != nil {
 		s.t.Fatal(err)
 	}
-	script := fmt.Sprintf("#!/bin/sh\npwd -P > %q\nfor a in \"$@\"; do printf '%%s\\n' \"$a\" >> %q; done\nprintf '%%s' '%s'\nexit %d\n", s.log, s.log, reply, code)
+	script := fmt.Sprintf("#!/bin/sh\nprintf -- '---\\n' >> %q\npwd -P >> %q\nprev=\nfail=0\nfor a in \"$@\"; do\n  printf '%%s\\n' \"$a\" >> %q\n  if [ \"$prev\" = --model ] && [ \"$a\" = %q ]; then fail=1; fi\n  prev=$a\ndone\n[ $fail = 1 ] && exit 1\nprintf '%%s' '%s'\nexit %d\n", s.log, s.log, s.log, failModel, reply, code)
 	if err := os.WriteFile(filepath.Join(bin, "claude"), []byte(script), 0o500); err != nil {
 		s.t.Fatal(err)
 	}
@@ -166,13 +178,22 @@ func (s *scenario) run() error {
 	})
 }
 
-func (s *scenario) claudeArguments() []string {
+func (s *scenario) claudeCalls() [][]string {
 	s.t.Helper()
 	raw, err := os.ReadFile(s.log)
 	if err != nil {
 		s.t.Fatalf("claude was not called: %v", err)
 	}
-	return strings.Split(strings.TrimSpace(string(raw)), "\n")
+	var calls [][]string
+	for _, block := range strings.Split(string(raw), "---\n")[1:] {
+		calls = append(calls, strings.Split(strings.TrimSpace(block), "\n"))
+	}
+	return calls
+}
+
+func (s *scenario) claudeArguments() []string {
+	s.t.Helper()
+	return s.claudeCalls()[0]
 }
 
 func (s *scenario) claudeNotCalled() bool {
@@ -221,6 +242,29 @@ func (s *scenario) metricsRows(rows ...string) {
 
 func costRow(stamp, cost string) string {
 	return stamp + "\t12\t5\t3\t" + cost + "\t1600\t50"
+}
+
+func (s *scenario) assistant(file, text string, at time.Time) {
+	s.t.Helper()
+	target := filepath.Join(s.cfg.Projects, "proj", file+".jsonl")
+	raw, err := json.Marshal(map[string]any{
+		"type":      "assistant",
+		"timestamp": at.UTC().Format("2006-01-02T15:04:05.000Z"),
+		"message":   map[string]any{"role": "assistant", "content": []map[string]any{{"type": "text", "text": text}}},
+	})
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	handle, err := os.OpenFile(target, os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	if _, err := handle.WriteString(string(raw) + "\n"); err != nil {
+		s.t.Fatal(err)
+	}
+	if err := handle.Close(); err != nil {
+		s.t.Fatal(err)
+	}
 }
 
 func (s *scenario) fresh(n int) {
@@ -287,7 +331,7 @@ func TestRunExecutesTheModel(t *testing.T) {
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		expected := "2026-11-22-1030\t12\t5\t3\t0.123\t1600\t50\n"
+		expected := "2026-11-22-1030\t12\t5\t3\t0.123\t1600\t50\trules\n"
 		if got := s.stateFile("metrics.tsv"); got != expected {
 			t.Fatalf("expected %q, got %q", expected, got)
 		}
@@ -520,6 +564,226 @@ func TestRunDailyBudget(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !strings.Contains(s.out.String(), "teto diário de US$ 0.10 atingido (US$ 0.12 gastos hoje)") {
+			t.Fatalf("output: %q", s.out.String())
+		}
+	})
+}
+
+func argumentAfter(call []string, flag string) string {
+	for i, argument := range call {
+		if argument == flag && i+1 < len(call) {
+			return call[i+1]
+		}
+	}
+	return ""
+}
+
+func (s *scenario) withNotes() {
+	s.cfg.SkipNotes = false
+	s.fresh(12)
+	s.assistant("new-session", "decided to use the cache", s.now.Add(-30*time.Minute))
+}
+
+func TestRunNotesPass(t *testing.T) {
+	t.Run("given human and assistant lines, when running, then the notes pass runs in the brain folder with the notes model and the right tools", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		calls := s.claudeCalls()
+		if len(calls) != 2 {
+			t.Fatalf("expected 2 calls, got %d", len(calls))
+		}
+		notes := calls[1]
+		brain, err := filepath.EvalSymlinks(s.cfg.Brain)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if notes[0] != brain {
+			t.Fatalf("notes pass ran in %q, expected %q", notes[0], brain)
+		}
+		input := filepath.Join(s.cfg.State, "notes-input-2026-11-22-1030.txt")
+		if prompt := argumentAfter(notes, "-p"); !strings.Contains(prompt, input) || !strings.Contains(prompt, "notes pass") {
+			t.Fatalf("prompt: %q", prompt)
+		}
+		for flag, expected := range map[string]string{
+			"--agent":           "learner",
+			"--model":           "sonnet",
+			"--permission-mode": "acceptEdits",
+			"--allowedTools":    "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*)",
+			"--output-format":   "json",
+			"--max-budget-usd":  "3",
+		} {
+			if got := argumentAfter(notes, flag); got != expected {
+				t.Errorf("%s: expected %q, got %q", flag, expected, got)
+			}
+		}
+	})
+
+	t.Run("given human and assistant lines, when running, then the notes input marks the project and the assistant text", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		input := s.stateFile("notes-input-2026-11-22-1030.txt")
+		if strings.Count(input, "\n") != 13 || !strings.Contains(input, "proj\tnew-session\t") || !strings.Contains(input, "[assistant] decided to use the cache") {
+			t.Fatalf("input: %q", input)
+		}
+		if raw := s.stateFile("notes-output-2026-11-22-1030.json"); raw != claudeJSON {
+			t.Fatalf("stored output: %q", raw)
+		}
+	})
+
+	t.Run("given a small byte limit, when running, then the notes input keeps the most recent lines", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.cfg.NotesMaxBytes = 200
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		input := s.stateFile("notes-input-2026-11-22-1030.txt")
+		if len(input) > 200 || !strings.HasSuffix(input, "[assistant] decided to use the cache\n") {
+			t.Fatalf("input (%d bytes): %q", len(input), input)
+		}
+	})
+
+	t.Run("given spend earlier today, when running, then the notes pass gets the remaining balance after the rules pass", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.metricsRows(costRow("2026-11-22-0700", "4.1"))
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		calls := s.claudeCalls()
+		if got := argumentAfter(calls[0], "--max-budget-usd"); got != "1.9" {
+			t.Fatalf("rules pass budget: %q", got)
+		}
+		if got := argumentAfter(calls[1], "--max-budget-usd"); got != "1.777" {
+			t.Fatalf("notes pass budget: %q", got)
+		}
+	})
+
+	t.Run("given a daily cap, when both passes have run, then the next round is blocked in both passes because the cost of both counts", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.cfg.DailyBudgetUSD = 0.2
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := argumentAfter(s.claudeCalls()[1], "--max-budget-usd"); got != "0.077" {
+			t.Fatalf("notes pass budget: %q", got)
+		}
+		s.now = s.now.Add(3 * time.Hour)
+		s.fresh(12)
+		s.out.Reset()
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		expected := "teto diário de US$ 0.20 atingido (US$ 0.25 gastos hoje): não rodo o modelo\n"
+		if s.out.String() != expected+"[notas] "+expected {
+			t.Fatalf("output: %q", s.out.String())
+		}
+		if len(s.claudeCalls()) != 2 {
+			t.Fatal("no new call was expected")
+		}
+	})
+
+	t.Run("given a notes pass that fails, when running, then the rules pass stays done and only the notes pass reports the error", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.fakeClaudeFailingOn(claudeJSON, 0, "sonnet")
+		if err := s.run(); err == nil {
+			t.Fatal("expected an error")
+		}
+		if !s.stateHas("checkpoint") || len(s.reminder.calls) != 1 || !strings.Contains(s.stateFile("metrics.tsv"), "\trules\n") {
+			t.Fatal("the rules pass should be done")
+		}
+		if s.stateHas("checkpoint-notes") || strings.Contains(s.stateFile("metrics.tsv"), "\tnotes\n") {
+			t.Fatal("the failed notes pass must leave no trace of success")
+		}
+	})
+
+	t.Run("given a rules pass that fails, when running, then the notes pass still runs and the rules checkpoint stays untouched", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.fakeClaudeFailingOn(claudeJSON, 0, "opus")
+		if err := s.run(); err == nil {
+			t.Fatal("expected an error")
+		}
+		if s.stateHas("checkpoint") || len(s.reminder.calls) != 0 {
+			t.Fatal("the failed rules pass must leave no trace of success")
+		}
+		if !s.stateHas("checkpoint-notes") || !strings.Contains(s.stateFile("metrics.tsv"), "\tnotes\n") {
+			t.Fatal("the notes pass should be done")
+		}
+	})
+
+	t.Run("given skip notes, when running, then only the rules pass calls the model", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.cfg.SkipNotes = true
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.claudeCalls()) != 1 || s.stateHas("notes-input-2026-11-22-1030.txt") || s.stateHas("checkpoint-notes") {
+			t.Fatal("the notes pass should not have run")
+		}
+	})
+
+	t.Run("given a finished notes pass, when it ends, then it records a notes row, updates its own checkpoint and creates no reminder", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		metrics := s.stateFile("metrics.tsv")
+		if !strings.Contains(metrics, "2026-11-22-1030\t12\t5\t3\t0.123\t1600\t50\tnotes\n") {
+			t.Fatalf("metrics: %q", metrics)
+		}
+		info, err := os.Stat(filepath.Join(s.cfg.State, "checkpoint-notes"))
+		if err != nil || !info.ModTime().Equal(s.now) {
+			t.Fatalf("checkpoint-notes: %v, %v", info, err)
+		}
+		if len(s.reminder.calls) != 1 {
+			t.Fatalf("expected only the rules reminder, got %d", len(s.reminder.calls))
+		}
+	})
+
+	t.Run("given a notes checkpoint 30 minutes ago, when running, then only the notes pass is blocked by the interval", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		if err := os.MkdirAll(s.cfg.State, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join(s.cfg.State, "checkpoint-notes")
+		if err := os.WriteFile(path, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		recent := s.now.Add(-30 * time.Minute)
+		if err := os.Chtimes(path, recent, recent); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.claudeCalls()) != 1 || !strings.Contains(s.out.String(), "[notas] a última rodada foi há 30 min, menos que o intervalo de 2h") {
+			t.Fatalf("calls %d, output %q", len(s.claudeCalls()), s.out.String())
+		}
+	})
+
+	t.Run("given nine human lines and many assistant lines, when running, then the notes pass counts only the human lines for the minimum", func(t *testing.T) {
+		s := newScenario(t)
+		s.cfg.SkipNotes = false
+		s.fresh(9)
+		for i := range 5 {
+			s.assistant("new-session", fmt.Sprintf("answer %d", i), s.now.Add(-30*time.Minute))
+		}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if !s.claudeNotCalled() || !strings.Contains(s.out.String(), "[notas] só 9 falas novas, abaixo do mínimo de 10") {
 			t.Fatalf("output: %q", s.out.String())
 		}
 	})
