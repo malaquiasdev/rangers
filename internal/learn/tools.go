@@ -2,6 +2,7 @@ package learn
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -11,7 +12,12 @@ const (
 )
 
 func notesAllowed(home string) string {
-	forms := []string{auditTilde, filepath.Join(home, ".claude", "bin", "audit")}
+	path := filepath.Join(home, ".claude", "bin", "audit")
+	forms := []string{auditTilde, path}
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil && !slices.Contains(forms, resolved) {
+		forms = append(forms, resolved)
+	}
 	rules := []string{notesBase}
 	for _, form := range forms {
 		rules = append(rules, "Bash("+form+":*)")

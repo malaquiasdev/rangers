@@ -658,6 +658,50 @@ func (s *scenario) withNotes() {
 	s.assistant("new-session", "decided to use the cache", s.now.Add(-30*time.Minute))
 }
 
+func (s *scenario) resolvedHome() {
+	s.t.Helper()
+	if err := os.MkdirAll(filepath.Join(s.home, ".claude", "bin"), 0o750); err != nil {
+		s.t.Fatal(err)
+	}
+	resolved, err := filepath.EvalSymlinks(s.home)
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	s.home = resolved
+}
+
+func (s *scenario) auditFile(link bool) string {
+	s.t.Helper()
+	s.resolvedHome()
+	path := filepath.Join(s.home, ".claude", "bin", "audit")
+	if !link {
+		writeExecutable(s.t, path, "#!/bin/sh\n")
+		return path
+	}
+	target := filepath.Join(s.t.TempDir(), "audit")
+	writeExecutable(s.t, target, "#!/bin/sh\n")
+	if err := os.Symlink(target, path); err != nil {
+		s.t.Fatal(err)
+	}
+	resolved, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	return resolved
+}
+
+func (s *scenario) notesAllowedTools() string {
+	s.t.Helper()
+	if err := s.run(); err != nil {
+		s.t.Fatal(err)
+	}
+	calls := s.claudeCalls()
+	if len(calls) != 2 {
+		s.t.Fatalf("expected 2 calls, got %d", len(calls))
+	}
+	return argumentAfter(calls[1], "--allowedTools")
+}
+
 func TestRunNotesPass(t *testing.T) {
 	t.Run("given human and assistant lines, when running, then the notes pass runs in the brain folder with the notes model and the right tools", func(t *testing.T) {
 		s := newScenario(t)
@@ -692,6 +736,36 @@ func TestRunNotesPass(t *testing.T) {
 			if got := argumentAfter(notes, flag); got != expected {
 				t.Errorf("%s: expected %q, got %q", flag, expected, got)
 			}
+		}
+	})
+
+	t.Run("given the audit script is a link to a file elsewhere, when running, then the notes pass also allows the resolved path", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		resolved := s.auditFile(true)
+		expected := "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*),Bash(" + s.home + "/.claude/bin/audit:*),Bash(" + resolved + ":*)"
+		if got := s.notesAllowedTools(); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("given the audit script is a regular file, when running, then the allowed path is not repeated", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.auditFile(false)
+		expected := "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*),Bash(" + s.home + "/.claude/bin/audit:*)"
+		if got := s.notesAllowedTools(); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("given the audit script does not exist, when running, then the round does not fail and allows only the two home forms", func(t *testing.T) {
+		s := newScenario(t)
+		s.withNotes()
+		s.resolvedHome()
+		expected := "Read,Write,Edit,Glob,Grep,Bash(~/.claude/bin/audit:*),Bash(" + s.home + "/.claude/bin/audit:*)"
+		if got := s.notesAllowedTools(); got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
 		}
 	})
 
