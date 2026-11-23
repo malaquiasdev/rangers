@@ -72,17 +72,23 @@ func at(t *testing.T, utc string) func() time.Time {
 	return func() time.Time { return moment }
 }
 
-func execute(t *testing.T, store Store, now string, env map[string]string, args ...string) error {
+func execute(t *testing.T, store Store, env map[string]string, args ...string) error {
 	t.Helper()
-	dep := &Dependencies{Store: store, Now: at(t, now)}
+	dep := &Dependencies{Store: store, Now: at(t, "2026-11-22T15:04:00Z")}
 	return Command(t.Context(), args, environment(env), dep)
+}
+
+func executeAt(t *testing.T, store Store, utc string, env map[string]string) error {
+	t.Helper()
+	dep := &Dependencies{Store: store, Now: at(t, utc)}
+	return Command(t.Context(), fourFields, environment(env), dep)
 }
 
 func TestUsage(t *testing.T) {
 	for count := range 4 {
 		t.Run(fmt.Sprintf("given %d arguments, when auditing, then it fails with the usage and writes nothing", count), func(t *testing.T) {
 			store := newStore()
-			err := execute(t, store, "2026-11-22T15:04:00Z", map[string]string{"BRAIN_DIR": brain}, fourFields[:count]...)
+			err := execute(t, store, map[string]string{"BRAIN_DIR": brain}, fourFields[:count]...)
 			if !errors.Is(err, ErrUsage) {
 				t.Fatalf("got %v", err)
 			}
@@ -103,7 +109,7 @@ func TestNewDay(t *testing.T) {
 	t.Run("given a day with no note, when auditing, then it creates the note, indexes it and appends the row", func(t *testing.T) {
 		store := newStore()
 		env := map[string]string{"BRAIN_DIR": brain, "CLAUDE_SESSION_ID": "0123456789abcdef"}
-		if err := execute(t, store, "2026-11-22T15:04:00Z", env, fourFields...); err != nil {
+		if err := execute(t, store, env, fourFields...); err != nil {
 			t.Fatal(err)
 		}
 		row := "| 12:04 | 01234567 | repo | merge | https://example.test/pull/1 | CI green |\n"
@@ -122,7 +128,7 @@ func TestExistingDay(t *testing.T) {
 		store.files[auditDir+"/2026-11-22.md"] = "note\n"
 		store.files[auditDir+"/index.md"] = "index\n"
 		env := map[string]string{"BRAIN_DIR": brain, "AUDIT_SESSION": "abc"}
-		if err := execute(t, store, "2026-11-22T15:04:00Z", env, fourFields...); err != nil {
+		if err := execute(t, store, env, fourFields...); err != nil {
 			t.Fatal(err)
 		}
 		want := "note\n| 12:04 | abc | repo | merge | https://example.test/pull/1 | CI green |\n"
@@ -138,7 +144,7 @@ func TestExistingDay(t *testing.T) {
 		store := newStore()
 		env := map[string]string{"BRAIN_DIR": brain}
 		for range 2 {
-			if err := execute(t, store, "2026-11-22T15:04:00Z", env, fourFields...); err != nil {
+			if err := execute(t, store, env, fourFields...); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -162,7 +168,7 @@ func TestSaoPauloTime(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			store := newStore()
-			if err := execute(t, store, tc.utc, map[string]string{"BRAIN_DIR": brain}, fourFields...); err != nil {
+			if err := executeAt(t, store, tc.utc, map[string]string{"BRAIN_DIR": brain}); err != nil {
 				t.Fatal(err)
 			}
 			note, ok := store.files[auditDir+"/"+tc.day+".md"]
@@ -194,7 +200,7 @@ func TestSession(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := newStore()
 			tc.env["BRAIN_DIR"] = brain
-			if err := execute(t, store, "2026-11-22T15:04:00Z", tc.env, fourFields...); err != nil {
+			if err := execute(t, store, tc.env, fourFields...); err != nil {
 				t.Fatal(err)
 			}
 			want := "| 12:04 | " + tc.want + " | repo | merge |"
@@ -209,7 +215,7 @@ func TestBrainDirectory(t *testing.T) {
 	t.Run("given no BRAIN_DIR, when auditing, then the note goes under the home folder", func(t *testing.T) {
 		store := newStore()
 		store.dirs["/home/x/Documents/brain/claude/auditoria"] = true
-		if err := execute(t, store, "2026-11-22T15:04:00Z", map[string]string{"HOME": "/home/x"}, fourFields...); err != nil {
+		if err := execute(t, store, map[string]string{"HOME": "/home/x"}, fourFields...); err != nil {
 			t.Fatal(err)
 		}
 		if !store.Exists("/home/x/Documents/brain/claude/auditoria/2026-11-22.md") {
@@ -221,7 +227,7 @@ func TestBrainDirectory(t *testing.T) {
 		store := newStore()
 		store.dirs["/home/x/Documents/brain/claude/auditoria"] = true
 		env := map[string]string{"HOME": "/home/x", "BRAIN_DIR": ""}
-		if err := execute(t, store, "2026-11-22T15:04:00Z", env, fourFields...); err != nil {
+		if err := execute(t, store, env, fourFields...); err != nil {
 			t.Fatal(err)
 		}
 		if !store.Exists("/home/x/Documents/brain/claude/auditoria/2026-11-22.md") {
@@ -232,7 +238,7 @@ func TestBrainDirectory(t *testing.T) {
 	t.Run("given a BRAIN_DIR, when auditing, then it wins over the home folder", func(t *testing.T) {
 		store := newStore()
 		env := map[string]string{"HOME": "/home/x", "BRAIN_DIR": brain}
-		if err := execute(t, store, "2026-11-22T15:04:00Z", env, fourFields...); err != nil {
+		if err := execute(t, store, env, fourFields...); err != nil {
 			t.Fatal(err)
 		}
 		if !store.Exists(auditDir + "/2026-11-22.md") {
@@ -242,7 +248,7 @@ func TestBrainDirectory(t *testing.T) {
 
 	t.Run("given a folder that does not exist, when auditing, then it fails and creates nothing", func(t *testing.T) {
 		store := &memStore{files: map[string]string{}, dirs: map[string]bool{}}
-		err := execute(t, store, "2026-11-22T15:04:00Z", map[string]string{"BRAIN_DIR": brain}, fourFields...)
+		err := execute(t, store, map[string]string{"BRAIN_DIR": brain}, fourFields...)
 		if !errors.Is(err, fs.ErrNotExist) {
 			t.Fatalf("got %v", err)
 		}
@@ -256,7 +262,7 @@ func TestFields(t *testing.T) {
 	t.Run("given more than four arguments, when auditing, then the extra ones are ignored", func(t *testing.T) {
 		store := newStore()
 		args := append(append([]string{}, fourFields...), "extra", "more")
-		if err := execute(t, store, "2026-11-22T15:04:00Z", map[string]string{"BRAIN_DIR": brain}, args...); err != nil {
+		if err := execute(t, store, map[string]string{"BRAIN_DIR": brain}, args...); err != nil {
 			t.Fatal(err)
 		}
 		if note := store.files[auditDir+"/2026-11-22.md"]; strings.Contains(note, "extra") {
@@ -267,7 +273,7 @@ func TestFields(t *testing.T) {
 	t.Run("given fields with percent signs and backslashes, when auditing, then they are written as they are", func(t *testing.T) {
 		store := newStore()
 		args := []string{"100%s", `a\nb`, "%d", "50% done"}
-		if err := execute(t, store, "2026-11-22T15:04:00Z", map[string]string{"BRAIN_DIR": brain}, args...); err != nil {
+		if err := execute(t, store, map[string]string{"BRAIN_DIR": brain}, args...); err != nil {
 			t.Fatal(err)
 		}
 		want := `| 12:04 | ? | 100%s | a\nb | %d | 50% done |` + "\n"

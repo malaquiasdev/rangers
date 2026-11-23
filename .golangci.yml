@@ -84,7 +84,7 @@ linters:
       - path: _test\.go
         linters:
           - lll
-      - path: internal/(learn|schedule|gate|agentwatch|hook)/
+      - path: internal/(learn|schedule|gate|agentwatch|hook|audit|check|githook)/
         linters:
           - gosec
         text: G204|G304
