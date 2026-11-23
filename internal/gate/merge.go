@@ -23,7 +23,11 @@ func (g *gate) audit(ctx context.Context) string {
 		return ""
 	}
 	link := fmt.Sprintf("https://github.com/%s/pull/%d", g.opts.repo, g.opts.pr)
-	reason := fmt.Sprintf("rangers gate: %s, checks green, squash at %s", g.token(), g.pr.short())
+	ci := "checks green"
+	if g.ciNotApplicable {
+		ci = "ci not applicable"
+	}
+	reason := fmt.Sprintf("rangers gate: %s, %s, squash at %s", g.token(), ci, g.pr.short())
 	if _, err := g.dep.Runner.Output(ctx, script, g.opts.repo, "merge", link, reason); err != nil {
 		return "; audit not recorded"
 	}

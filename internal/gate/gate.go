@@ -57,6 +57,8 @@ type gate struct {
 	opts options
 	home string
 	pr   pullRequest
+
+	ciNotApplicable bool
 }
 
 func Command(ctx context.Context, args []string, env func(string) string, dep *Dependencies) error {

@@ -25,11 +25,16 @@ const (
 	green    = `[{"name":"build","state":"SUCCESS","bucket":"pass"},` +
 		`{"name":"lint","state":"SUCCESS","bucket":"pass"},` +
 		`{"name":"docs","state":"SKIPPED","bucket":"skipping"}]`
-	token    = "gate:4a7010e4"
-	other    = "gate:2cd50664"
-	mergeCmd = "gh pr merge 7 --repo acme/api --squash --match-head-commit " + headSHA
-	auditBin = homeDir + "/.claude/bin/audit"
-	auditCmd = auditBin + " acme/api merge https://github.com/acme/api/pull/7 " +
+	workflowsPath = "repos/acme/api/contents/.github/workflows"
+	rawHeader     = "Accept: application/vnd.github.raw+json"
+	notFound      = "exit status 1: gh: Not Found (HTTP 404)"
+	noCommit      = "exit status 1: gh: No commit found for the ref 0123456 (HTTP 404)"
+	noChecks      = "no checks reported on the 'feat/endpoint' branch"
+	token         = "gate:4a7010e4"
+	other         = "gate:2cd50664"
+	mergeCmd      = "gh pr merge 7 --repo acme/api --squash --match-head-commit " + headSHA
+	auditBin      = homeDir + "/.claude/bin/audit"
+	auditCmd      = auditBin + " acme/api merge https://github.com/acme/api/pull/7 " +
 		"rangers gate: " + token + ", checks green, squash at 0123456"
 )
 
@@ -225,4 +230,42 @@ func (s *scenario) printed() string {
 func (s *scenario) lastLine() string {
 	lines := strings.Split(strings.TrimSpace(s.out.String()), "\n")
 	return lines[len(lines)-1]
+}
+
+func listCmd(ref string) string {
+	return "gh api " + workflowsPath + "?ref=" + ref
+}
+
+func fileCmd(ref, name string) string {
+	return "gh api -H " + rawHeader + " " + workflowsPath + "/" + name + "?ref=" + ref
+}
+
+func (s *scenario) workflowsAt(ref string, files map[string]string) {
+	s.t.Helper()
+	entries := make([]map[string]string, 0, len(files))
+	for name, body := range files {
+		entries = append(entries, map[string]string{"name": name, "type": "file"})
+		s.runner.replies[fileCmd(ref, name)] = reply{out: body}
+	}
+	raw, err := json.Marshal(entries)
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	s.runner.replies[listCmd(ref)] = reply{out: string(raw)}
+}
+
+func (s *scenario) noWorkflowsAt(ref string) {
+	s.t.Helper()
+	s.runner.replies[listCmd(ref)] = reply{err: errors.New(listCmd(ref) + ": " + notFound)}
+}
+
+func (s *scenario) workflowsFail(ref string) {
+	s.t.Helper()
+	s.runner.replies[listCmd(ref)] = reply{err: errors.New(listCmd(ref) + ": exit status 1: gh: Bad Gateway (HTTP 502)")}
+}
+
+func (s *scenario) sameWorkflows(files map[string]string) {
+	s.t.Helper()
+	s.workflowsAt("main", files)
+	s.workflowsAt(headSHA, files)
 }
