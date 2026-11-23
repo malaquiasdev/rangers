@@ -52,7 +52,7 @@ func TestSummary(t *testing.T) {
 		if !errors.Is(err, ErrFailed) {
 			t.Fatalf("got %v", err)
 		}
-		want := privacyWarning + "FALHOU: skills/pilot/SKILL.md: name diferente da pasta\n\n1 checagem(ns) falharam\n"
+		want := "FALHOU: skills/pilot/SKILL.md: name diferente da pasta\n" + privacyWarning + "\n1 checagem(ns) falharam\n"
 		if got := h.out.String(); got != want {
 			t.Fatalf("got %q, want %q", got, want)
 		}

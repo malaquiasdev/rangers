@@ -3,16 +3,17 @@ package check
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
-	"regexp"
 )
 
-var (
-	ErrFailed = errors.New("checks failed")
-
-	errNotImplemented = errors.New("not implemented")
+const (
+	modeFull  = "full"
+	namesFile = "scripts/characters.txt"
 )
+
+var ErrFailed = errors.New("checks failed")
 
 type Invocation struct {
 	Name  string
@@ -34,23 +35,57 @@ type Dependencies struct {
 	Out      io.Writer
 }
 
-type ExecRunner struct {
-	Dir      string
-	Out, Err io.Writer
+type checker struct {
+	dep      *Dependencies
+	env      func(string) string
+	mode     string
+	failures int
 }
 
-func (ExecRunner) Run(context.Context, Invocation) error {
-	return errNotImplemented
+func Command(ctx context.Context, args []string, env func(string) string, dep *Dependencies) error {
+	c := &checker{dep: dep, env: env, mode: modeFull}
+	if len(args) > 0 {
+		c.mode = args[0]
+	}
+	if err := c.run(ctx); err != nil {
+		return err
+	}
+	return c.verdict()
 }
 
-func (ExecRunner) Output(context.Context, string, ...string) (string, error) {
-	return "", errNotImplemented
+func (c *checker) run(ctx context.Context) error {
+	c.shell(ctx)
+	c.agents()
+	c.skills()
+	c.manifest()
+	if err := c.characters(); err != nil {
+		return err
+	}
+	c.origins()
+	c.privacy()
+	c.golang(ctx)
+	c.slow(ctx)
+	return nil
 }
 
-func WholeWord(string) (*regexp.Regexp, error) {
-	return nil, errNotImplemented
+func (c *checker) verdict() error {
+	if c.failures == 0 {
+		c.say("tudo certo (%s)\n", c.mode)
+		return nil
+	}
+	c.say("\n%d checagem(ns) falharam\n", c.failures)
+	return ErrFailed
 }
 
-func Command(_ context.Context, _ []string, _ func(string) string, _ *Dependencies) error {
-	return errNotImplemented
+func (c *checker) say(format string, args ...any) {
+	_, _ = fmt.Fprintf(c.dep.Out, format, args...)
+}
+
+func (c *checker) fail(format string, args ...any) {
+	c.say("FALHOU: "+format+"\n", args...)
+	c.failures++
+}
+
+func (c *checker) full() bool {
+	return c.mode == modeFull
 }
