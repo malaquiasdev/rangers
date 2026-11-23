@@ -28,7 +28,7 @@ The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refacto
 
 | Check | Fails when | Mode |
 | --- | --- | --- |
-| Shell syntax | `bash -n` fails on a file in `scripts/*.sh` or `.githooks/` | both |
+| Shell syntax | `bash -n` fails on a file in `scripts/*.sh`, `.githooks/` or `bin/` | both |
 | Shell comments | One of those files has a comment line after the first line | both |
 | Agent files | In a file of `agents/`, `name` differs from the file name, `model` is not `opus`, `sonnet` or `haiku`, `effort` is not `low`, `medium`, `high`, `xhigh` or `max`, `description` is empty, or the `Character:` line is missing | both |
 | Skill files | In `skills/<folder>/SKILL.md`, `name` differs from the folder | both |
@@ -39,6 +39,7 @@ The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refacto
 | Go format | `gofmt -l .` lists a file | both |
 | Go vet and tests | `go vet ./...` or `go test ./...` fails | `full` |
 | Go lint | `golangci-lint run` fails, with the rules in [`.golangci.yml`](../../.golangci.yml) | `full` |
+| Bin helper tests | `tests/` has a failing test, which covers the helpers in `bin/` | `full` |
 | Documentation links | lychee, run with Podman, finds a broken link or anchor in `README.md` or `docs/` | `full` |
 
 The Go checks run only when `go.mod` exists. The checks skip the `.serena/` folder.
