@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"slices"
 	"time"
 
+	"github.com/malaquiasdev/rangers/internal/agentwatch"
 	"github.com/malaquiasdev/rangers/internal/gate"
+	"github.com/malaquiasdev/rangers/internal/hook"
 	"github.com/malaquiasdev/rangers/internal/install"
 	"github.com/malaquiasdev/rangers/internal/learn"
 	"github.com/malaquiasdev/rangers/internal/schedule"
@@ -16,29 +20,56 @@ import (
 )
 
 const usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
-	" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]"
+	" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]" +
+	" | rangers hook stop-push-check|complete-reminders | rangers watch [limit]"
+
+var binAliases = map[string][]string{
+	"stop-push-check":    {"hook", "stop-push-check"},
+	"complete-reminders": {"hook", "complete-reminders"},
+	"agent-watch":        {"watch"},
+}
+
+var commands = map[string]func(context.Context, []string) int{
+	"learn": func(ctx context.Context, args []string) int {
+		return report("learn", learn.Command(ctx, args, os.Getenv, learnDependencies()))
+	},
+	"install": func(ctx context.Context, args []string) int {
+		return report("install", install.Command(ctx, args, os.Getenv, installDependencies()))
+	},
+	"gate": func(ctx context.Context, args []string) int {
+		return reportGate(gate.Command(ctx, args, os.Getenv, gateDependencies()))
+	},
+	"schedule": func(ctx context.Context, args []string) int {
+		return report("schedule", schedule.Command(ctx, args, os.Getenv, scheduleDependencies()))
+	},
+	"hook": func(ctx context.Context, args []string) int {
+		return reportHook(hook.Command(ctx, args, os.Getenv, hookDependencies()))
+	},
+	"watch": func(ctx context.Context, args []string) int {
+		return reportWatch(agentwatch.Command(ctx, args, os.Getenv, watchDependencies()))
+	},
+}
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	code := run(ctx, os.Args[1:])
+	code := run(ctx, expand(os.Args))
 	stop()
 	os.Exit(code)
 }
 
-func run(ctx context.Context, args []string) int {
-	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, usage)
-		return 2
+func expand(argv []string) []string {
+	if len(argv) == 0 {
+		return nil
 	}
-	switch args[0] {
-	case "learn":
-		return report(args[0], learn.Command(ctx, args[1:], os.Getenv, learnDependencies()))
-	case "install":
-		return report(args[0], install.Command(ctx, args[1:], os.Getenv, installDependencies()))
-	case "gate":
-		return reportGate(gate.Command(ctx, args[1:], os.Getenv, gateDependencies()))
-	case "schedule":
-		return report(args[0], schedule.Command(ctx, args[1:], os.Getenv, scheduleDependencies()))
+	prefix := binAliases[filepath.Base(argv[0])]
+	return append(slices.Clone(prefix), argv[1:]...)
+}
+
+func run(ctx context.Context, args []string) int {
+	if len(args) > 0 {
+		if command, ok := commands[args[0]]; ok {
+			return command(ctx, args[1:])
+		}
 	}
 	fmt.Fprintln(os.Stderr, usage)
 	return 2
@@ -55,6 +86,28 @@ func report(name string, err error) int {
 	return 1
 }
 
+func reportHook(err error) int {
+	if err == nil {
+		return 0
+	}
+	fmt.Fprintln(os.Stderr, "rangers hook:", err)
+	return 2
+}
+
+func reportWatch(err error) int {
+	switch {
+	case err == nil:
+		return 0
+	case errors.Is(err, context.Canceled):
+		return 130
+	case errors.Is(err, agentwatch.ErrUsage):
+		fmt.Fprintln(os.Stderr, "rangers watch:", err)
+		return 2
+	}
+	fmt.Fprintln(os.Stderr, "rangers watch:", err)
+	return 1
+}
+
 func reportGate(err error) int {
 	switch {
 	case err == nil:
@@ -64,6 +117,19 @@ func reportGate(err error) int {
 	}
 	fmt.Fprintln(os.Stderr, "rangers gate:", err)
 	return 2
+}
+
+func hookDependencies() *hook.Dependencies {
+	return &hook.Dependencies{In: os.Stdin, Out: os.Stdout, Scripter: hook.OsascriptCLI{}}
+}
+
+func watchDependencies() *agentwatch.Dependencies {
+	return &agentwatch.Dependencies{
+		Git:   agentwatch.GitCLI{},
+		Out:   os.Stdout,
+		Now:   time.Now,
+		Sleep: agentwatch.Sleep,
+	}
 }
 
 func gateDependencies() *gate.Dependencies {
@@ -116,16 +182,4 @@ func installDependencies() *install.Dependencies {
 		Out:    os.Stdout,
 		Dir:    dir,
 	}
-}
-
-func expand(argv []string) []string {
-	return nil
-}
-
-func reportHook(err error) int {
-	return 0
-}
-
-func reportWatch(err error) int {
-	return 0
 }
