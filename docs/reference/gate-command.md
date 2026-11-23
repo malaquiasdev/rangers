@@ -27,12 +27,22 @@ The checks run in this order and the gate stops at the first one that refuses.
 | 1 | `pr` | The pull request is open, is not a draft and its base is the default branch of the repository. The head SHA is read here |
 | 2 | `production` | The title does not start with `chore(main): release`, the head branch does not start with `release-please--` and no label is `production` (any case) |
 | 3 | `approval` | The human said yes to the question for this head SHA (see below) |
-| 4 | `ci` | `gh pr checks` lists at least one check and every one has the bucket `pass` or `skipping` |
+| 4 | `ci` | `gh pr checks` lists at least one check and every one has the bucket `pass` or `skipping`; or there are no checks and no workflow can run on a pull request (see below) |
 | 5 | `merge` | Only with `--merge`: `gh pr merge` squashes the pull request, pinned with `--match-head-commit` to the head SHA read in check 1 |
 
 The production stop comes before the approval and nothing overrides it: a release pull request is refused even when the human said yes. Its verdict is `production needs the human's explicit yes; the gate stops here`.
 
-A check that is pending, failing or cancelled refuses, and the verdict lists each one as `name (bucket)`. A pull request with no checks is refused too.
+A check that is pending, failing or cancelled refuses, and the verdict lists each one as `name (bucket)`.
+
+### A pull request with no checks
+
+With no checks, the gate reads the files `.github/workflows/*.yml` and `*.yaml` at the base branch and at the head commit. A workflow runs on pull requests when `on` has `pull_request` or `pull_request_target`, or has `push` with no `branches` filter, with `branches-ignore`, or with a `branches` entry that is a glob or equals the head branch. A workflow that does not parse counts as running on pull requests.
+
+- If any workflow at either ref runs on pull requests, the gate refuses with `ci has no checks for this head`: the checks should exist and have not been reported yet, or the head deleted them.
+- If none does, the line is `ci: ok not applicable, no workflow runs on pull requests`, and the audit reason says `ci not applicable` instead of `checks green`.
+- A missing workflows folder (HTTP 404) at a ref means no workflows there. Any other failure reading them is an error with exit code `2`, and nothing is merged.
+
+Workflows are read only when there are no checks: when checks exist they all have to pass, as before.
 
 ## The approval
 
