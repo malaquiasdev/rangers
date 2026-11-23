@@ -18,7 +18,7 @@ newest_in_dir() {
 last_activity() {
   local file=$1; shift
   local newest=0 t dir
-  [ -f "$file" ] && newest=$(stat -f %m "$file")
+  [ -f "$file" ] && newest=$(stat -L -f %m "$file")
   for dir in "$@"; do
     t=$(newest_in_dir "$dir")
     [ "$t" -gt "$newest" ] && newest=$t
@@ -33,8 +33,8 @@ while true; do
     [ -n "$name" ] || continue
     case "$name" in \#*) continue ;; esac
     if [ ! -f "$file" ] && [ -z "$dirs" ]; then echo "SUMIU $name"; exit 0; fi
-    # shellcheck disable=SC2086
     last=$(last_activity "$file" $dirs)
+    if [ "$last" -eq 0 ]; then echo "SUMIU $name"; exit 0; fi
     age=$(( now - last ))
     if [ "$age" -gt "$limit" ]; then
       echo "PARADO $name há $((age/60)) min (última atividade: $(date -r "$last" +%H:%M))"
