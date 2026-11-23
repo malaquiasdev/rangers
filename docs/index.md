@@ -23,7 +23,9 @@ Rangers is a repository of agents and rules for Claude Code, on top of open sour
 
 - [Dependencies](reference/dependencies.md): format of `deps.toml`, what `rangers install` covers, install and remove commands, what the machine needs.
 - [The `rangers install` command](reference/install-command.md): the check of each piece, flags and exit codes.
-- [Scripts](reference/scripts.md): what each script in `scripts/` does and returns.
+- [The `rangers audit` command](reference/audit-command.md): the audit note of the day, its row, settings, output and exit codes, and the `audit` link.
+- [The `rangers check` command](reference/check-command.md): the modes, settings, output and exit codes of the repository checks.
+- [The `rangers hooks` command](reference/hooks-command.md): turning on the Git hooks and what each hook runs.
 - [The `rangers learn` command](reference/learn-command.md): flags, passes, gates, state folder and schedule.
 - [The `rangers gate` command](reference/gate-command.md): checks, the approval bound to the head commit, the production stop, output and exit codes.
 - [The `rangers watch` command](reference/watch-command.md): the agent list, what counts as activity, the idle and gone reports and the `agent-watch` link.

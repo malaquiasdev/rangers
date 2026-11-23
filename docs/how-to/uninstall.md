@@ -11,7 +11,7 @@ Then run `rangers install --check`. The removed piece shows as `MISSING` and the
 ## Remove everything
 
 1. Disconnect the agents, the rules and the skill, as in [disconnect the agents](connect-agents.md#disconnect-the-agents).
-   Then delete the links that `rangers install` made from the old helper names to the program: `find ~/.claude/bin -maxdepth 1 -type l -lname "*/rangers" -print -delete`.
+   Then delete the links that `rangers install` made from the helper names (`agent-watch`, `audit`, `complete-reminders` and `stop-push-check`) to the program: `find ~/.claude/bin -maxdepth 1 -type l -lname "*/rangers" -print -delete`.
 2. Stop the learning job with `~/.local/bin/rangers schedule uninstall`, then delete `~/.local/state/rangers/learn`.
 3. Run the remove command of each piece in the dependencies table.
 4. Delete the folder of each skill listed in `deps.toml` from `~/.claude/skills/`, if you want the skills gone too. Each one has a `.rangers-commit` file. The commands above do not remove them.

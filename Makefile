@@ -1,10 +1,10 @@
 .PHONY: check quick hooks
 
 check:
-	scripts/check.sh full
+	go run ./cmd/rangers check full
 
 quick:
-	scripts/check.sh quick
+	go run ./cmd/rangers check quick
 
 hooks:
-	scripts/install-hooks.sh
+	go run ./cmd/rangers hooks install

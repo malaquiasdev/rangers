@@ -51,4 +51,4 @@ The list and the prefix are constants in [`internal/hook/hook.go`](../../interna
 
 ## Tests
 
-[`internal/hook/reminders_test.go`](../../internal/hook/reminders_test.go) has one test per scenario. The hook tests use a fake that records what it receives, and the `osascript` adapter tests use a stand-in `osascript` on the `PATH`, so the tests never touch the Reminders app. `scripts/check.sh full` runs them with `go test`.
+[`internal/hook/reminders_test.go`](../../internal/hook/reminders_test.go) has one test per scenario. The hook tests use a fake that records what it receives, and the `osascript` adapter tests use a stand-in `osascript` on the `PATH`, so the tests never touch the Reminders app. `rangers check full` runs them with `go test`.

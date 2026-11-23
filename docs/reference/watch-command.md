@@ -62,4 +62,4 @@ Each round reads the list and checks the agents in order. The command prints one
 
 ## Tests
 
-[`internal/agentwatch/agentwatch_test.go`](../../internal/agentwatch/agentwatch_test.go) has one test per scenario. The tests use real files with set modification times and a fake clock, sleep and Git, so none of them waits. One group runs `git` in a temporary repository. `scripts/check.sh full` runs them with `go test`.
+[`internal/agentwatch/agentwatch_test.go`](../../internal/agentwatch/agentwatch_test.go) has one test per scenario. The tests use real files with set modification times and a fake clock, sleep and Git, so none of them waits. One group runs `git` in a temporary repository. `rangers check full` runs them with `go test`.

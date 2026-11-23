@@ -197,13 +197,13 @@ func TestCommandArguments(t *testing.T) {
 
 func TestCheckBinLinks(t *testing.T) {
 	t.Run("given the bin link in place, when checking, then it lists it before the runtime and says All in place", func(t *testing.T) {
-		s := withAudit(t)
-		s.files.links[auditInstalled] = auditSource
+		s := withHelper(t)
+		s.files.links[helperInstalled] = helperSource
 		if err := s.run("--check"); err != nil {
 			t.Fatal(err)
 		}
 		want := row("grilling", "abeeaf95660b") +
-			row("bin/audit", "linked") +
+			row("bin/helper", "linked") +
 			row("docker", "responding") +
 			"\nAll in place.\n"
 		if !strings.HasSuffix(s.typed(), want) {
@@ -212,12 +212,12 @@ func TestCheckBinLinks(t *testing.T) {
 	})
 
 	t.Run("given the bin link missing, when checking, then it marks it, counts it and fails", func(t *testing.T) {
-		s := withAudit(t)
+		s := withHelper(t)
 		err := s.run("--check")
 		if !errors.Is(err, ErrIncomplete) {
 			t.Fatalf("got %v", err)
 		}
-		if !strings.Contains(s.typed(), row("bin/audit", "NOT LINKED")) {
+		if !strings.Contains(s.typed(), row("bin/helper", "NOT LINKED")) {
 			t.Fatalf("got\n%s", s.typed())
 		}
 		if !strings.HasSuffix(s.typed(), "\n1 item(s) missing. Run rangers install\n") {
@@ -226,16 +226,16 @@ func TestCheckBinLinks(t *testing.T) {
 	})
 
 	t.Run("given a different regular file in the way, when checking, then it reports it and does not count it", func(t *testing.T) {
-		s := withAudit(t)
-		s.files.files[auditInstalled] = "mine\n"
+		s := withHelper(t)
+		s.files.files[helperInstalled] = "mine\n"
 		if err := s.run("--check"); err != nil {
 			t.Fatal(err)
 		}
 		status := "differs from the installed file, left alone"
-		if !strings.Contains(s.typed(), row("bin/audit", status)) {
+		if !strings.Contains(s.typed(), row("bin/helper", status)) {
 			t.Fatalf("got\n%s", s.typed())
 		}
-		if s.files.files[auditInstalled] != "mine\n" || len(s.files.symlinked) != 0 {
+		if s.files.files[helperInstalled] != "mine\n" || len(s.files.symlinked) != 0 {
 			t.Fatal("the check changed something")
 		}
 	})

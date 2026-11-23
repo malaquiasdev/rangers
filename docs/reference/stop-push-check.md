@@ -67,4 +67,4 @@ Anything else includes `stop_hook_active` set to `true`, input that is not JSON,
 
 ## Tests
 
-[`internal/hook/stoppush_test.go`](../../internal/hook/stoppush_test.go) has one table-driven test per group of scenarios, and compares the blocking output byte for byte. `scripts/check.sh full` runs it with `go test`.
+[`internal/hook/stoppush_test.go`](../../internal/hook/stoppush_test.go) has one table-driven test per group of scenarios, and compares the blocking output byte for byte. `rangers check full` runs it with `go test`.

@@ -19,7 +19,7 @@ var (
 		binDiffers:  "differs from the installed file, left alone",
 	}
 
-	binAliases = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+	binAliases = []string{"agent-watch", "audit", "complete-reminders", "stop-push-check"}
 )
 
 type binState int

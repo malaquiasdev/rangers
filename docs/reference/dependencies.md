@@ -6,7 +6,7 @@ The list of what Rangers uses, with a pinned version or commit, the license and 
 
 The file starts with `format_version = 1`. Each dependency is a `[[dependency]]` table.
 
-Fields every dependency has. `scripts/check.sh` fails when one is missing:
+Fields every dependency has. `rangers check` fails when one is missing:
 
 | Field | What it holds |
 | --- | --- |
@@ -83,7 +83,7 @@ To schedule `rangers learn`:
 
 To run the repository checks:
 
-- Bash and Git;
+- Bash and Git, because the Git hooks are one-line Bash files that run `rangers`;
 - Go with `gofmt`, and `golangci-lint`;
-- `python3` 3.11 or newer, which has the `tomllib` module;
+- `python3`, only for the tests of the pixel art in `assets/`;
 - Podman, with its machine running, for the link check of `make check`.

@@ -14,7 +14,7 @@ Each agent is a Markdown file in [`agents/`](../../agents/), with a YAML header 
 
 The agents that only read or only run one command declare `tools`. The ones that write files do not.
 
-`scripts/check.sh` refuses a file whose `name`, `model`, `effort` or `description` breaks the rules above (see the [checks reference](checks-and-release.md#what-scriptschecksh-checks)).
+`rangers check` refuses a file whose `name`, `model`, `effort` or `description` breaks the rules above (see the [checks reference](checks-and-release.md#what-rangers-check-checks)).
 
 `rangers learn` finds the learning agent by its `description`, which must start with `Learning.` (see the [`rangers learn` reference](learn-command.md#the-two-passes)).
 
