@@ -22,11 +22,16 @@ import (
 const (
 	usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
 		" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]" +
-		" | rangers hook stop-push-check|complete-reminders | rangers watch [limit]"
+		" | rangers hook stop-push-check|complete-reminders | rangers watch [limit]" +
+		" | rangers audit WHERE ACTION LINK WHY | rangers check [quick|full]" +
+		" | rangers hooks install | rangers hooks run pre-commit|commit-msg FILE|pre-push"
 
 	gateName     = "gate"
 	hookName     = "hook"
 	watchName    = "watch"
+	auditName    = "audit"
+	checkName    = "check"
+	hooksName    = "hooks"
 	stopHook     = "stop-push-check"
 	completeHook = "complete-reminders"
 )
@@ -36,6 +41,7 @@ var (
 		stopHook:      {hookName, stopHook},
 		completeHook:  {hookName, completeHook},
 		"agent-watch": {watchName},
+		auditName:     {auditName},
 	}
 
 	commands = map[string]func(context.Context, []string) int{
@@ -51,6 +57,9 @@ var (
 		"schedule": func(ctx context.Context, args []string) int {
 			return report("schedule", schedule.Command(ctx, args, os.Getenv, scheduleDependencies()))
 		},
+		auditName: runAudit,
+		checkName: runCheck,
+		hooksName: runHooks,
 		hookName: func(ctx context.Context, args []string) int {
 			return reportHook(hook.Command(ctx, args, os.Getenv, hookDependencies()))
 		},
