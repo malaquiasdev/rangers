@@ -73,8 +73,7 @@ To use the agents:
 - Homebrew, for container-use;
 - a container runtime that answers the `docker` command. Podman works when `docker` calls Podman, for example through a `docker` link that points to `podman`;
 - `gh`, logged in, because the gate agent runs `rangers gate`, which reads and merges the pull request with `gh`;
-- `jq`, only for the [`stop-push-check`](stop-push-check.md) hook;
-- macOS with `osascript` and the Reminders app, with a list named `Tarefas Claude`, for the reminder that [`stop-push-check`](stop-push-check.md) requires and [`complete-reminders`](complete-reminders.md) closes;
+- macOS with `osascript` and the Reminders app, with a list named `Tarefas Claude`, for the reminder that [`stop-push-check`](stop-push-check.md) requires and [`complete-reminders`](complete-reminders.md) closes, and for the helpers that `rangers install` links as `agent-watch`, `complete-reminders` and `stop-push-check`;
 - npm, only to install the optional openspec.
 
 To schedule `rangers learn`:

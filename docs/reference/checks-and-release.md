@@ -39,7 +39,6 @@ The types that `commit-msg` accepts are `feat`, `fix`, `docs`, `chore`, `refacto
 | Go format | `gofmt -l .` lists a file | both |
 | Go vet and tests | `go vet ./...` or `go test ./...` fails | `full` |
 | Go lint | `golangci-lint run` fails, with the rules in [`.golangci.yml`](../../.golangci.yml) | `full` |
-| Bin helper tests | `tests/` has a failing test, which covers the helpers in `bin/` | `full` |
 | Documentation links | lychee, run with Podman, finds a broken link or anchor in `README.md` or `docs/` | `full` |
 
 The Go checks run only when `go.mod` exists. The checks skip the `.serena/` folder.
