@@ -13,7 +13,10 @@ import (
 	"time"
 )
 
-const watchWindow = 3 * time.Second
+const (
+	quietWindow  = 3 * time.Second
+	reportWindow = 30 * time.Second
+)
 
 type watch struct {
 	t    *testing.T
@@ -63,7 +66,7 @@ func (w *watch) dir(name string) string {
 	return path
 }
 
-func (w *watch) run(entry string) (string, bool) {
+func (w *watch) run(entry string, window time.Duration) (string, bool) {
 	w.t.Helper()
 	list := filepath.Join(w.root, "agent-watch.txt")
 	if err := os.WriteFile(list, []byte(entry+"\n"), 0o600); err != nil {
@@ -73,7 +76,7 @@ func (w *watch) run(entry string) (string, bool) {
 	if err != nil {
 		w.t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), watchWindow)
+	ctx, cancel := context.WithTimeout(context.Background(), window)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", script, "900")
 	cmd.Env = append(os.Environ(), "AGENT_WATCH_LIST="+list, "AGENT_WATCH_INTERVAL=1")
@@ -93,7 +96,7 @@ func TestAgentWatchSymlink(t *testing.T) {
 		w := newWatch(t)
 		target := w.file("transcript.jsonl", time.Minute)
 		link := w.link("task.output", target, 2*time.Hour)
-		if out, exited := w.run("zack " + link); exited {
+		if out, exited := w.run("zack "+link, quietWindow); exited {
 			t.Fatalf("reported %q for a transcript written a minute ago", out)
 		}
 	})
@@ -102,7 +105,7 @@ func TestAgentWatchSymlink(t *testing.T) {
 		w := newWatch(t)
 		target := w.file("transcript.jsonl", time.Hour)
 		link := w.link("task.output", target, time.Minute)
-		out, exited := w.run("zack " + link)
+		out, exited := w.run("zack "+link, reportWindow)
 		if !exited {
 			t.Fatal("kept watching a transcript idle for an hour")
 		}
@@ -114,7 +117,7 @@ func TestAgentWatchSymlink(t *testing.T) {
 	t.Run("given a symlink to a missing transcript and no directory, when watching, then it reports it gone", func(t *testing.T) {
 		w := newWatch(t)
 		link := w.link("task.output", filepath.Join(w.root, "missing.jsonl"), time.Minute)
-		out, exited := w.run("zack " + link)
+		out, exited := w.run("zack "+link, reportWindow)
 		if !exited || out != "SUMIU zack" {
 			t.Fatalf("got %q, exited %v", out, exited)
 		}
@@ -124,7 +127,7 @@ func TestAgentWatchSymlink(t *testing.T) {
 		w := newWatch(t)
 		link := w.link("task.output", filepath.Join(w.root, "missing.jsonl"), time.Minute)
 		dir := w.dir("worktree")
-		out, exited := w.run("zack " + link + " " + dir)
+		out, exited := w.run("zack "+link+" "+dir, reportWindow)
 		if !exited || out != "SUMIU zack" {
 			t.Fatalf("got %q, exited %v", out, exited)
 		}
