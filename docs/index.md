@@ -26,7 +26,8 @@ Rangers is a repository of agents and rules for Claude Code, on top of open sour
 - [Scripts](reference/scripts.md): what each script in `scripts/` does and returns.
 - [The `rangers learn` command](reference/learn-command.md): flags, passes, gates, state folder and schedule.
 - [The `rangers gate` command](reference/gate-command.md): checks, the approval bound to the head commit, the production stop, output and exit codes.
-- [The `stop-push-check` hook](reference/stop-push-check.md): the Stop hook that requires a push notification, its settings snippet and what it blocks.
+- [The `stop-push-check` hook](reference/stop-push-check.md): the Stop hook that requires a push notification and a reminder, its settings snippet and what it blocks.
+- [The `complete-reminders` hook](reference/complete-reminders.md): the UserPromptSubmit hook that completes the waiting reminders, its settings snippet and its limits.
 - [Checks and release](reference/checks-and-release.md): `make` targets, Git hooks, what the checks look at, the privacy file and the release workflow.
 - [Agent file](reference/agent-file.md): header fields and body sections.
 - [Test plan](reference/test-plan.md): measures and decision criteria.
