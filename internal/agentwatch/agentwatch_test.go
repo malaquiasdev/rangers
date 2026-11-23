@@ -19,11 +19,6 @@ type fakeGit struct {
 	commits map[string]int64
 }
 
-func (f fakeGit) LastCommit(_ context.Context, dir string) (int64, bool) {
-	stamp, ok := f.commits[dir]
-	return stamp, ok
-}
-
 type harness struct {
 	t       *testing.T
 	root    string
@@ -34,6 +29,11 @@ type harness struct {
 	passes  int
 	onSleep func(pass int)
 	out     bytes.Buffer
+}
+
+func (f fakeGit) LastCommit(_ context.Context, dir string) (int64, bool) {
+	stamp, ok := f.commits[dir]
+	return stamp, ok
 }
 
 func newHarness(t *testing.T) *harness {

@@ -16,7 +16,11 @@ const (
 	auditInstalled = claudeDir + "/bin/audit"
 	auditScript    = "#!/usr/bin/env bash\n"
 	auditDiffers   = "bin/audit differs from the installed file, left alone\n"
+
+	rangersBinary = "/opt/rangers/bin/rangers"
 )
+
+var aliasNames = []string{"agent-watch", "complete-reminders", "stop-push-check"}
 
 func TestInstallPieces(t *testing.T) {
 	t.Run("given a missing plugin, when installing, then it adds the marketplace and installs the plugin", func(t *testing.T) {
@@ -345,12 +349,6 @@ func TestInstallBinLinks(t *testing.T) {
 		}
 	})
 }
-
-const (
-	rangersBinary = "/opt/rangers/bin/rangers"
-)
-
-var aliasNames = []string{"agent-watch", "complete-reminders", "stop-push-check"}
 
 func withBinary(t *testing.T) *setup {
 	t.Helper()

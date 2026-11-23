@@ -17,7 +17,8 @@ const (
   set waitingPrefix to item 2 of argv
   tell application "Reminders"
     if not (exists list listName) then return
-    set waiting to (every reminder of list listName whose completed is false and name starts with waitingPrefix)
+    set waiting to (every reminder of list listName whose completed is false and ` +
+		`name starts with waitingPrefix)
     repeat with entry in waiting
       set completed of entry to true
     end repeat

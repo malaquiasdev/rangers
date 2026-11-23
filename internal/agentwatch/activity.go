@@ -54,7 +54,7 @@ func newestFile(dir string) int64 {
 	_ = filepath.WalkDir(dir, func(_ string, entry fs.DirEntry, err error) error {
 		switch {
 		case err != nil:
-			return nil
+			return fs.SkipDir
 		case ignoredNames[entry.Name()] && entry.IsDir():
 			return filepath.SkipDir
 		case ignoredNames[entry.Name()] || !entry.Type().IsRegular():

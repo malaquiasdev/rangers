@@ -14,13 +14,19 @@ const (
 	blockTrail = " Then end the turn."
 	pushStep   = "Call PushNotification now (action first, up to 200 characters)."
 
+	typeUser      = "user"
+	typeAssistant = "assistant"
+	typeText      = "text"
+	typeToolUse   = "tool_use"
+
 	verdictOK       = "ok"
 	verdictBoth     = "both"
 	verdictPush     = "push"
 	verdictReminder = "reminder"
 )
 
-var reminderStep = `Create a reminder in the "` + ListName + `" list of Reminders with osascript, ` +
+var reminderStep = `Create a reminder in the "` + ListName + `" list of Reminders ` +
+	`with osascript, ` +
 	`named "` + Prefix + `" followed by the question: ` +
 	`osascript -e 'tell application "Reminders" to make new reminder at end of reminders of list "` +
 	ListName + `" with properties {name:"` + Prefix + `<question>"}'. ` +
@@ -116,7 +122,7 @@ func (t turn) next(e *logEntry) turn {
 	switch {
 	case e.startsTurn():
 		return turn{}
-	case e.Type == "assistant":
+	case e.Type == typeAssistant:
 		return t.record(e.contentBlocks())
 	}
 	return t
@@ -127,7 +133,7 @@ func (t turn) record(blocks []contentBlock) turn {
 	for _, b := range blocks {
 		t.pushed = t.pushed || b.isPush()
 		t.reminded = t.reminded || b.isReminder()
-		if b.Type == "text" {
+		if b.Type == typeText {
 			texts = append(texts, b.Text)
 		}
 	}
@@ -159,7 +165,7 @@ func (t turn) asks() bool {
 }
 
 func (e *logEntry) startsTurn() bool {
-	if e.Type != "user" || e.IsMeta == true {
+	if e.Type != typeUser || e.IsMeta == true {
 		return false
 	}
 	content := strings.TrimSpace(string(e.Message.Content))
@@ -189,11 +195,11 @@ func (e *logEntry) contentBlocks() []contentBlock {
 }
 
 func (b contentBlock) isPush() bool {
-	return b.Type == "tool_use" && strings.HasSuffix(b.Name, "PushNotification")
+	return b.Type == typeToolUse && strings.HasSuffix(b.Name, "PushNotification")
 }
 
 func (b contentBlock) isReminder() bool {
-	if b.Type != "tool_use" || b.Name != "Bash" {
+	if b.Type != typeToolUse || b.Name != "Bash" {
 		return false
 	}
 	for _, part := range []string{"osascript", "Reminders", ListName, Prefix} {

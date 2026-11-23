@@ -46,8 +46,8 @@ func Command(ctx context.Context, args []string, env func(string) string, dep *D
 	if err != nil {
 		return err
 	}
-	w := &watcher{dep: dep, list: listPath(env), limit: limit, interval: parseInterval(env(intervalVar))}
-	return w.loop(ctx)
+	interval := parseInterval(env(intervalVar))
+	return (&watcher{dep: dep, list: listPath(env), limit: limit, interval: interval}).loop(ctx)
 }
 
 func Sleep(ctx context.Context, d time.Duration) error {
@@ -112,8 +112,12 @@ func readList(path string) ([]target, bool) {
 	if err != nil {
 		return nil, false
 	}
+	return parseList(string(raw)), true
+}
+
+func parseList(text string) []target {
 	var targets []target
-	for line := range strings.Lines(string(raw)) {
+	for line := range strings.Lines(text) {
 		fields := strings.Fields(line)
 		if len(fields) == 0 || strings.HasPrefix(fields[0], "#") {
 			continue
@@ -124,7 +128,7 @@ func readList(path string) ([]target, bool) {
 		}
 		targets = append(targets, t)
 	}
-	return targets, true
+	return targets
 }
 
 func (w *watcher) pass(ctx context.Context, targets []target) bool {

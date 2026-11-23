@@ -34,6 +34,10 @@ type fakeScripter struct {
 	deadline time.Time
 }
 
+type unreadable struct {
+	t *testing.T
+}
+
 func (f *fakeScripter) Available() bool {
 	return !f.absent
 }
@@ -48,10 +52,6 @@ func (f *fakeScripter) Run(ctx context.Context, script string, args []string) er
 		return ctx.Err()
 	}
 	return f.err
-}
-
-type unreadable struct {
-	t *testing.T
 }
 
 func (u unreadable) Read([]byte) (int, error) {
@@ -170,7 +170,17 @@ func TestPrefixIsShared(t *testing.T) {
 func writeStub(t *testing.T, body string) {
 	t.Helper()
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "osascript"), []byte("#!/bin/sh\n"+body), 0o700); err != nil {
+	file, err := os.OpenFile(filepath.Join(dir, "osascript"), os.O_WRONLY|os.O_CREATE, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = file.WriteString("#!/bin/sh\n" + body); err != nil {
+		t.Fatal(err)
+	}
+	if err = file.Chmod(0o500); err != nil {
+		t.Fatal(err)
+	}
+	if err = file.Close(); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir)

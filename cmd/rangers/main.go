@@ -19,36 +19,46 @@ import (
 	"github.com/malaquiasdev/rangers/internal/transcript"
 )
 
-const usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
-	" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]" +
-	" | rangers hook stop-push-check|complete-reminders | rangers watch [limit]"
+const (
+	usage = "uso: rangers learn [metrics] [flags] | rangers schedule install|uninstall|status" +
+		" | rangers install [--check] | rangers gate [ask] --repo owner/name --pr N [--merge]" +
+		" | rangers hook stop-push-check|complete-reminders | rangers watch [limit]"
 
-var binAliases = map[string][]string{
-	"stop-push-check":    {"hook", "stop-push-check"},
-	"complete-reminders": {"hook", "complete-reminders"},
-	"agent-watch":        {"watch"},
-}
+	gateName     = "gate"
+	hookName     = "hook"
+	watchName    = "watch"
+	stopHook     = "stop-push-check"
+	completeHook = "complete-reminders"
+)
 
-var commands = map[string]func(context.Context, []string) int{
-	"learn": func(ctx context.Context, args []string) int {
-		return report("learn", learn.Command(ctx, args, os.Getenv, learnDependencies()))
-	},
-	"install": func(ctx context.Context, args []string) int {
-		return report("install", install.Command(ctx, args, os.Getenv, installDependencies()))
-	},
-	"gate": func(ctx context.Context, args []string) int {
-		return reportGate(gate.Command(ctx, args, os.Getenv, gateDependencies()))
-	},
-	"schedule": func(ctx context.Context, args []string) int {
-		return report("schedule", schedule.Command(ctx, args, os.Getenv, scheduleDependencies()))
-	},
-	"hook": func(ctx context.Context, args []string) int {
-		return reportHook(hook.Command(ctx, args, os.Getenv, hookDependencies()))
-	},
-	"watch": func(ctx context.Context, args []string) int {
-		return reportWatch(agentwatch.Command(ctx, args, os.Getenv, watchDependencies()))
-	},
-}
+var (
+	binAliases = map[string][]string{
+		stopHook:      {hookName, stopHook},
+		completeHook:  {hookName, completeHook},
+		"agent-watch": {watchName},
+	}
+
+	commands = map[string]func(context.Context, []string) int{
+		"learn": func(ctx context.Context, args []string) int {
+			return report("learn", learn.Command(ctx, args, os.Getenv, learnDependencies()))
+		},
+		"install": func(ctx context.Context, args []string) int {
+			return report("install", install.Command(ctx, args, os.Getenv, installDependencies()))
+		},
+		gateName: func(ctx context.Context, args []string) int {
+			return reportGate(gate.Command(ctx, args, os.Getenv, gateDependencies()))
+		},
+		"schedule": func(ctx context.Context, args []string) int {
+			return report("schedule", schedule.Command(ctx, args, os.Getenv, scheduleDependencies()))
+		},
+		hookName: func(ctx context.Context, args []string) int {
+			return reportHook(hook.Command(ctx, args, os.Getenv, hookDependencies()))
+		},
+		watchName: func(ctx context.Context, args []string) int {
+			return reportWatch(agentwatch.Command(ctx, args, os.Getenv, watchDependencies()))
+		},
+	}
+)
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

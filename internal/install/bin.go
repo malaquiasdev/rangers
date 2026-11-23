@@ -12,13 +12,15 @@ const (
 	binDiffers
 )
 
-var binStatus = map[binState]string{
-	binLinked:   "linked",
-	binLinkable: "NOT LINKED",
-	binDiffers:  "differs from the installed file, left alone",
-}
+var (
+	binStatus = map[binState]string{
+		binLinked:   "linked",
+		binLinkable: "NOT LINKED",
+		binDiffers:  "differs from the installed file, left alone",
+	}
 
-var binAliases = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+	binAliases = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+)
 
 type binState int
 
@@ -90,9 +92,10 @@ func (in *installer) withAliases(links []link) []link {
 	if in.binary == "" {
 		return links
 	}
+	aliases := make([]link, 0, len(binAliases))
 	for _, name := range binAliases {
 		path := filepath.Join(in.opts.claudeDir, "bin", name)
-		links = append(links, link{target: in.binary, path: path, guarded: true})
+		aliases = append(aliases, link{target: in.binary, path: path, guarded: true})
 	}
-	return links
+	return append(links, aliases...)
 }
