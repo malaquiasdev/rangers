@@ -12,15 +12,15 @@ const (
 	skillSource = "/tmp/skill-1/skills/productivity/grilling"
 	doneText    = "\nDone. Restart Claude Code and run /pstack:setup-pstack once.\n"
 
-	auditSource    = repoDir + "/bin/audit"
-	auditInstalled = claudeDir + "/bin/audit"
-	auditScript    = "#!/usr/bin/env bash\n"
-	auditDiffers   = "bin/audit differs from the installed file, left alone\n"
+	helperSource    = repoDir + "/bin/helper"
+	helperInstalled = claudeDir + "/bin/helper"
+	helperScript    = "#!/usr/bin/env bash\n"
+	helperDiffers   = "bin/helper differs from the installed file, left alone\n"
 
 	rangersBinary = "/opt/rangers/bin/rangers"
 )
 
-var aliasNames = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+var aliasNames = []string{"agent-watch", "audit", "complete-reminders", "stop-push-check"}
 
 func TestInstallPieces(t *testing.T) {
 	t.Run("given a missing plugin, when installing, then it adds the marketplace and installs the plugin", func(t *testing.T) {
@@ -275,21 +275,21 @@ func TestInstallLinks(t *testing.T) {
 	})
 }
 
-func withAudit(t *testing.T) *setup {
+func withHelper(t *testing.T) *setup {
 	t.Helper()
 	s := newSetup(t)
 	s.allInstalled()
-	s.files.files[auditSource] = auditScript
+	s.files.files[helperSource] = helperScript
 	return s
 }
 
 func TestInstallBinLinks(t *testing.T) {
 	t.Run("given a bin file in the repository and none installed, when installing, then it links it into the claude dir bin", func(t *testing.T) {
-		s := withAudit(t)
+		s := withHelper(t)
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		if s.files.links[auditInstalled] != auditSource {
+		if s.files.links[helperInstalled] != helperSource {
 			t.Fatalf("got %v", s.files.links)
 		}
 		if !strings.Contains(s.typed(), row("links", "1 linked into "+claudeDir)) {
@@ -298,33 +298,33 @@ func TestInstallBinLinks(t *testing.T) {
 	})
 
 	t.Run("given a regular file with the same bytes, when installing, then it becomes a link", func(t *testing.T) {
-		s := withAudit(t)
-		s.files.files[auditInstalled] = auditScript
+		s := withHelper(t)
+		s.files.files[helperInstalled] = helperScript
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		if s.files.links[auditInstalled] != auditSource {
+		if s.files.links[helperInstalled] != helperSource {
 			t.Fatalf("got %v", s.files.links)
 		}
-		if _, still := s.files.files[auditInstalled]; still {
+		if _, still := s.files.files[helperInstalled]; still {
 			t.Fatal("the regular file is still there")
 		}
 	})
 
 	t.Run("given a regular file with other bytes, when installing, then it is left alone, says so and the other links are made", func(t *testing.T) {
-		s := withAudit(t)
-		s.files.files[auditInstalled] = "mine\n"
+		s := withHelper(t)
+		s.files.files[helperInstalled] = "mine\n"
 		s.files.files[repoDir+"/agents/a.md"] = "a"
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		if s.files.files[auditInstalled] != "mine\n" || s.files.links[auditInstalled] != "" {
+		if s.files.files[helperInstalled] != "mine\n" || s.files.links[helperInstalled] != "" {
 			t.Fatalf("files %v, links %v", s.files.files, s.files.links)
 		}
 		if s.files.links[claudeDir+"/agents/a.md"] != repoDir+"/agents/a.md" {
 			t.Fatalf("got %v", s.files.links)
 		}
-		if !strings.Contains(s.typed(), auditDiffers) {
+		if !strings.Contains(s.typed(), helperDiffers) {
 			t.Fatalf("got\n%s", s.typed())
 		}
 		if !strings.Contains(s.typed(), row("links", "1 linked into "+claudeDir)) {
@@ -333,7 +333,7 @@ func TestInstallBinLinks(t *testing.T) {
 	})
 
 	t.Run("given the bin link already made, when installing again, then nothing changes", func(t *testing.T) {
-		s := withAudit(t)
+		s := withHelper(t)
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
@@ -341,7 +341,7 @@ func TestInstallBinLinks(t *testing.T) {
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		if len(s.files.symlinked) != made || s.files.links[auditInstalled] != auditSource {
+		if len(s.files.symlinked) != made || s.files.links[helperInstalled] != helperSource {
 			t.Fatalf("symlinked %v, links %v", s.files.symlinked, s.files.links)
 		}
 		if strings.Contains(s.typed(), "left alone") {
@@ -370,7 +370,7 @@ func TestInstallAliasLinks(t *testing.T) {
 				t.Errorf("%s: got %q", name, got)
 			}
 		}
-		if !strings.Contains(s.typed(), row("links", "3 linked into "+claudeDir)) {
+		if !strings.Contains(s.typed(), row("links", "4 linked into "+claudeDir)) {
 			t.Fatalf("got\n%s", s.typed())
 		}
 	})
@@ -431,16 +431,28 @@ func TestInstallAliasLinks(t *testing.T) {
 		}
 	})
 
-	t.Run("given the repository bin file and the program, when installing, then it links both", func(t *testing.T) {
+	t.Run("given a repository that still has the old audit script, when installing, then the link goes to the program", func(t *testing.T) {
 		s := withBinary(t)
-		s.files.files[auditSource] = auditScript
+		s.files.files[repoDir+"/bin/audit"] = "#!/usr/bin/env bash\n"
+		s.files.links[claudeDir+"/bin/audit"] = repoDir + "/bin/audit"
 		if err := s.run(); err != nil {
 			t.Fatal(err)
 		}
-		if s.files.links[auditInstalled] != auditSource {
+		if got := s.files.links[claudeDir+"/bin/audit"]; got != rangersBinary {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	t.Run("given the repository bin file and the program, when installing, then it links both", func(t *testing.T) {
+		s := withBinary(t)
+		s.files.files[helperSource] = helperScript
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.links[helperInstalled] != helperSource {
 			t.Fatalf("got %v", s.files.links)
 		}
-		if !strings.Contains(s.typed(), row("links", "4 linked into "+claudeDir)) {
+		if !strings.Contains(s.typed(), row("links", "5 linked into "+claudeDir)) {
 			t.Fatalf("got\n%s", s.typed())
 		}
 	})
@@ -449,16 +461,17 @@ func TestInstallAliasLinks(t *testing.T) {
 func TestCheckAliasLinks(t *testing.T) {
 	t.Run("given the links in place, when checking, then it lists them after the bin files and says All in place", func(t *testing.T) {
 		s := withBinary(t)
-		s.files.files[auditSource] = auditScript
-		s.files.links[auditInstalled] = auditSource
+		s.files.files[helperSource] = helperScript
+		s.files.links[helperInstalled] = helperSource
 		for _, name := range aliasNames {
 			s.files.links[claudeDir+"/bin/"+name] = rangersBinary
 		}
 		if err := s.run("--check"); err != nil {
 			t.Fatal(err)
 		}
-		want := row("bin/audit", "linked") +
+		want := row("bin/helper", "linked") +
 			row("bin/agent-watch", "linked") +
+			row("bin/audit", "linked") +
 			row("bin/complete-reminders", "linked") +
 			row("bin/stop-push-check", "linked") +
 			row("docker", "responding") +
@@ -480,7 +493,7 @@ func TestCheckAliasLinks(t *testing.T) {
 		if !strings.Contains(s.typed(), row("bin/stop-push-check", "NOT LINKED")) {
 			t.Fatalf("got\n%s", s.typed())
 		}
-		if !strings.HasSuffix(s.typed(), "\n3 item(s) missing. Run rangers install\n") {
+		if !strings.HasSuffix(s.typed(), "\n4 item(s) missing. Run rangers install\n") {
 			t.Fatalf("got\n%s", s.typed())
 		}
 		if len(s.files.symlinked) != 0 {
