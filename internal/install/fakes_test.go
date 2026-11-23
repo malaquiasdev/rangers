@@ -60,6 +60,7 @@ type setup struct {
 	files  *memFiles
 	out    *bytes.Buffer
 	dir    string
+	binary string
 }
 
 func (f *fakeRunner) Has(name string) bool {
@@ -195,7 +196,7 @@ func (s *setup) run(args ...string) error {
 		}
 		return ""
 	}
-	dep := &Dependencies{Runner: s.runner, Files: s.files, Out: s.out, Dir: s.dir}
+	dep := &Dependencies{Runner: s.runner, Files: s.files, Out: s.out, Dir: s.dir, Binary: s.binary}
 	return Command(s.t.Context(), args, env, dep)
 }
 

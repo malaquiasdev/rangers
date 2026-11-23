@@ -22,6 +22,7 @@ type Dependencies struct {
 	Files  Files
 	Out    io.Writer
 	Dir    string
+	Binary string
 }
 
 type options struct {
@@ -36,6 +37,7 @@ type installer struct {
 	files  Files
 	opts   options
 	out    printer
+	binary string
 }
 
 func Command(ctx context.Context, args []string, env func(string) string, dep *Dependencies) error {
@@ -47,7 +49,13 @@ func Command(ctx context.Context, args []string, env func(string) string, dep *D
 	if err != nil {
 		return err
 	}
-	in := &installer{runner: dep.Runner, files: dep.Files, opts: opts, out: newPrinter(dep.Out, deps)}
+	in := &installer{
+		runner: dep.Runner,
+		files:  dep.Files,
+		opts:   opts,
+		out:    newPrinter(dep.Out, deps),
+		binary: dep.Binary,
+	}
 	if opts.check {
 		return in.check(ctx, deps)
 	}

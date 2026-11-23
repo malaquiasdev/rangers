@@ -1,12 +1,12 @@
 # The `stop-push-check` hook
 
-[`bin/stop-push-check`](../../bin/stop-push-check) is a Claude Code `Stop` hook. It enforces one rule: a turn that ends waiting for the human must also call `PushNotification` and create a reminder in the Reminders list `Tarefas Claude`. The reminder is needed because the push does not reach the human's iPhone and a reminder does. The [`complete-reminders`](complete-reminders.md) hook closes it on the next human message. `rangers install` links it into `~/.claude/bin/` with the other [`bin/`](install-command.md#what-the-install-does) helpers. The hook is not active until it is registered in `~/.claude/settings.json`.
+`rangers hook stop-push-check` is a Claude Code `Stop` hook. It enforces one rule: a turn that ends waiting for the human must also call `PushNotification` and create a reminder in the Reminders list `Tarefas Claude`. The reminder is needed because the push does not reach the human's iPhone and a reminder does. The [`complete-reminders`](complete-reminders.md) hook closes it on the next human message. The source is in [`internal/hook/`](../../internal/hook/). The hook is not active until it is registered in `~/.claude/settings.json`.
 
-It needs `jq` on the `PATH`. The reminder needs macOS, the Reminders app and a list named `Tarefas Claude`.
+It needs only the `rangers` program. The reminder needs macOS, the Reminders app and a list named `Tarefas Claude`.
 
 ## Register it
 
-Add this to the `hooks` object of `~/.claude/settings.json`:
+`rangers install` links `~/.claude/bin/stop-push-check` to the `rangers` program, which runs this hook when it is called by that name. Add this to the `hooks` object of `~/.claude/settings.json`:
 
 ```json
 {
@@ -22,6 +22,8 @@ Add this to the `hooks` object of `~/.claude/settings.json`:
 }
 ```
 
+To skip the link, use `"command": "~/.local/bin/rangers hook stop-push-check"` instead.
+
 ## Input
 
 Claude Code writes the `Stop` event as JSON on standard input. The hook reads two fields.
@@ -33,7 +35,7 @@ Claude Code writes the `Stop` event as JSON on standard input. The hook reads tw
 
 ## What it decides
 
-The turn is every transcript entry after the last user entry that is not only tool results. The last assistant message of the turn is the last one that has text.
+The turn is every transcript entry after the last user entry that is not only tool results. A user entry marked `isMeta` does not start a turn. The last assistant message of the turn is the last one that has text.
 
 The hook blocks when both are true:
 
@@ -44,14 +46,16 @@ The reminder command is a `Bash` tool call whose `command` contains all four of 
 
 A push call or a reminder in an earlier turn does not count.
 
-The prefix `Claude espera: ` and the list `Tarefas Claude` are set at the top of [`bin/stop-push-check`](../../bin/stop-push-check) and of [`bin/complete-reminders`](../../bin/complete-reminders). The two files must hold the same values, and a test checks the prefix.
+The prefix `Claude espera: ` and the list `Tarefas Claude` are constants in [`internal/hook/hook.go`](../../internal/hook/hook.go). Both hooks use them, so they cannot differ.
 
 ## Output and exit codes
 
 | Situation | Standard output | Exit code |
 | --- | --- | --- |
-| Blocked | `{"decision":"block","reason":"..."}`, telling the assistant what is missing and to end the turn | `0` |
+| Blocked | a JSON object with `decision` set to `block` and a `reason`, telling the assistant what is missing and to end the turn | `0` |
 | Anything else | nothing | `0` |
+
+The JSON is written with two-space indentation and one key per line.
 
 The reason names only what is missing: `PushNotification`, the reminder, or both. For the reminder it gives the `osascript` command to run:
 
@@ -59,8 +63,8 @@ The reason names only what is missing: `PushNotification`, the reminder, or both
 osascript -e 'tell application "Reminders" to make new reminder at end of reminders of list "Tarefas Claude" with properties {name:"Claude espera: <question>"}'
 ```
 
-Anything else includes `stop_hook_active` set to `true`, input that is not JSON, a missing or unreadable transcript, an empty turn and a message that asks nothing. A broken line in the transcript is skipped.
+Anything else includes `stop_hook_active` set to `true`, input that is not JSON, a missing or unreadable transcript, an empty turn and a message that asks nothing. A line of the transcript that is not a JSON object is skipped.
 
 ## Tests
 
-[`tests/test_stop_push_check.py`](../../tests/test_stop_push_check.py) has one test per scenario. `scripts/check.sh full` runs it.
+[`internal/hook/stoppush_test.go`](../../internal/hook/stoppush_test.go) has one table-driven test per group of scenarios, and compares the blocking output byte for byte. `scripts/check.sh full` runs it with `go test`.

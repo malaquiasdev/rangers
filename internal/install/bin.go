@@ -3,6 +3,7 @@ package install
 import (
 	"bytes"
 	"path/filepath"
+	"slices"
 )
 
 const (
@@ -11,11 +12,15 @@ const (
 	binDiffers
 )
 
-var binStatus = map[binState]string{
-	binLinked:   "linked",
-	binLinkable: "NOT LINKED",
-	binDiffers:  "differs from the installed file, left alone",
-}
+var (
+	binStatus = map[binState]string{
+		binLinked:   "linked",
+		binLinkable: "NOT LINKED",
+		binDiffers:  "differs from the installed file, left alone",
+	}
+
+	binAliases = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+)
 
 type binState int
 
@@ -24,12 +29,15 @@ func (in *installer) binLinks() ([]link, error) {
 	if err != nil {
 		return nil, err
 	}
-	links := make([]link, 0, len(matches))
+	links := make([]link, 0, len(matches)+len(binAliases))
 	for _, match := range matches {
+		if slices.Contains(binAliases, filepath.Base(match)) && in.binary != "" {
+			continue
+		}
 		path := filepath.Join(in.opts.claudeDir, "bin", filepath.Base(match))
 		links = append(links, link{target: match, path: path, guarded: true})
 	}
-	return links, nil
+	return in.withAliases(links), nil
 }
 
 func (in *installer) binState(l link) (binState, error) {
@@ -78,4 +86,16 @@ func (in *installer) checkBins() (int, error) {
 		}
 	}
 	return missing, nil
+}
+
+func (in *installer) withAliases(links []link) []link {
+	if in.binary == "" {
+		return links
+	}
+	aliases := make([]link, 0, len(binAliases))
+	for _, name := range binAliases {
+		path := filepath.Join(in.opts.claudeDir, "bin", name)
+		aliases = append(aliases, link{target: in.binary, path: path, guarded: true})
+	}
+	return append(links, aliases...)
 }
