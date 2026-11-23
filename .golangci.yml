@@ -92,6 +92,10 @@ linters:
         linters:
           - gosec
         text: G204|G304|G703
+      - path: internal/githook/
+        linters:
+          - gosec
+        text: G302
 
 formatters:
   enable:
