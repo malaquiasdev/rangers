@@ -25,9 +25,11 @@ class CompleteRemindersTest(unittest.TestCase):
         self.stub_dir.mkdir()
         self.bin_dir = Path(self.folder.name) / "bin"
         self.bin_dir.mkdir()
-        (self.bin_dir / "bash").symlink_to(subprocess.run(
-            ["which", "bash"], capture_output=True, text=True, check=True
-        ).stdout.strip())
+        for tool in ("bash", "cat", "sleep"):
+            location = subprocess.run(
+                ["which", tool], capture_output=True, text=True, check=True
+            ).stdout.strip()
+            (self.bin_dir / tool).symlink_to(location)
 
     def install_stub(self, body):
         path = self.bin_dir / "osascript"

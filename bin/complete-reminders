@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -u
+
+list="Tarefas Claude"
+prefix="Claude espera: "
+limit=${COMPLETE_REMINDERS_TIMEOUT:-10}
+
+command -v osascript > /dev/null 2>&1 || exit 0
+
+osascript - "$list" "$prefix" > /dev/null 2>&1 <<'APPLESCRIPT' &
+on run argv
+  set listName to item 1 of argv
+  set waitingPrefix to item 2 of argv
+  tell application "Reminders"
+    if not (exists list listName) then return
+    set waiting to (every reminder of list listName whose completed is false and name starts with waitingPrefix)
+    repeat with entry in waiting
+      set completed of entry to true
+    end repeat
+  end tell
+end run
+APPLESCRIPT
+worker=$!
+
+( sleep "$limit"; kill "$worker" ) > /dev/null 2>&1 &
+watcher=$!
+
+wait "$worker" > /dev/null 2>&1 || true
+kill "$watcher" > /dev/null 2>&1 || true
+exit 0
