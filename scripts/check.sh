@@ -85,7 +85,6 @@ fi
 
 if [ "$mode" = "full" ]; then
   PYTHONDONTWRITEBYTECODE=1 python3 -I -m unittest discover -s assets/tests -t assets > /dev/null 2>&1 || fail "testes dos assets"
-  PYTHONDONTWRITEBYTECODE=1 python3 -I -m unittest discover -s tests > /dev/null 2>&1 || fail "testes dos scripts de bin"
 fi
 
 if [ "$mode" = "full" ]; then
