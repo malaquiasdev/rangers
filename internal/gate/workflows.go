@@ -13,7 +13,7 @@ import (
 
 const (
 	rawAccept      = "Accept: application/vnd.github.raw+json"
-	notFoundMarker = "HTTP 404"
+	notFoundMarker = "Not Found (HTTP 404)"
 	globCharacters = "*?+[]!"
 )
 
