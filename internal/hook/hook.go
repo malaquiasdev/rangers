@@ -24,16 +24,17 @@ type Dependencies struct {
 	Scripter Scripter
 }
 
-func Command(_ context.Context, _ []string, _ func(string) string, _ *Dependencies) error {
-	return nil
-}
-
-type OsascriptCLI struct{}
-
-func (OsascriptCLI) Available() bool {
-	return false
-}
-
-func (OsascriptCLI) Run(_ context.Context, _ string, _ []string) error {
-	return nil
+func Command(ctx context.Context, args []string, env func(string) string, dep *Dependencies) error {
+	if len(args) == 0 {
+		return ErrUsage
+	}
+	switch args[0] {
+	case "stop-push-check":
+		stopPushCheck(dep.In, dep.Out)
+		return nil
+	case "complete-reminders":
+		completeReminders(ctx, env, dep.Scripter)
+		return nil
+	}
+	return ErrUsage
 }
