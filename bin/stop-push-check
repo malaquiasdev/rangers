@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+input=$(cat)
+active=$(printf '%s' "$input" | jq -r '.stop_hook_active // false' 2>/dev/null || echo false)
+transcript=$(printf '%s' "$input" | jq -r '.transcript_path // empty' 2>/dev/null || true)
+
+if [ "$active" = "true" ] || [ -z "$transcript" ] || [ ! -f "$transcript" ]; then
+  exit 0
+fi
+
+verdict=$(jq -Rn '
+  def human_turn_start:
+    .type == "user"
+    and (.isMeta != true)
+    and (.message.content
+      | if type == "string" then true
+        elif type == "array" then any(.[]; ((.type? // "") != "tool_result"))
+        else false end);
+  [inputs | fromjson? | select(type == "object")] as $entries
+  | ([range(0; $entries | length) | select($entries[.] | human_turn_start)] | last // -1) as $start
+  | $entries[$start + 1:] as $turn
+  | ($turn | any(.[];
+      .type == "assistant"
+      and any(.message.content[]?; .type == "tool_use" and ((.name // "") | endswith("PushNotification")))
+    )) as $pushed
+  | ($turn
+      | map(select(.type == "assistant") | [.message.content[]? | select(.type == "text") | .text] | join("\n"))
+      | map(select(length > 0))
+      | last // "") as $last
+  | ($last | test("\\?\\s*$") or contains("Responda") or contains("Answer sim")) as $asks
+  | if $asks and ($pushed | not) then "block" else "ok" end
+' "$transcript" 2>/dev/null || echo ok)
+
+if [ "$verdict" = '"block"' ]; then
+  jq -n '{decision: "block", reason: "This turn ends waiting for the human but PushNotification was not called. Call PushNotification now (action first, up to 200 characters), then end the turn."}'
+fi
