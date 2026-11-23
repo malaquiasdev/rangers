@@ -117,3 +117,15 @@ func installDependencies() *install.Dependencies {
 		Dir:    dir,
 	}
 }
+
+func expand(argv []string) []string {
+	return nil
+}
+
+func reportHook(err error) int {
+	return 0
+}
+
+func reportWatch(err error) int {
+	return 0
+}
