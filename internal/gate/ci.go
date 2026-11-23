@@ -35,13 +35,25 @@ func (g *gate) checks(ctx context.Context) ([]check, error) {
 	return checks, nil
 }
 
+func (g *gate) withoutChecks(ctx context.Context) (outcome, error) {
+	runs, err := g.runsOnPullRequests(ctx)
+	if err != nil {
+		return outcome{}, err
+	}
+	if runs {
+		return refuse("ci", "ci has no checks for this head"), nil
+	}
+	g.ciNotApplicable = true
+	return pass("ci", "not applicable, no workflow runs on pull requests"), nil
+}
+
 func (g *gate) ci(ctx context.Context) (outcome, error) {
 	checks, err := g.checks(ctx)
 	if err != nil {
 		return outcome{}, err
 	}
 	if len(checks) == 0 {
-		return refuse("ci", "ci has no checks for this head"), nil
+		return g.withoutChecks(ctx)
 	}
 	var failing []string
 	for _, c := range checks {
