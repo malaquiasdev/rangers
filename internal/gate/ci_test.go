@@ -263,6 +263,24 @@ func TestCI(t *testing.T) {
 		}
 	})
 
+	t.Run("given a ref the api cannot find, when running the gate with --merge, then it returns the error and makes no merge call", func(t *testing.T) {
+		for _, missing := range []string{"main", headSHA} {
+			t.Run(missing, func(t *testing.T) {
+				s := approvedScenario(t)
+				s.runner.replies[checkCmd] = reply{err: errors.New(checkCmd + ": exit status 1: " + noChecks)}
+				s.sameWorkflows(map[string]string{"release.yml": releaseWorkflow})
+				s.runner.replies[listCmd(missing)] = reply{err: errors.New(listCmd(missing) + ": " + noCommit)}
+				err := s.run("--merge")
+				if err == nil || errors.Is(err, ErrRefused) || !strings.Contains(err.Error(), "No commit found") {
+					t.Fatalf("got %v", err)
+				}
+				if n := s.runner.called(mergeCmd); n != 0 {
+					t.Fatalf("merge called %d times: %v", n, s.runner.calls)
+				}
+			})
+		}
+	})
+
 	t.Run("given a workflow file that cannot be read, when running the gate with --merge, then it returns the error and makes no merge call", func(t *testing.T) {
 		s := approvedScenario(t)
 		s.runner.replies[checkCmd] = reply{out: `[]`}

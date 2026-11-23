@@ -28,6 +28,7 @@ const (
 	workflowsPath = "repos/acme/api/contents/.github/workflows"
 	rawHeader     = "Accept: application/vnd.github.raw+json"
 	notFound      = "exit status 1: gh: Not Found (HTTP 404)"
+	noCommit      = "exit status 1: gh: No commit found for the ref 0123456 (HTTP 404)"
 	noChecks      = "no checks reported on the 'feat/endpoint' branch"
 	token         = "gate:4a7010e4"
 	other         = "gate:2cd50664"
