@@ -79,7 +79,7 @@ func (w *watch) run(entry string, window time.Duration) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), window)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", script, "900")
-	cmd.Env = append(os.Environ(), "AGENT_WATCH_LIST="+list, "AGENT_WATCH_INTERVAL=1")
+	cmd.Env = append(cleanEnv(), "AGENT_WATCH_LIST="+list, "AGENT_WATCH_INTERVAL=1")
 	out, runErr := cmd.Output()
 	exit := new(exec.ExitError)
 	if errors.As(runErr, &exit) || ctx.Err() != nil {
@@ -89,6 +89,16 @@ func (w *watch) run(entry string, window time.Duration) (string, bool) {
 		w.t.Fatal(runErr)
 	}
 	return strings.TrimSpace(string(out)), true
+}
+
+func cleanEnv() []string {
+	var env []string
+	for _, pair := range os.Environ() {
+		if !strings.HasPrefix(pair, "GIT_") {
+			env = append(env, pair)
+		}
+	}
+	return env
 }
 
 func TestAgentWatchSymlink(t *testing.T) {
