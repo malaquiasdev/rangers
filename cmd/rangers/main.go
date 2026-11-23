@@ -176,10 +176,12 @@ func installDependencies() *install.Dependencies {
 	if err != nil {
 		dir = "."
 	}
+	binary, _ := os.Executable()
 	return &install.Dependencies{
 		Runner: install.ExecRunner{Out: os.Stdout},
 		Files:  install.OSFiles{},
 		Out:    os.Stdout,
 		Dir:    dir,
+		Binary: binary,
 	}
 }
