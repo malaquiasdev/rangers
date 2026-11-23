@@ -48,7 +48,7 @@ func (w *watch) link(name, target string, age time.Duration) string {
 		w.t.Fatal(err)
 	}
 	stamp := time.Now().Add(-age).Format("200601021504")
-	if out, err := exec.Command("touch", "-h", "-t", stamp, path).CombinedOutput(); err != nil {
+	if out, err := exec.CommandContext(context.Background(), "touch", "-h", "-t", stamp, path).CombinedOutput(); err != nil {
 		w.t.Fatalf("touch -h: %v: %s", err, out)
 	}
 	return path
