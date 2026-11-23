@@ -345,3 +345,148 @@ func TestInstallBinLinks(t *testing.T) {
 		}
 	})
 }
+
+const (
+	rangersBinary = "/opt/rangers/bin/rangers"
+)
+
+var aliasNames = []string{"agent-watch", "complete-reminders", "stop-push-check"}
+
+func withBinary(t *testing.T) *setup {
+	t.Helper()
+	s := newSetup(t)
+	s.allInstalled()
+	s.binary = rangersBinary
+	s.files.files[rangersBinary] = "binary"
+	return s
+}
+
+func TestInstallAliasLinks(t *testing.T) {
+	t.Run("given the path of the program, when installing, then it links each old helper name to the program", func(t *testing.T) {
+		s := withBinary(t)
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range aliasNames {
+			if got := s.files.links[claudeDir+"/bin/"+name]; got != rangersBinary {
+				t.Errorf("%s: got %q", name, got)
+			}
+		}
+		if !strings.Contains(s.typed(), row("links", "3 linked into "+claudeDir)) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given links that point to the old scripts, when installing, then they are pointed at the program", func(t *testing.T) {
+		s := withBinary(t)
+		for _, name := range aliasNames {
+			s.files.links[claudeDir+"/bin/"+name] = repoDir + "/bin/" + name
+		}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range aliasNames {
+			if got := s.files.links[claudeDir+"/bin/"+name]; got != rangersBinary {
+				t.Errorf("%s: got %q", name, got)
+			}
+		}
+	})
+
+	t.Run("given links that already point to the program, when installing, then it changes nothing", func(t *testing.T) {
+		s := withBinary(t)
+		for _, name := range aliasNames {
+			s.files.links[claudeDir+"/bin/"+name] = rangersBinary
+		}
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if len(s.files.symlinked) != 0 {
+			t.Fatalf("got %v", s.files.symlinked)
+		}
+	})
+
+	t.Run("given a regular file of another content in the way, when installing, then it is left alone and the others are linked", func(t *testing.T) {
+		s := withBinary(t)
+		s.files.files[claudeDir+"/bin/agent-watch"] = "mine\n"
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.files[claudeDir+"/bin/agent-watch"] != "mine\n" || s.files.links[claudeDir+"/bin/agent-watch"] != "" {
+			t.Fatalf("files %v, links %v", s.files.files, s.files.links)
+		}
+		if !strings.Contains(s.typed(), "bin/agent-watch differs from the installed file, left alone\n") {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if s.files.links[claudeDir+"/bin/stop-push-check"] != rangersBinary {
+			t.Fatalf("got %v", s.files.links)
+		}
+	})
+
+	t.Run("given a repository that still has a bin file with an old helper name, when installing, then the link goes to the program", func(t *testing.T) {
+		s := withBinary(t)
+		s.files.files[repoDir+"/bin/stop-push-check"] = "#!/usr/bin/env bash\n"
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := s.files.links[claudeDir+"/bin/stop-push-check"]; got != rangersBinary {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	t.Run("given the repository bin file and the program, when installing, then it links both", func(t *testing.T) {
+		s := withBinary(t)
+		s.files.files[auditSource] = auditScript
+		if err := s.run(); err != nil {
+			t.Fatal(err)
+		}
+		if s.files.links[auditInstalled] != auditSource {
+			t.Fatalf("got %v", s.files.links)
+		}
+		if !strings.Contains(s.typed(), row("links", "4 linked into "+claudeDir)) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+}
+
+func TestCheckAliasLinks(t *testing.T) {
+	t.Run("given the links in place, when checking, then it lists them after the bin files and says All in place", func(t *testing.T) {
+		s := withBinary(t)
+		s.files.files[auditSource] = auditScript
+		s.files.links[auditInstalled] = auditSource
+		for _, name := range aliasNames {
+			s.files.links[claudeDir+"/bin/"+name] = rangersBinary
+		}
+		if err := s.run("--check"); err != nil {
+			t.Fatal(err)
+		}
+		want := row("bin/audit", "linked") +
+			row("bin/agent-watch", "linked") +
+			row("bin/complete-reminders", "linked") +
+			row("bin/stop-push-check", "linked") +
+			row("docker", "responding") +
+			"\nAll in place.\n"
+		if !strings.HasSuffix(s.typed(), want) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+	})
+
+	t.Run("given links that still point to the removed scripts, when checking, then it marks them, counts them and fails", func(t *testing.T) {
+		s := withBinary(t)
+		for _, name := range aliasNames {
+			s.files.links[claudeDir+"/bin/"+name] = repoDir + "/bin/" + name
+		}
+		err := s.run("--check")
+		if !errors.Is(err, ErrIncomplete) {
+			t.Fatalf("got %v", err)
+		}
+		if !strings.Contains(s.typed(), row("bin/stop-push-check", "NOT LINKED")) {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if !strings.HasSuffix(s.typed(), "\n3 item(s) missing. Run rangers install\n") {
+			t.Fatalf("got\n%s", s.typed())
+		}
+		if len(s.files.symlinked) != 0 {
+			t.Fatal("the check changed something")
+		}
+	})
+}

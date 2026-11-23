@@ -22,6 +22,7 @@ type Dependencies struct {
 	Files  Files
 	Out    io.Writer
 	Dir    string
+	Binary string
 }
 
 type options struct {
