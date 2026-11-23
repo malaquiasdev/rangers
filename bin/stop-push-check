@@ -9,7 +9,10 @@ if [ "$active" = "true" ] || [ -z "$transcript" ] || [ ! -f "$transcript" ]; the
   exit 0
 fi
 
-verdict=$(jq -Rn '
+list="Tarefas Claude"
+prefix="Claude espera: "
+
+verdict=$(jq -Rn --arg list "$list" --arg prefix "$prefix" '
   def human_turn_start:
     .type == "user"
     and (.isMeta != true)
@@ -24,14 +27,37 @@ verdict=$(jq -Rn '
       .type == "assistant"
       and any(.message.content[]?; .type == "tool_use" and ((.name // "") | endswith("PushNotification")))
     )) as $pushed
+  | ($turn | any(.[];
+      .type == "assistant"
+      and any(.message.content[]?;
+        .type == "tool_use"
+        and .name == "Bash"
+        and ((.input.command // "") as $command
+          | ($command | contains("osascript"))
+          and ($command | contains("Reminders"))
+          and ($command | contains($list))
+          and ($command | contains($prefix))))
+    )) as $reminded
   | ($turn
       | map(select(.type == "assistant") | [.message.content[]? | select(.type == "text") | .text] | join("\n"))
       | map(select(length > 0))
       | last // "") as $last
   | ($last | test("\\?\\s*$") or contains("Responda") or contains("Answer sim")) as $asks
-  | if $asks and ($pushed | not) then "block" else "ok" end
+  | if ($asks | not) then "ok"
+    elif ($pushed | not) and ($reminded | not) then "both"
+    elif ($pushed | not) then "push"
+    elif ($reminded | not) then "reminder"
+    else "ok" end
 ' "$transcript" 2>/dev/null || echo ok)
 
-if [ "$verdict" = '"block"' ]; then
-  jq -n '{decision: "block", reason: "This turn ends waiting for the human but PushNotification was not called. Call PushNotification now (action first, up to 200 characters), then end the turn."}'
-fi
+push_step="Call PushNotification now (action first, up to 200 characters)."
+reminder_step="Create a reminder in the \"$list\" list of Reminders with osascript, named \"$prefix\" followed by the question: osascript -e 'tell application \"Reminders\" to make new reminder at end of reminders of list \"$list\" with properties {name:\"${prefix}<question>\"}'. It is closed automatically on the next human message."
+
+case "$verdict" in
+  '"both"') steps="$push_step $reminder_step" ;;
+  '"push"') steps="$push_step" ;;
+  '"reminder"') steps="$reminder_step" ;;
+  *) exit 0 ;;
+esac
+
+jq -n --arg steps "$steps" '{decision: "block", reason: ("This turn ends waiting for the human but the notification is incomplete. " + $steps + " Then end the turn.")}'
