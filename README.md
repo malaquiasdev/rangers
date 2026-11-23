@@ -39,13 +39,13 @@ You need Claude Code, Git, `gh` logged in, Go 1.26, Homebrew and Podman, with it
 ```sh
 git clone https://github.com/malaquiasdev/rangers
 cd rangers
-make hooks
 mkdir -p ~/.local/bin
 go build -o ~/.local/bin/rangers ./cmd/rangers
+make hooks
 rangers install
 ```
 
-`rangers install` installs the pieces in `deps.toml` and links the agents, the rules, the entry skill and the `bin/` helpers into `~/.claude`. Then restart Claude Code and run `/pstack:setup-pstack` once. `rangers install --check` shows what is in place and ends with `All in place.` when nothing is missing. If the `docker` line says `NOT RESPONDING`, start Podman with `podman machine start`. The [step-by-step tutorial](docs/tutorials/prepare-the-machine.md) walks through the same setup, and [how to uninstall](docs/how-to/uninstall.md) undoes it.
+`rangers install` installs the pieces in `deps.toml` and links the agents, the rules, the entry skill and the `audit`, `agent-watch`, `complete-reminders` and `stop-push-check` helpers into `~/.claude`. Then restart Claude Code and run `/pstack:setup-pstack` once. `rangers install --check` shows what is in place and ends with `All in place.` when nothing is missing. If the `docker` line says `NOT RESPONDING`, start Podman with `podman machine start`. The [step-by-step tutorial](docs/tutorials/prepare-the-machine.md) walks through the same setup, and [how to uninstall](docs/how-to/uninstall.md) undoes it.
 
 ## Use
 
@@ -69,7 +69,7 @@ To let it learn from your sessions, schedule it every two hours. This needs macO
 make check
 ```
 
-The checks also need `golangci-lint` and Python 3.11 or newer. They run locally through git hooks, so the only GitHub workflow is release-please. More in the [docs](docs/index.md).
+The checks also need `golangci-lint`, and Python 3 for the tests of the pixel art. The hooks call the `rangers` program, so keep it built. They run locally through git hooks, so the only GitHub workflow is release-please. More in the [docs](docs/index.md).
 
 ## Credits and license
 
