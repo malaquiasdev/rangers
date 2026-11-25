@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.0](https://github.com/malaquiasdev/rangers/compare/v0.1.0...v0.2.0) (2026-11-25)
+
+
+### Features
+
+* **cli:** port audit, check and the Git hooks to rangers subcommands ([#17](https://github.com/malaquiasdev/rangers/issues/17)) ([2bb815f](https://github.com/malaquiasdev/rangers/commit/2bb815f750874874ea6f982a6601be43d6c3e052))
+* **hooks:** force a push notification when the turn waits for the human ([#10](https://github.com/malaquiasdev/rangers/issues/10)) ([bfbc2d1](https://github.com/malaquiasdev/rangers/commit/bfbc2d1fbd5ef533d8d23515b7b0f449d32d060d))
+* **hooks:** require a reminder when the turn waits for the human and close it on the next message ([#13](https://github.com/malaquiasdev/rangers/issues/13)) ([bb95b7f](https://github.com/malaquiasdev/rangers/commit/bb95b7f93e94658925369f311a17ebb30908d6ca))
+* **learn:** drop pending reminders whose branch no longer exists ([#4](https://github.com/malaquiasdev/rangers/issues/4)) ([53ce3e4](https://github.com/malaquiasdev/rangers/commit/53ce3e4a40c910496dcc935130accd4564b6e155))
+* port the stop-push-check, complete-reminders and agent-watch helpers to Go subcommands ([#15](https://github.com/malaquiasdev/rangers/issues/15)) ([307f408](https://github.com/malaquiasdev/rangers/commit/307f408b4b8810b85e5c8375ddff1d6b436989fe))
+
+
+### Bug Fixes
+
+* **agent-watch:** read the modification time of the symlink target ([#8](https://github.com/malaquiasdev/rangers/issues/8)) ([1abc09b](https://github.com/malaquiasdev/rangers/commit/1abc09b2d8de23da1dbabe7c4df4ddbf5201b2b2))
+* **gate:** pass the ci item as not applicable when no workflow runs on pull requests ([#6](https://github.com/malaquiasdev/rangers/issues/6)) ([7658d4a](https://github.com/malaquiasdev/rangers/commit/7658d4a15d9e609e039312e39628167b84a8d272))
+* **learn:** allow the audit script by its absolute home path in the notes pass ([3bddb32](https://github.com/malaquiasdev/rangers/commit/3bddb3204583522f3213e1eab93e249875fa84fe))
+* **learn:** allow the resolved path of the audit script when it is a link ([e57421d](https://github.com/malaquiasdev/rangers/commit/e57421d543ef622e6a2822e5e2f727537059c979))
+
 ## 0.1.0 (2026-11-22)
 
 
