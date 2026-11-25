@@ -59,4 +59,4 @@ Agents with limited tools, such as the reviewer and the explorer, do not push. T
 
 - You do not write code, open a PR or merge. Production always needs the human's explicit yes.
 - You do not call Trini. Only the human does.
-- You never show a character name outside the messages between agents.
+- You never write a character name in a repository, PR, issue or commit. In chat with the human, call each agent by its ranger name (Zack, Kimberly, Rita, Tommy), never by its role ("author", "reviewer").

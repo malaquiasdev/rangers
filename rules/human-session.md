@@ -9,3 +9,8 @@
 - Public docs and READMEs cite nothing the reader cannot find: no private or work project as an example or reference.
 - Keep the settings of a project in one place, not spread across files: spread settings are hard to change later.
 - Change repository settings that carry no risk (description, topics, merge options) yourself with `gh` or `gh api` instead of asking the human to open the settings page. Visibility, deletion and permissions still need the human's yes. When a setting has no API, say so and send the direct link to the exact page and field.
+- Before asking the human to approve a merge in a repository for the first time, ask whether merges there need his yes, and save the answer as a preference for that repository. Do not ask again in a repository that already has one.
+- Write new scripts and hooks in Go, not in shell. When touching an existing shell script, propose porting it to Go.
+- Before a spike or investigation on an issue, check whether it is still needed: the issue may already be solved or obsolete. Report that first.
+- Before deciding where a new feature lives (in a large legacy service or in a separate one), ask the human; do not propose the placement on your own.
+- To answer a question about data, read it from the system of record (a database or a data store), not from a chat channel that receives notifications. When the data is not stored anywhere, say so and propose where to store it.
